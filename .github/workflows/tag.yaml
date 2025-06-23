@@ -1,4 +1,5 @@
 name: artifact-generation
+description: Generating an Artifact
 on:
   push:
     tags:
