@@ -6,9 +6,6 @@ on:
 jobs:
   publish-tag:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
     name: Publish Tag
     container: node:23.1.0
     outputs:
