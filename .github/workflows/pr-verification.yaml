@@ -12,8 +12,8 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
       - name: NPM install
-        uses: npm ci
+        run: npm ci
       - name: Lint
-        uses: npm run lint
+        run: npm run lint
       - name: Build
-        uses: npm run build
+        run: npm run build
