@@ -1,15 +1,14 @@
 name: artifact-generation
-description: Generating an Artifact
 on:
   push:
     tags:
       - v*
 jobs:
   publish-tag:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     name: Publish Tag
     container: node:20.5.1
     outputs:
