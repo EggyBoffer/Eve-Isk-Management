@@ -1,10 +1,9 @@
-import Database from 'better-sqlite3';
-import path from 'node:path';
-import { app } from 'electron';
-import { fileURLToPath } from 'node:url';
+import Database from "better-sqlite3";
+import path from "node:path";
+import { app } from "electron";
 
-const userDataPath = app.getPath('userData');
-const dbPath = path.join(userDataPath, 'isk-tracker.sqlite');
+const userDataPath = app.getPath("userData");
+const dbPath = path.join(userDataPath, "isk-tracker.sqlite");
 
 const db = new Database(dbPath);
 
@@ -26,10 +25,10 @@ function addColumnIfNotExists(table, column, definition) {
 }
 
 // Add missing columns one by one
-addColumnIfNotExists('abyssals', 'room1_isk', 'INTEGER DEFAULT 0');
-addColumnIfNotExists('abyssals', 'room2_isk', 'INTEGER DEFAULT 0');
-addColumnIfNotExists('abyssals', 'room3_isk', 'INTEGER DEFAULT 0');
-addColumnIfNotExists('abyssals', 'time_taken', 'INTEGER DEFAULT 0');
-addColumnIfNotExists('abyssals', 'fillament_cost', 'INTEGER DEFAULT 0');
+addColumnIfNotExists("abyssals", "room1_isk", "INTEGER DEFAULT 0");
+addColumnIfNotExists("abyssals", "room2_isk", "INTEGER DEFAULT 0");
+addColumnIfNotExists("abyssals", "room3_isk", "INTEGER DEFAULT 0");
+addColumnIfNotExists("abyssals", "time_taken", "INTEGER DEFAULT 0");
+addColumnIfNotExists("abyssals", "fillament_cost", "INTEGER DEFAULT 0");
 
 export default db;
