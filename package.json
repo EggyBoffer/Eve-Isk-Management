@@ -1,5 +1,6 @@
 {
-  "name": "isk-tracker",
+  "name": "eve-isk-management",
+  "description": "Eve Isk Management is a Dev tool to track income for EveOnline",
   "private": true,
   "version": "0.0.0",
   "type": "module",
