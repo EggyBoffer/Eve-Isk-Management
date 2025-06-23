@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Install Key package for building
+        run: apt-get update -y && apt-get install -y libarchive-tools
       - name: Get Tag Version
         id: tag-version
         run: |
