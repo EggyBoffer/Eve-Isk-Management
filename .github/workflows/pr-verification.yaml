@@ -1,5 +1,6 @@
 name: PR Validation
 on:
+  push:
   pull_request:
   merge_group:
 
