@@ -10,18 +10,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     name: Publish Tag
-    container: node:20.5.1
+    container: node:23.1.0
     outputs:
       release-version: ${{steps.tag-version.outputs.release-version}}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install Dependancies
-        run: npm ci
-      - name: Build
-        run: npm run build
-      - name: Pack
-        run: npm run pack
       - name: Get Tag Version
         id: tag-version
         run: |
