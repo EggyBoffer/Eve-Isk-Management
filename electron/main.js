@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import db from "./database.js";
-import platform from "os";
+import os from "os";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,5 +60,5 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (platform() !== "darwin") app.quit();
+  if (os.platform() !== "darwin") app.quit();
 });
