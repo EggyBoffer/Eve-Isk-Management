@@ -1,0 +1,134 @@
+/* Reset & base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121217;
+  color: #eee;
+  line-height: 1.6;
+}
+
+a {
+  color: #61dafb;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #21a1f1;
+}
+
+/* Container for page content */
+.container {
+  max-width: 1500px;
+  margin-right: auto;
+  padding: 0 1rem;
+}
+
+/* Headings */
+.container h1 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  color: #61dafb;
+  text-align: center;
+}
+
+/* Form Styles */
+form {
+  background-color: #222233;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(97, 218, 251, 0.4);
+  
+  /* Use flex column to stack fields vertically */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  /* Limit form width and center it */
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Label styling */
+label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #ddd;
+}
+
+/* Inputs take equal width */
+input {
+  flex: 1;
+  margin-left: 1rem;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background-color: #333344;
+  color: #eee;
+  font-family: inherit;
+  min-width: 100px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #61dafb;
+  box-shadow: 0 0 5px #61dafb;
+}
+
+/* Button styling */
+button {
+  margin-top: 2rem;
+  width: 100%;
+  padding: 0.7rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 6px;
+  color: #222;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+/* List styles */
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+li {
+  background-color: #1e1e2f;
+  padding: 0.8rem;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  font-size: 1rem;
+}
+
+/* Navbar tweaks */
+nav {
+  font-weight: 600;
+}
+
+nav a {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+nav a.active {
+  color: #fff;
+  border-bottom: 2px solid #61dafb;
+}
