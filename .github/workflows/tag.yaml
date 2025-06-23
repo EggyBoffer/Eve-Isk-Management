@@ -22,8 +22,6 @@ jobs:
         run: npm run build
       - name: Pack
         run: npm run pack
-      - name: Publish
-        run: npm run publish
       - name: Get Tag Version
         id: tag-version
         run: |
