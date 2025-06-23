@@ -1,0 +1,37 @@
+name: artifact-generation
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  publish-tag:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    name: Publish Tag
+    container: node:20.5.1
+    outputs:
+      release-version: ${{steps.tag-version.outputs.release-version}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Dependancies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Pack
+        run: npm run pack
+      - name: Publish
+        run: npm run publish
+      - name: Get Tag Version
+        id: tag-version
+        run: |
+          chmod +x ./scripts/release.sh
+          echo "new-version=$(./scripts/release.sh getNewVersion)" >> $GITHUB_OUTPUT
+      - name: Build/release Electron app
+        uses: samuelmeuli/action-electron-builder@v1
+        with:
+          max_attempts: 3
+          github_token: ${{ secrets.github_token }}
+          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
