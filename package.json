@@ -38,11 +38,11 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-    "appId": "com.isktracker.app",
-    "files": [
-      "dist",
-      "electron"
-    ],
+  "appId": "com.isktracker.app",
+  "files": [
+    "dist/**/*",
+    "electron/**/*"
+  ],
     "directories": {
       "buildResources": "assets"
     }

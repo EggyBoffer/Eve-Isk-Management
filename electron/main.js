@@ -30,15 +30,16 @@ function createWindow() {
   const preloadPath = path.join(__dirname, "preload.js");
 
   const win = new BrowserWindow({
-    width: 1300,
-    height: 900,
-    title: "MainApp",
-    webPreferences: {
-      preload: preloadPath,
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
-  });
+  width: 1300,
+  height: 900,
+  title: "MainApp",
+  webPreferences: {
+    preload: preloadPath,
+    contextIsolation: true,
+    nodeIntegration: false,
+    webSecurity: false, // <-- add this
+  },
+});
 
   const isDev = !app.isPackaged;
 
