@@ -29,6 +29,8 @@ jobs:
 
       - name: Build Electron app installer
         run: npm run dist
+        env: 
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Create GitHub Release
         id: create_release

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const FILAMENT_TYPES = {
   T0: { Firestorm: 56134, Dark: 56132, Gamma: 56136, Electrical: 56131, Exotic: 56133 },
@@ -20,26 +20,34 @@ export default function Abyssals() {
   const [tier, setTier] = useState(() => sessionStorage.getItem("tier") || "T3");
   const [stormType, setStormType] = useState(() => sessionStorage.getItem("stormType") || "Firestorm");
   const [entries, setEntries] = useState([]);
-  const [editingId, setEditingId] = useState(null); 
-  
+  const [editingId, setEditingId] = useState(null);
+
+  // Wrap updateFilamentPrice in useCallback to memoize it
+  const updateFilamentPrice = useCallback(async () => {
+    const id = getFilamentTypeId(tier, stormType);
+    if (id) {
+      const price = await fetchFilamentPrice(id);
+      setFillamentCost(price);
+    }
+  }, [tier, stormType]);
 
   useEffect(() => {
-  fetchEntries();
-  updateFilamentPrice();
-  // clear form too
-  setEditingId(null);
-  setRoom1Isk("");
-  setRoom2Isk("");
-  setRoom3Isk("");
-  setTimeTaken("");
-  setFillamentCost("");
-}, []);
+    fetchEntries();
+    updateFilamentPrice();
+    // clear form too
+    setEditingId(null);
+    setRoom1Isk("");
+    setRoom2Isk("");
+    setRoom3Isk("");
+    setTimeTaken("");
+    setFillamentCost("");
+  }, [updateFilamentPrice]); // added updateFilamentPrice here
 
   useEffect(() => {
     sessionStorage.setItem("tier", tier);
     sessionStorage.setItem("stormType", stormType);
     updateFilamentPrice();
-  }, [tier, stormType]);
+  }, [tier, stormType, updateFilamentPrice]);
 
   async function fetchFilamentPrice(typeId) {
     const regionId = 10000002;
@@ -59,34 +67,27 @@ export default function Abyssals() {
     return FILAMENT_TYPES[tier]?.[stormType] || 0;
   }
 
-  async function updateFilamentPrice() {
-    const id = getFilamentTypeId(tier, stormType);
-    if (id) {
-      const price = await fetchFilamentPrice(id);
-      setFillamentCost(price);
-    }
-  }
-
   async function fetchEntries() {
     const data = await window.api.getEntries("abyssals");
     setEntries(data);
   }
 
   async function handleDelete(id) {
-  if (confirm(`Delete entry #${id}?`)) {
-    await window.api.deleteEntry("abyssals", id);
-    // Clear all fields so they're ready for new data:
-    setEditingId(null);
-    setRoom1Isk("");
-    setRoom2Isk("");
-    setRoom3Isk("");
-    setTimeTaken("");
-    setFillamentCost("");
-    await fetchEntries();
+    if (confirm(`Delete entry #${id}?`)) {
+      await window.api.deleteEntry("abyssals", id);
+      // Clear all fields so they're ready for new data:
+      setEditingId(null);
+      setRoom1Isk("");
+      setRoom2Isk("");
+      setRoom3Isk("");
+      setTimeTaken("");
+      setFillamentCost("");
+      await fetchEntries();
+    }
   }
-}
+
   function handleEdit(entry) {
-    setEditingId(entry.id); 
+    setEditingId(entry.id);
     setDate(entry.date);
     setRoom1Isk(entry.room1_isk);
     setRoom2Isk(entry.room2_isk);
@@ -112,8 +113,8 @@ export default function Abyssals() {
     };
 
     if (editingId) {
-      await window.api.updateEntry("abyssals", editingId, entryData); 
-      setEditingId(null); 
+      await window.api.updateEntry("abyssals", editingId, entryData);
+      setEditingId(null);
     } else {
       await window.api.addEntry("abyssals", entryData);
     }
@@ -126,7 +127,7 @@ export default function Abyssals() {
   }
 
   // Filter for today's entries and show last 4
-  const today = new Date().toISOString().slice(0, 10); 
+  const today = new Date().toISOString().slice(0, 10);
   const todaysEntries = entries
     .filter((entry) => entry.date === today)
     .sort((a, b) => b.id - a.id) // most recent first
@@ -134,72 +135,96 @@ export default function Abyssals() {
 
   return (
     <div className="abyssals-background">
-    <div className="container">
-      <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Abyssals</h1>
-      <div className="abyssals-container">
-        {/* Left Column */}
-        <div className="abyssals-form-column">
-          <form onSubmit={handleSubmit}>{/* ... form inputs ... */}
-            <label>
-              <span>Date:</span>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-            </label>
-            <label>
-              Filament Tier:
-              <select value={tier} onChange={(e) => setTier(e.target.value)}>
-                {Object.keys(FILAMENT_TYPES).map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </label>
-            <label>
-              Storm Type:
-              <select value={stormType} onChange={(e) => setStormType(e.target.value)}>
-                {Object.keys(FILAMENT_TYPES["T1"]).map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </label>
-            <label><span>Room 1 ISK:</span><input type="number" value={room1Isk} onChange={(e) => setRoom1Isk(e.target.value)} required /></label>
-            <label><span>Room 2 ISK:</span><input type="number" value={room2Isk} onChange={(e) => setRoom2Isk(e.target.value)} required /></label>
-            <label><span>Room 3 ISK:</span><input type="number" value={room3Isk} onChange={(e) => setRoom3Isk(e.target.value)} required /></label>
-            <label><span>Time (min):</span><input type="number" value={timeTaken} onChange={(e) => setTimeTaken(e.target.value)} required /></label>
-            <label>
-              Fillament Cost:
-              <span className="fillament-value">{fillamentCost ? `${Number(fillamentCost).toLocaleString()} ISK` : "—"}</span>
-              <span className="tooltip-icon" title="Auto-updated from Jita market">?</span>
-            </label>
-            <button type="submit">{editingId ? "Update Entry" : "Add Entry"}</button>
-          </form>
-        </div>
+      <div className="container">
+        <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Abyssals</h1>
+        <div className="abyssals-container">
+          {/* Left Column */}
+          <div className="abyssals-form-column">
+            <form onSubmit={handleSubmit}>
+              {/* ... form inputs ... */}
+              <label>
+                <span>Date:</span>
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+              </label>
+              <label>
+                Filament Tier:
+                <select value={tier} onChange={(e) => setTier(e.target.value)}>
+                  {Object.keys(FILAMENT_TYPES).map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Storm Type:
+                <select value={stormType} onChange={(e) => setStormType(e.target.value)}>
+                  {Object.keys(FILAMENT_TYPES["T1"]).map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Room 1 ISK:</span>
+                <input type="number" value={room1Isk} onChange={(e) => setRoom1Isk(e.target.value)} required />
+              </label>
+              <label>
+                <span>Room 2 ISK:</span>
+                <input type="number" value={room2Isk} onChange={(e) => setRoom2Isk(e.target.value)} required />
+              </label>
+              <label>
+                <span>Room 3 ISK:</span>
+                <input type="number" value={room3Isk} onChange={(e) => setRoom3Isk(e.target.value)} required />
+              </label>
+              <label>
+                <span>Time (min):</span>
+                <input type="number" value={timeTaken} onChange={(e) => setTimeTaken(e.target.value)} required />
+              </label>
+              <label>
+                Fillament Cost:
+                <span className="fillament-value">{fillamentCost ? `${Number(fillamentCost).toLocaleString()} ISK` : "—"}</span>
+                <span className="tooltip-icon" title="Auto-updated from Jita market">
+                  ?
+                </span>
+              </label>
+              <button type="submit">{editingId ? "Update Entry" : "Add Entry"}</button>
+            </form>
+          </div>
 
-        {/* Right Column */}
-        <div className="abyssals-entries-column">
-          <h2 style={{ textAlign: "center" }}>Today's Entries</h2>
-          <div className="entries-grid">
-            {todaysEntries.length === 0 ? (
-              <div className="no-entries-message">Ready to start krabbing? Add your first entry.</div>
-            ) : (
-              todaysEntries.map((entry) => (
-                <div key={entry.id} className="entry-card">
-                  <div className="entry-date">{entry.date}</div>
-                  <div className="entry-rooms">
-                    <span>Room 1: {entry.room1_isk.toLocaleString()}</span>
-                    <span>Room 2: {entry.room2_isk.toLocaleString()}</span>
-                    <span>Room 3: {entry.room3_isk.toLocaleString()}</span>
+          {/* Right Column */}
+          <div className="abyssals-entries-column">
+            <h2 style={{ textAlign: "center" }}>Today's Entries</h2>
+            <div className="entries-grid">
+              {todaysEntries.length === 0 ? (
+                <div className="no-entries-message">Ready to start krabbing? Add your first entry.</div>
+              ) : (
+                todaysEntries.map((entry) => (
+                  <div key={entry.id} className="entry-card">
+                    <div className="entry-date">{entry.date}</div>
+                    <div className="entry-rooms">
+                      <span>Room 1: {entry.room1_isk.toLocaleString()}</span>
+                      <span>Room 2: {entry.room2_isk.toLocaleString()}</span>
+                      <span>Room 3: {entry.room3_isk.toLocaleString()}</span>
+                    </div>
+                    <div className="entry-info">
+                      Time: {entry.time_taken} mins | Filament: {entry.fillament_cost.toLocaleString()} ISK | Profit:{" "}
+                      {((entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost).toLocaleString()} ISK
+                    </div>
+                    <div className="entry-actions">
+                      <button title="Edit" onClick={() => handleEdit(entry)}>
+                        ✏️
+                      </button>
+                      <button title="Delete" onClick={() => handleDelete(entry.id)}>❌</button>
+                    </div>
                   </div>
-                  <div className="entry-info">
-                    Time: {entry.time_taken} mins | Filament: {entry.fillament_cost.toLocaleString()} ISK | Profit: {(
-    (entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost
-  ).toLocaleString()} ISK
-                  </div>
-                  <div className="entry-actions">
-                    <button title="Edit" onClick={() => handleEdit(entry)}>✏️</button>
-                    <button title="Delete" onClick={() => handleDelete(entry.id)}>❌</button>
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

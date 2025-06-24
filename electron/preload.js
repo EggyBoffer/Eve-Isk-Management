@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* global require */
+
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {

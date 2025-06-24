@@ -1,3 +1,6 @@
+/* eslint-env node */
+/* global process */
+
 import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
 import path from "node:path";
 import fs from "node:fs";
