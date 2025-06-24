@@ -49,4 +49,5 @@ jobs:
           asset_path: "dist/eve-isk-management Setup 0.2.5.exe"
           asset_name: myapp-installer.exe
           asset_content_type: application/octet-stream
-          token: ${{ secrets.PAT_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
