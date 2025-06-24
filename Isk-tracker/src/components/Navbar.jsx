@@ -6,19 +6,54 @@ export default function Navbar() {
       <div style={containerStyle}>
         <div style={logoStyle}>ISK Tracker</div>
         <div style={linksStyle}>
-          <NavLink to="/dashboard" style={linkStyle} activeStyle={activeLinkStyle}>
+          <NavLink
+            to="/"
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#fff" : "#ccc",
+              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+            })}
+          >
             Dashboard
           </NavLink>
-          <NavLink to="/abyssals" style={linkStyle} activeStyle={activeLinkStyle}>
+          <NavLink
+            to="/abyssals"
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#fff" : "#ccc",
+              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+            })}
+          >
             Abyssals
           </NavLink>
-          <NavLink to="/industry" style={linkStyle} activeStyle={activeLinkStyle}>
+          <NavLink
+            to="/industry"
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#fff" : "#ccc",
+              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+            })}
+          >
             Industry
           </NavLink>
-          <NavLink to="/market" style={linkStyle} activeStyle={activeLinkStyle}>
+          <NavLink
+            to="/market"
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#fff" : "#ccc",
+              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+            })}
+          >
             Market
           </NavLink>
-          <NavLink to="/misc" style={linkStyle} activeStyle={activeLinkStyle}>
+          <NavLink
+            to="/misc"
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#fff" : "#ccc",
+              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+            })}
+          >
             Misc
           </NavLink>
         </div>
@@ -27,6 +62,7 @@ export default function Navbar() {
   );
 }
 
+// Styles
 const navStyle = {
   position: "fixed",
   top: 0,
@@ -64,9 +100,6 @@ const linkStyle = {
   color: "#ccc",
   textDecoration: "none",
   fontWeight: "500",
-};
-
-const activeLinkStyle = {
-  color: "#fff",
-  borderBottom: "2px solid #61dafb",
+  paddingBottom: "2px",
+  transition: "color 0.3s ease, border-bottom 0.3s ease",
 };

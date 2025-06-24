@@ -3,12 +3,14 @@
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: #121217;
   color: #eee;
   line-height: 1.6;
+  overflow: hidden;
 }
 
 a {
@@ -23,9 +25,13 @@ a:hover {
 
 /* Container for page content */
 .container {
-  max-width: 1500px;
-  margin-right: auto;
-  padding: 0 1rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
 
 /* Headings */
@@ -56,11 +62,19 @@ form {
 /* Label styling */
 label {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  font-weight: 600;
-  font-size: 1rem;
-  color: #ddd;
+  justify-content: space-between;
+  
+}
+
+label span:first-child {
+  width: 150px; /* make all label text column the same width */
+}
+
+label input,
+label select {
+  width: 200px; /* or whatever width you want */
+  box-sizing: border-box;
 }
 
 /* Inputs take equal width */
@@ -131,4 +145,341 @@ nav a {
 nav a.active {
   color: #fff;
   border-bottom: 2px solid #61dafb;
+}
+
+.entries-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  /* NEW additions */
+  max-height: 500px;   /* limit vertical height */
+  overflow-y: auto;    /* scroll if content is taller */
+
+  padding-right: 0.5rem; /* leave space for scrollbar */
+}
+
+.entries-grid::-webkit-scrollbar {
+  width: 8px;
+}
+
+.entries-grid::-webkit-scrollbar-track {
+  background: #1e1e2f; /* matches card background */
+  border-radius: 4px;
+}
+
+.entries-grid::-webkit-scrollbar-thumb {
+  background: #61dafb;
+  border-radius: 4px;
+}
+
+.entries-grid::-webkit-scrollbar-thumb:hover {
+  background: #21a1f1;
+}
+
+.entry-card {
+  background-color: #1e1e2f;
+  padding: 0.7rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease;
+
+  /* Reduce width by ~50px */
+  width: calc(100% - 50px);  /* this shrinks the card width by 50px inside the column */
+  max-width: 500px;           /* optional absolute max-width to control card size */
+}
+
+.entry-card:hover {
+  transform: scale(1.01);
+}
+
+.entry-date {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #61dafb;
+  margin-bottom: 0.5rem;
+}
+
+.entry-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+}
+
+.entry-info {
+  font-size: 0.85rem;
+  color: #aaa;
+}
+
+.entry-actions {
+  display: flex;
+  justify-content: space-between; /* Space them apart */
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.entry-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem;
+  font-size: 1.2rem;
+  color: #ccc;
+  transition: color 0.2s;
+}
+
+.entry-actions button:hover {
+  color: #61dafb;
+}
+
+.no-entries-message {
+  padding: 1rem;
+  border-radius: 8px;
+  background: #1e1e2f;
+  color: #777;
+  font-style: italic;
+  text-align: center;
+  width: 100%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.abyssals-background {
+  background-image: url('https://images.ctfassets.net/7lhcm73ukv5p/B678ILemSkguaYIgkEeag/63614d9b95ef58745ed7fc3eac47a659/1.png?w=850&fm=jpg&fl=progressive&q=75');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-height: calc(100vh - 60px); /* Fill the whole screen minus navbar height */
+  padding: 2rem;
+  box-sizing: border-box;
+  overflow: auto; /* allow scrolling if content overflows */
+}
+
+.profit-positive {
+  color: #4caf50; /* green */
+  font-weight: bold;
+}
+.profit-negative {
+  color: #ff4c4c; /* red */
+  font-weight: bold;
+}
+
+.abyssals-container {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+  width: 100%;
+  overflow-x: auto; /* allow horizontal scroll if the window is too small */
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.abyssals-form-column {
+  flex: 0 0 550px;
+}
+
+.abyssals-entries-column {
+  flex: 1;
+  min-width: 550px; /* Ensure this column is wider */
+}
+
+@media (min-width: 1200px) {
+  .abyssals-form-column {
+    flex: 0 0 550px;
+  }
+  .abyssals-entries-column {
+    flex: 1;
+    min-width: 550px;
+  }
+}
+
+.tooltip-icon {
+  display: inline-block;
+  margin-left: 0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #61dafb;
+  color: #222;
+  text-align: center;
+  line-height: 1.5rem;
+  font-weight: bold;
+  cursor: help;
+  font-size: 1rem;
+}
+
+.tooltip-icon:hover {
+  background: #21a1f1;
+}
+
+.fillament-value {
+  margin-left: 0.5rem;
+  font-weight: bold;
+  color: #61dafb;
+}
+
+.overlay-box {
+  width: 100%;
+  height: 100%;
+  padding: 8px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.8);
+  -webkit-app-region: drag; /* allow dragging by empty space */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.field-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  max-width: 260px; /* narrower so it's compact */
+  -webkit-app-region: no-drag; /* allow interaction */
+}
+
+.field-row input {
+  flex: 1;
+  height: 2rem;
+  padding: 0 0.5rem;
+  margin-left: 0;
+  margin-right: 4px;
+  font-size: 0.9rem;
+  border: none;
+  border-radius: 4px;
+  background: #333344;
+  color: white;
+  box-sizing: border-box;
+}
+
+.check-btn {
+  margin-bottom: 32px;
+  height: 2rem;
+}
+
+.field-row .check-btn {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 0px;
+  background: #61dafb;
+  color: black;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.draggable-area {
+  -webkit-app-region: drag;
+}
+
+.dashboard-container {
+  width: 100vw;
+  min-height: calc(100vh - 60px);
+  padding: 2rem;
+  box-sizing: border-box;
+  background: radial-gradient(circle at top, #1e1e2f, #121217);
+
+  position: relative; /* allows absolute pos. for overlay btn */
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* center the title & subtitle */
+  text-align: center;
+}
+
+.overlay-launch-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  width: auto;            /* <- so it stays small */
+  background: #61dafb;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+  z-index: 10;           /* keep above other content */
+}
+.overlay-launch-btn:hover {
+  background: #21a1f1;
+}
+
+.dashboard-title {
+  font-size: 3rem;
+  color: #61dafb;
+  margin: 0;
+}
+
+.dashboard-subtitle {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-links {
+  width: 100%;
+  display: flex;
+  flex-direction: column;   /* vertical list of buttons */
+  align-items: flex-start;  /* align left */
+  gap: 0.5rem;
+  margin-top: 2rem;
+  padding-left: 2rem;       /* some left padding so it's not on edge */
+}
+
+.dashboard-links button {
+  padding: 0.7rem 1.2rem;
+  background: #333344;
+  color: #eee;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  width: 180px;         /* fixed width for all buttons */
+  text-align: center;    /* center the text */
+}
+.dashboard-links button:hover {
+  background: #61dafb;
+  color: #222;
+}
+
+.dashboard-footer {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.patch-notes-btn {
+  background: none;
+  border: none;
+  color: #61dafb;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0;
+}
+
+.version-label {
+  padding-top: 30px;
+  white-space: nowrap;
 }
