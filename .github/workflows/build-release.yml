@@ -28,33 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend (Vite)
-        run: npm run build
-
-      - name: Install electron-builder dependencies
-        run: npx electron-builder install-app-deps
-
-      - name: Build Electron app installer
-        run: npm run dist
-        env: 
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-      - name: List dist directory
-        run: dir dist
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.VERSION }}
-          token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Upload release assets
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "dist/eve-isk-management Setup ${{ env.VERSION }}.exe"
-          asset_name: "eve-isk-management Setup ${{ env.VERSION }}.exe"
-          asset_content_type: application/octet-stream
+      - name: Publish
+        run: npm run publish
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GITHUB_TOKEN: ${{GITHUB.TOKEN}}
