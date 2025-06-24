@@ -12,7 +12,10 @@ jobs:
       matrix:
         os: [mac-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
