@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import pkg from '../../package.json';  // Adjust path if needed
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const version = pkg.version;
 
   return (
     <div className="dashboard-container">
@@ -26,7 +28,7 @@ export default function Dashboard() {
       {/* Patch Notes and version */}
       <div className="dashboard-footer">
         <button className="patch-notes-btn" onClick={() => navigate("/patch-notes")}>Patch Notes</button>
-        <span className="version-label">Version Alpha 0.0.1</span>
+        <span className="version-label">Version {version}</span>
       </div>
     </div>
   );
