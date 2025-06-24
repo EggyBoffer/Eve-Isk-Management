@@ -50,6 +50,7 @@ function createWindow() {
       // optional: open devtools in packaged app too
    win.webContents.openDevTools();
   }
+}
 
 // Create overlay window
 function createOverlay() {
