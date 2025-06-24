@@ -7,6 +7,7 @@ import Market from "./pages/Market";
 import Misc from "./pages/Misc";
 import Analytics from "./pages/Analytics";
 import Overlay from "./pages/Overlay";
+import PatchNotes from "./pages/PatchNotes"; // <-- Add this import
 import "./styles/global.css";
 
 function AppContent() {
@@ -25,6 +26,7 @@ function AppContent() {
           <Route path="/misc" element={<Misc />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/overlay" element={<Overlay />} />
+          <Route path="/patch-notes" element={<PatchNotes />} /> {/* <- Added this */}
         </Routes>
       </main>
     </>

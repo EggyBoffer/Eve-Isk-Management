@@ -483,3 +483,189 @@ nav a.active {
   padding-top: 30px;
   white-space: nowrap;
 }
+
+/* ==================== Analytics Page ==================== */
+
+.analytics-container {
+  width: 100vw;
+  min-height: 100vh;
+  padding: 2rem;
+  background: radial-gradient(circle at top, #1e1e2f, #121217);
+  color: #eee;
+  overflow-y: auto;
+}
+
+.analytics-entries-section {
+  background-color: #1e1e2f;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  margin-bottom: 2rem;
+}
+
+.analytics-entries-section h2 {
+  text-align: center;
+  color: #61dafb;
+  margin-bottom: 1rem;
+}
+
+.analytics-entries-table,
+.analytics-filament-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+}
+
+.analytics-entries-table th,
+.analytics-entries-table td,
+.analytics-filament-table th,
+.analytics-filament-table td {
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #eee;
+}
+
+.analytics-entries-table th,
+.analytics-filament-table th {
+  background-color: #333344;
+  color: #61dafb;
+  position: sticky;
+  top: 0;
+}
+
+.analytics-entries-table tr:nth-child(even),
+.analytics-filament-table tr:nth-child(even) {
+  background-color: #222233;
+}
+
+.analytics-entry-actions {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+}
+
+.analytics-entry-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem;
+  color: #ccc;
+  transition: color 0.2s;
+}
+
+.analytics-entry-actions button:hover {
+  color: #61dafb;
+}
+
+.analytics-summary {
+  padding: 1rem;
+  background-color: #1e1e2f;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.analytics-summary h2 {
+  color: #61dafb;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.analytics-summary p {
+  text-align: center;
+  margin: 0.2rem 0;
+  color: #ccc;
+}
+
+.analytics-summary h3 {
+  color: #61dafb;
+  margin-top: 2rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.analytics-filament-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.analytics-filament-table th,
+.analytics-filament-table td {
+  padding: 0.5rem;
+  border: 1px solid #333344;
+  text-align: center;
+}
+
+.analytics-filament-table th {
+  background-color: #333344;
+  color: #61dafb;
+}
+
+/* Style profit positive/negative */
+.profit-positive {
+  color: #32ff7e; /* green */
+  font-weight: bold;
+}
+.profit-negative {
+  color: #ff3838; /* red */
+  font-weight: bold;
+}
+
+.patchnotes-container {
+  width: 100vw;
+  min-height: 100vh;
+  padding: 2rem;
+  background: radial-gradient(circle at top, #1e1e2f, #121217);
+  color: #eee;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.patchnotes-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.patchnote-card {
+  background: #1e1e2f;
+  padding: 1rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  text-align: left;
+}
+
+.patchnote-card h2 {
+  color: #61dafb;
+  margin-bottom: 0.5rem;
+}
+
+.patchnote-card ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.patchnote-card li {
+  padding: 0.2rem 0;
+  color: #ccc;
+}
+
+.patch-notes-btn {
+  background: #61dafb;
+  border: none;
+  padding: 0.7rem 1.2rem;
+  border-radius: 6px;
+  color: #222;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 2rem;
+  transition: background 0.3s;
+}
+.patch-notes-btn:hover {
+  background: #21a1f1;
+}
