@@ -328,23 +328,26 @@ nav a.active {
 .overlay-box {
   width: 100%;
   height: 100%;
-  padding: 8px;
+  padding: 0px;
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.8);
   -webkit-app-region: drag; /* allow dragging by empty space */
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-app-region: drag;
 }
 
 .field-row {
   display: flex;
   flex-direction: row;
+  padding-left: 10px;
   align-items: center;
   gap: 0.3rem;
   width: 100%;
   max-width: 260px; /* narrower so it's compact */
   -webkit-app-region: no-drag; /* allow interaction */
+  
 }
 
 .field-row input {
@@ -388,7 +391,8 @@ nav a.active {
 
 .dashboard-container {
   width: 100vw;
-  min-height: calc(100vh - 60px);
+  min-height: 100vh;
+  margin-top: 20px;
   padding: 2rem;
   box-sizing: border-box;
   background: radial-gradient(circle at top, #1e1e2f, #121217);
@@ -403,6 +407,7 @@ nav a.active {
 
 .overlay-launch-btn {
   position: absolute;
+  padding-top: 20px;
   top: 1rem;
   right: 1rem;
   padding: 0.5rem 1rem;
@@ -420,6 +425,7 @@ nav a.active {
 }
 
 .dashboard-title {
+  padding-top: 30px;
   font-size: 3rem;
   color: #61dafb;
   margin: 0;

@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import os from "os";
 import db from "./database.js";
 
+
+
 // Path to store settings
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 
@@ -44,11 +46,7 @@ function createWindow() {
   if (isDev) {
     win.loadURL("http://localhost:5173");
   } else {
-    // This assumes `dist/index.html` is in the same folder as main.js
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
-
-      // optional: open devtools in packaged app too
-   // win.webContents.openDevTools();
+    win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 }
 
@@ -57,33 +55,35 @@ function createOverlay() {
   const savedSettings = loadSettings();
 
   const overlayWin = new BrowserWindow({
-    width: 800,
-    height: 600,
-    x: savedSettings.x,
-    y: savedSettings.y,
-    title: "Overlay",
-    alwaysOnTop: true,
-    frame: false,
-    transparent: true,
-    backgroundColor: "#00000000",
-    resizable: false,
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      nodeIntegration: false,
-      webSecurity: false,
-    },
-  });
+  width: 275,
+  height: 80,
+  x: savedSettings.x,
+  y: savedSettings.y,
+  title: "Overlay",
+  alwaysOnTop: true,
+  frame: false,
+  transparent: false,               // <== CHANGE HERE
+  backgroundColor: "#121217",       // <== MATCH your CSS background-color
+  resizable: false,
+  webPreferences: {
+    preload: path.join(__dirname, "preload.js"),
+    contextIsolation: true,
+    nodeIntegration: false,
+    webSecurity: false,
+  },
+});
 
   overlayWin.setAlwaysOnTop(true, "screen-saver");
 
   if (!app.isPackaged) {
-    overlayWin.loadURL('http://localhost:5173/#/overlay');
-  } else {
-    // Correct path for production
-    const indexPath = path.join(process.resourcesPath, "dist/index.html");
-    overlayWin.loadFile(indexPath, { hash: "/overlay" }); // NOTE: hash option here
-  }
+  overlayWin.loadURL('http://localhost:5173/#/overlay');
+} else {
+  const indexPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', 'index.html');
+  overlayWin.loadFile(indexPath);
+  overlayWin.webContents.once('did-finish-load', () => {
+    overlayWin.webContents.executeJavaScript(`window.location.hash = "/overlay"`);
+  });
+}
 
   globalShortcut.register('Escape', () => {
     overlayWin.close();
@@ -154,4 +154,13 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (os.platform() !== 'darwin') app.quit();
+});
+
+ipcMain.on('close-overlay', () => {
+  const overlay = BrowserWindow.getAllWindows().find(
+    w => w.getTitle() === "Overlay"
+  );
+  if (overlay) {
+    overlay.close();
+  }
 });

@@ -40,11 +40,14 @@
   "build": {
   "appId": "com.isktracker.app",
   "files": [
-    "dist/**/*",
-    "electron/**/*"
+    "dist/**",
+    "electron/**"
   ],
-    "directories": {
-      "buildResources": "assets"
-    }
+  "asarUnpack": [
+    "dist/**"
+  ],
+  "directories": {
+    "buildResources": "assets"
   }
+}
 }

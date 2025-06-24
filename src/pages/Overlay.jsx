@@ -61,10 +61,7 @@ export default function Overlay() {
 }, []);
 
   return (
-  <div className="overlay-box draggable-area" style={{ padding: '1rem', background: 'rgba(0,0,0,0.7)', color: 'white' }}>
-    {/* 👇 TEST MARKER */}
-    <h1 style={{ fontSize: '1.5rem', color: 'yellow', textAlign: 'center' }}>Overlay loaded</h1>
-
+  <div className="overlay-box draggable-area">
     <div className="field-row" style={{ WebkitAppRegion: "no-drag" }}>
       <input
         autoFocus
@@ -73,7 +70,7 @@ export default function Overlay() {
         value={values[inputs[step].key]}
         onChange={(e) => {
           setValues({ ...values, [inputs[step].key]: e.target.value });
-          if (error) setError(false); // clear error on input
+          if (error) setError(false);
         }}
         onKeyDown={(e) => e.key === "Enter" && nextStep()}
         style={{
@@ -91,4 +88,5 @@ export default function Overlay() {
     </div>
   </div>
 );
+
 }
