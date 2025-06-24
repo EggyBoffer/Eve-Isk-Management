@@ -1,0 +1,20 @@
+name: PR Validation
+on:
+  push:
+  pull_request:
+  merge_group:
+
+jobs:
+  setup:
+    name: Lint
+    runs-on: ubuntu-latest
+    container: node:20.5.1
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: NPM install
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build

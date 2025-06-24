@@ -1,0 +1,32 @@
+# # This is a sort of a boilerplate design for you.  This will build and run the tools that need to deploy the app.
+# # The problem with this script as is is taht the underlying builder doesnt have permission.  You will want to add tweaks or use different stuff
+# # in order to finish this deployment process.  I personally dont run electron but you can do things like it here.
+
+# name: artifact-generation
+# on:
+#   push:
+#     tags:
+#       - v*
+# jobs:
+#   publish-tag:
+#     runs-on: ubuntu-latest
+#     name: Publish Tag
+#     container: node:23.1.0
+#     outputs:
+#       release-version: ${{steps.tag-version.outputs.release-version}}
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+#       - name: Install Key package for building
+#         run: apt-get update -y && apt-get install -y libarchive-tools
+#       - name: Get Tag Version
+#         id: tag-version
+#         run: |
+#           chmod +x ./scripts/release.sh
+#           echo "new-version=$(./scripts/release.sh getNewVersion)" >> $GITHUB_OUTPUT
+#       - name: Build/release Electron app
+#         uses: samuelmeuli/action-electron-builder@v1
+#         with:
+#           max_attempts: 3
+#           github_token: ${{ secrets.github_token }}
+#           release: ${{ startsWith(github.ref, 'refs/tags/v') }}
