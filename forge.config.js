@@ -3,7 +3,7 @@ export default {
   makers: [
     {
       name: "@electron-forge/maker-zip",
-      platforms: ["darwin", "linux", "windows"],
+      platforms: ["darwin", "linux", "win32"],
       config: {
         // identity: null, // Disable code signing for the maker
         // the config can be an object
