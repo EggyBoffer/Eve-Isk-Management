@@ -2,7 +2,7 @@
   "name": "eve-isk-management",
   "description": "Eve Isk Management is a Dev tool to track income for EveOnline",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -12,23 +12,36 @@
     "preview": "vite preview",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
+    "electron-squirrel-startup": "^1.0.1",
     "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron-forge/publisher-github": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
     "@eslint/js": "^9.25.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.1.2",
     "electron": "^36.4.0",
-    "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -38,20 +51,20 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-  "appId": "com.isktracker.app",
-  "files": [
-    "dist/**",
-    "electron/**"
-  ],
-  "asarUnpack": [
-    "dist/**"
-  ],
-  "directories": {
-    "buildResources": "assets"
-  },
-  "win": {
-    "target": "nsis",
-    "artifactName": "eve-isk-management Setup ${version}.exe"
+    "appId": "com.isktracker.app",
+    "files": [
+      "dist/**",
+      "electron/**"
+    ],
+    "asarUnpack": [
+      "dist/**"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "eve-isk-management Setup ${version}.exe"
+    }
   }
-}
 }
