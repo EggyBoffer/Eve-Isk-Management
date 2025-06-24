@@ -28,7 +28,6 @@ function saveSettings(settings) {
 // Create main application window
 function createWindow() {
   const preloadPath = path.join(__dirname, "preload.js");
-  console.log('Preload path:', preloadPath); // Debug log
 
   const win = new BrowserWindow({
     width: 1300,
@@ -36,10 +35,20 @@ function createWindow() {
     title: "MainApp",
     webPreferences: {
       preload: preloadPath,
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
-  win.loadURL("http://localhost:5173");
+  const isDev = !app.isPackaged;
+
+  if (isDev) {
+    // Dev mode — connect to Vite
+    win.loadURL("http://localhost:5173");
+  } else {
+    // Production — load built index.html from resources
+    win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
+  }
 }
 
 // Create overlay window
@@ -65,22 +74,22 @@ function createOverlay() {
   });
 
   overlayWin.setAlwaysOnTop(true, "screen-saver");
-  overlayWin.loadURL('http://localhost:5173/#/overlay');
 
-  // Register global Escape listener
+  const isDev = !app.isPackaged;
+  if (isDev) {
+    overlayWin.loadURL('http://localhost:5173/#/overlay');
+  } else {
+    // Load built index.html from resources with overlay hash
+    overlayWin.loadFile(path.join(process.resourcesPath, "dist/index.html"), { hash: '/overlay' });
+  }
+
   globalShortcut.register('Escape', () => {
     overlayWin.close();
     globalShortcut.unregister('Escape');
   });
 
-  overlayWin.on('closed', () => {
-    globalShortcut.unregister('Escape');
-  });
-
-  overlayWin.on('close', () => {
-    const bounds = overlayWin.getBounds();
-    saveSettings(bounds); // Save position and size
-  });
+  overlayWin.on('closed', () => globalShortcut.unregister('Escape'));
+  overlayWin.on('close', () => saveSettings(overlayWin.getBounds()));
 
   return overlayWin;
 }
@@ -96,13 +105,7 @@ ipcMain.handle('add-entry', (event, category, entry) => {
   const { date } = entry;
 
   if (category === 'abyssals') {
-    const {
-      room1_isk = 0,
-      room2_isk = 0,
-      room3_isk = 0,
-      time_taken = 0,
-      fillament_cost = 0,
-    } = entry;
+    const { room1_isk = 0, room2_isk = 0, room3_isk = 0, time_taken = 0, fillament_cost = 0 } = entry;
     const stmt = db.prepare(
       `INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost) 
        VALUES (?, ?, ?, ?, ?, ?)`
