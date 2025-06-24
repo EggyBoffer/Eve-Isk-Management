@@ -10,17 +10,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [mac-latest]
+        os: [mac-latest, windows-latest]
     runs-on: ${{ matrix.os }}
 
+    container: node:22
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22
 
       - name: Get version from package.json
         id: get_version
