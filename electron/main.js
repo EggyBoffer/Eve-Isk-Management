@@ -28,29 +28,28 @@ function saveSettings(settings) {
 // Create main application window
 function createWindow() {
   const preloadPath = path.join(__dirname, "preload.js");
-
   const win = new BrowserWindow({
-  width: 1300,
-  height: 900,
-  title: "MainApp",
-  webPreferences: {
-    preload: preloadPath,
-    contextIsolation: true,
-    nodeIntegration: false,
-    webSecurity: false, // <-- add this
-  },
-});
+    width: 1300,
+    height: 900,
+    title: "MainApp",
+    webPreferences: {
+      preload: preloadPath,
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: false,
+    },
+  });
 
   const isDev = !app.isPackaged;
-
   if (isDev) {
-    // Dev mode — connect to Vite
     win.loadURL("http://localhost:5173");
   } else {
-    // Production — load built index.html from resources
-    win.loadFile(path.join(process.resourcesPath, "dist/index.html"));
+    // This assumes `dist/index.html` is in the same folder as main.js
+    win.loadFile(path.join(__dirname, "dist/index.html"));
+
+      // optional: open devtools in packaged app too
+   win.webContents.openDevTools();
   }
-}
 
 // Create overlay window
 function createOverlay() {
