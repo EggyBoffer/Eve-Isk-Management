@@ -30,10 +30,7 @@ jobs:
       - name: Build Electron app installer
         run: npm run dist
         env: 
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-      - name: List dist directory
-        run: dir dist
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: Create GitHub Release
         id: create_release
@@ -47,6 +44,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "dist/eve-isk-management Setup 0.2.5.exe"
+          asset_path: "dist/*.exe"
           asset_name: myapp-installer.exe
           asset_content_type: application/octet-stream
