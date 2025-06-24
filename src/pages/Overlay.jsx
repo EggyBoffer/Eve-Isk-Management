@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+
+
 export default function Overlay() {
   const [step, setStep] = useState(0); // 0-3
   const [values, setValues] = useState({ room1: "", room2: "", room3: "", timeTaken: "" });
@@ -54,32 +56,39 @@ export default function Overlay() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  useEffect(() => {
+  console.log('Overlay component mounted'); // you'll see this in DevTools
+}, []);
+
   return (
-    <div className="overlay-box draggable-area">
-      <div className="field-row" style={{ WebkitAppRegion: "no-drag" }}>
-        <input
-          autoFocus
-          type="number"
-          placeholder={inputs[step].label}
-          value={values[inputs[step].key]}
-          onChange={(e) => {
-            setValues({ ...values, [inputs[step].key]: e.target.value });
-            if (error) setError(false); // clear error on input
-          }}
-          onKeyDown={(e) => e.key === "Enter" && nextStep()}
-          style={{
-            WebkitAppRegion: "no-drag",
-            border: error ? "2px solid red" : "1px solid #555",
-          }}
-        />
-        <button
-          className="check-btn"
-          onClick={nextStep}
-          style={{ WebkitAppRegion: "no-drag" }}
-        >
-          ✔️
-        </button>
-      </div>
+  <div className="overlay-box draggable-area" style={{ padding: '1rem', background: 'rgba(0,0,0,0.7)', color: 'white' }}>
+    {/* 👇 TEST MARKER */}
+    <h1 style={{ fontSize: '1.5rem', color: 'yellow', textAlign: 'center' }}>Overlay loaded</h1>
+
+    <div className="field-row" style={{ WebkitAppRegion: "no-drag" }}>
+      <input
+        autoFocus
+        type="number"
+        placeholder={inputs[step].label}
+        value={values[inputs[step].key]}
+        onChange={(e) => {
+          setValues({ ...values, [inputs[step].key]: e.target.value });
+          if (error) setError(false); // clear error on input
+        }}
+        onKeyDown={(e) => e.key === "Enter" && nextStep()}
+        style={{
+          WebkitAppRegion: "no-drag",
+          border: error ? "2px solid red" : "1px solid #555",
+        }}
+      />
+      <button
+        className="check-btn"
+        onClick={nextStep}
+        style={{ WebkitAppRegion: "no-drag" }}
+      >
+        ✔️
+      </button>
     </div>
-  );
+  </div>
+);
 }

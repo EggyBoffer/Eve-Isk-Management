@@ -45,10 +45,10 @@ function createWindow() {
     win.loadURL("http://localhost:5173");
   } else {
     // This assumes `dist/index.html` is in the same folder as main.js
-    win.loadFile(path.join(__dirname, "dist/index.html"));
+    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 
       // optional: open devtools in packaged app too
-   win.webContents.openDevTools();
+   // win.webContents.openDevTools();
   }
 }
 
@@ -57,8 +57,8 @@ function createOverlay() {
   const savedSettings = loadSettings();
 
   const overlayWin = new BrowserWindow({
-    width: savedSettings.width || 245,
-    height: savedSettings.height || 100,
+    width: 800,
+    height: 600,
     x: savedSettings.x,
     y: savedSettings.y,
     title: "Overlay",
@@ -71,17 +71,18 @@ function createOverlay() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: false,
     },
   });
 
   overlayWin.setAlwaysOnTop(true, "screen-saver");
 
-  const isDev = !app.isPackaged;
-  if (isDev) {
+  if (!app.isPackaged) {
     overlayWin.loadURL('http://localhost:5173/#/overlay');
   } else {
-    // Load built index.html from resources with overlay hash
-    overlayWin.loadFile(path.join(process.resourcesPath, "dist/index.html"), { hash: '/overlay' });
+    // Correct path for production
+    const indexPath = path.join(process.resourcesPath, "dist/index.html");
+    overlayWin.loadFile(indexPath, { hash: "/overlay" }); // NOTE: hash option here
   }
 
   globalShortcut.register('Escape', () => {
@@ -89,10 +90,7 @@ function createOverlay() {
     globalShortcut.unregister('Escape');
   });
 
-  overlayWin.on('closed', () => globalShortcut.unregister('Escape'));
   overlayWin.on('close', () => saveSettings(overlayWin.getBounds()));
-
-  return overlayWin;
 }
 
 // Listen for request to open overlay
