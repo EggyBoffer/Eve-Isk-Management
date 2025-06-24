@@ -26,7 +26,7 @@ export default function Dashboard() {
       {/* Patch Notes and version */}
       <div className="dashboard-footer">
         <button className="patch-notes-btn" onClick={() => navigate("/patch-notes")}>Patch Notes</button>
-        <span className="version-label">Version 1.0.0</span>
+        <span className="version-label">Version Alpha 0.0.1</span>
       </div>
     </div>
   );
