@@ -2,9 +2,8 @@ name: Build and Release Isk App.
 
 on:
   push:
-    branches:
-      - main
-      - deployer
+    tags:
+      - v*
 
 jobs:
   build:
