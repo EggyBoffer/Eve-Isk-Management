@@ -47,6 +47,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "dist/*.exe"
+          asset_path: "dist/eve-isk-management Setup 0.2.5.exe"
           asset_name: myapp-installer.exe
           asset_content_type: application/octet-stream
