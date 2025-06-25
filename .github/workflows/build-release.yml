@@ -36,11 +36,13 @@ jobs:
 
       - name: Build Electron app installer
         run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
       - name: List dist directory
         run: dir dist
 
-      # ✅ Rename the file so it's nicer for uploading
+      # ✅ Rename the file
       - name: Rename installer file
         run: |
           ren "dist/eve-isk-management Setup ${{ env.VERSION }}.exe" "eve-isk-management-setup-${{ env.VERSION }}.exe"
@@ -50,8 +52,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.VERSION }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
@@ -61,4 +62,4 @@ jobs:
           asset_name: "eve-isk-management-setup-${{ env.VERSION }}.exe"
           asset_content_type: application/octet-stream
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
