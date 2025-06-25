@@ -5,7 +5,26 @@ export default function PatchNotes() {
 
   const patches = [
     {
-      version: "1.0.0",
+      version: "0.0.2",
+      date: "2025-06-25",
+      changes: [
+        "Update for way overlay loads to improve functionality in the long run.",
+        "Added a fillament selector to the dashboard for when you launch the overlay.", 
+        "Added fillament cost to the overlay to save the fillament you select when launching the overlay." ,
+        "Added version control and automatic update checks."
+      ]
+    },
+    {
+      version: "0.0.1",
+      date: "2025-06-23",
+      changes: [
+        "Bug fixes for delete/edit in Abyssals page.",
+        "Styling improvements for smaller entry cards and scrollbars.",
+        "Drag and close improvements for the Overlay."
+      ]
+    },
+    {
+      version: "0.0.1",
       date: "2025-06-22",
       changes: [
         "Initial release of the ISK Tracker!",
@@ -13,15 +32,7 @@ export default function PatchNotes() {
         "Analytics page with total profit, ISK/hour calculations, and entry management."
       ]
     },
-    {
-      version: "1.0.1",
-      date: "2025-06-23",
-      changes: [
-        "Bug fixes for delete/edit in Abyssals page.",
-        "Styling improvements for smaller entry cards and scrollbars.",
-        "Drag and close improvements for the Overlay."
-      ]
-    }
+    
     // Add more patches as your app evolves!
   ];
 
