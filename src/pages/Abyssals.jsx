@@ -22,7 +22,6 @@ export default function Abyssals() {
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
-  // Wrap updateFilamentPrice in useCallback to memoize it
   const updateFilamentPrice = useCallback(async () => {
     const id = getFilamentTypeId(tier, stormType);
     if (id) {
@@ -34,14 +33,13 @@ export default function Abyssals() {
   useEffect(() => {
     fetchEntries();
     updateFilamentPrice();
-    // clear form too
     setEditingId(null);
     setRoom1Isk("");
     setRoom2Isk("");
     setRoom3Isk("");
     setTimeTaken("");
     setFillamentCost("");
-  }, [updateFilamentPrice]); // added updateFilamentPrice here
+  }, [updateFilamentPrice]);
 
   useEffect(() => {
     sessionStorage.setItem("tier", tier);
@@ -75,7 +73,6 @@ export default function Abyssals() {
   async function handleDelete(id) {
     if (confirm(`Delete entry #${id}?`)) {
       await window.api.deleteEntry("abyssals", id);
-      // Clear all fields so they're ready for new data:
       setEditingId(null);
       setRoom1Isk("");
       setRoom2Isk("");
@@ -126,11 +123,10 @@ export default function Abyssals() {
     fetchEntries();
   }
 
-  // Filter for today's entries and show last 4
   const today = new Date().toISOString().slice(0, 10);
   const todaysEntries = entries
     .filter((entry) => entry.date === today)
-    .sort((a, b) => b.id - a.id) // most recent first
+    .sort((a, b) => b.id - a.id)
     .slice(0, 4);
 
   return (
@@ -138,10 +134,8 @@ export default function Abyssals() {
       <div className="container">
         <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Abyssals</h1>
         <div className="abyssals-container">
-          {/* Left Column */}
           <div className="abyssals-form-column">
             <form onSubmit={handleSubmit}>
-              {/* ... form inputs ... */}
               <label>
                 <span>Date:</span>
                 <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
@@ -150,9 +144,7 @@ export default function Abyssals() {
                 Filament Tier:
                 <select value={tier} onChange={(e) => setTier(e.target.value)}>
                   {Object.keys(FILAMENT_TYPES).map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
+                    <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
               </label>
@@ -160,9 +152,7 @@ export default function Abyssals() {
                 Storm Type:
                 <select value={stormType} onChange={(e) => setStormType(e.target.value)}>
                   {Object.keys(FILAMENT_TYPES["T1"]).map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
               </label>
@@ -185,15 +175,13 @@ export default function Abyssals() {
               <label>
                 Fillament Cost:
                 <span className="fillament-value">{fillamentCost ? `${Number(fillamentCost).toLocaleString()} ISK` : "—"}</span>
-                <span className="tooltip-icon" title="Auto-updated from Jita market">
-                  ?
-                </span>
+                <span className="tooltip-icon" title="Auto-updated from Jita market">?</span>
               </label>
               <button type="submit">{editingId ? "Update Entry" : "Add Entry"}</button>
+              
             </form>
           </div>
 
-          {/* Right Column */}
           <div className="abyssals-entries-column">
             <h2 style={{ textAlign: "center" }}>Today's Entries</h2>
             <div className="entries-grid">
@@ -213,9 +201,7 @@ export default function Abyssals() {
                       {((entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost).toLocaleString()} ISK
                     </div>
                     <div className="entry-actions">
-                      <button title="Edit" onClick={() => handleEdit(entry)}>
-                        ✏️
-                      </button>
+                      <button title="Edit" onClick={() => handleEdit(entry)}>✏️</button>
                       <button title="Delete" onClick={() => handleDelete(entry.id)}>❌</button>
                     </div>
                   </div>
