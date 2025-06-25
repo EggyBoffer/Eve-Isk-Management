@@ -10,7 +10,8 @@ html, body {
   background-color: #121217;
   color: #eee;
   line-height: 1.6;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 a {
@@ -256,9 +257,9 @@ nav a.active {
   background-repeat: no-repeat;
   background-position: center;
   min-height: calc(100vh - 60px); /* Fill the whole screen minus navbar height */
-  padding: 2rem;
+  padding: 1.2rem;
   box-sizing: border-box;
-  overflow: auto; /* allow scrolling if content overflows */
+  overflow: hidden; /* allow scrolling if content overflows */
 }
 
 .profit-positive {
@@ -279,6 +280,7 @@ nav a.active {
   overflow-x: auto; /* allow horizontal scroll if the window is too small */
   padding: 1rem;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .abyssals-form-column {
@@ -391,8 +393,8 @@ nav a.active {
 
 .dashboard-container {
   width: 100vw;
-  min-height: 100vh;
-  margin-top: 20px;
+  height: 100vh;
+  margin-top: 0px;
   padding: 2rem;
   box-sizing: border-box;
   background: radial-gradient(circle at top, #1e1e2f, #121217);
@@ -403,11 +405,12 @@ nav a.active {
   flex-direction: column;
   align-items: center;   /* center the title & subtitle */
   text-align: center;
+  overflow: hidden;
 }
 
 .overlay-launch-btn {
   position: absolute;
-  padding-top: 20px;
+  margin-top: 70px;
   top: 1rem;
   right: 1rem;
   padding: 0.5rem 1rem;
@@ -466,7 +469,7 @@ nav a.active {
 
 .dashboard-footer {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 2.5rem;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -474,15 +477,6 @@ nav a.active {
   gap: 2rem;
   color: #777;
   font-size: 0.9rem;
-}
-
-.patch-notes-btn {
-  background: none;
-  border: none;
-  color: #61dafb;
-  cursor: pointer;
-  font-weight: bold;
-  padding: 0;
 }
 
 .version-label {
@@ -499,6 +493,13 @@ nav a.active {
   background: radial-gradient(circle at top, #1e1e2f, #121217);
   color: #eee;
   overflow-y: auto;
+}
+
+.analytics-entries-wrapper {
+  max-height: 400px; /* Adjust so that about 3-4 records fit nicely */
+  overflow-y: auto;
+  border: 1px solid #333344;
+  border-radius: 8px;
 }
 
 .analytics-entries-section {
@@ -618,6 +619,7 @@ nav a.active {
 }
 
 .patchnotes-container {
+  margin-top: 10px;
   width: 100vw;
   min-height: 100vh;
   padding: 2rem;
@@ -676,3 +678,44 @@ nav a.active {
   background: #21a1f1;
 }
 
+/* ==================== Themed Scrollbar ==================== */
+/* This applies to the entire page as well as most scrollable elements */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 8px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: #1e1e2f;    /* matches card background */
+  border-radius: 4px;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background: #61dafb;    /* primary blue color */
+  border-radius: 4px;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background: #21a1f1;    /* darker blue on hover */
+}
+
+.analytics-entries-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.analytics-entries-wrapper::-webkit-scrollbar-track {
+  background: #1e1e2f; /* matches card background */
+  border-radius: 4px;
+}
+
+.analytics-entries-wrapper::-webkit-scrollbar-thumb {
+  background: #61dafb; /* primary blue color */
+  border-radius: 4px;
+}
+
+.analytics-entries-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #21a1f1; /* darker blue on hover */
+}

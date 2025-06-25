@@ -89,11 +89,13 @@ export default function Analytics() {
       <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Analytics</h1>
 
       {/* Display all Abyssals Entries */}
+
       <div className="analytics-entries-section">
         <h2>Abyssals Entries</h2>
         {entries.length === 0 ? (
           <p style={{ padding: "1rem" }}>No abyssals tracked yet.</p>
         ) : (
+          <div className="analytics-entries-wrapper">
           <table className="analytics-entries-table">
             <thead>
               <tr>
@@ -140,6 +142,7 @@ export default function Analytics() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 
