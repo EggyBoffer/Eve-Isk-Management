@@ -5,6 +5,16 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.0.3",
+      date: "2025-06-26",
+      changes: [
+        "Added scroll bar to Analytics page to handle large data sets.",
+        "Fixed a minor issue with analytics page.",
+        "Fixed a minor issue with the Dashboard and Abyssals page having more space used than it needed.",
+        "Limited 'Abyssals Entries' page to only show 4 entries at a time, Then scroll for the rest to improve readability.",
+      ]
+    },
+    {
       version: "0.0.2",
       date: "2025-06-25",
       changes: [
