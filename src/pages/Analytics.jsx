@@ -16,7 +16,70 @@ export default function Analytics() {
 
   useEffect(() => {
     fetchEntries();
+    fetchGlorified();
   }, []);
+
+  function GlorifiedDrops() {
+  const [glorified, setGlorified] = useState([]);
+
+  useEffect(() => {
+    window.api.getEntries("glorified").then(setGlorified);
+  }, []);
+
+  const totalGlorified = glorified.reduce((sum, drop) => sum + Number(drop.isk_earned || 0), 0);
+
+  return (
+    <>
+      {glorified.length === 0 ? (
+        <p style={{ padding: "0.5rem" }}>No glorified drops recorded yet.</p>
+      ) : (
+        <>
+          <table className="analytics-glorified-table">
+            <thead>
+  <tr>
+    <th>Date</th>
+    <th>Name</th>
+    <th>ISK Earned</th>
+    <th>Filament</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+          <tbody>
+            {glorified.map((drop) => (
+              <tr key={drop.id}>
+                <td>{drop.date}</td>
+                <td>{drop.name || "—"}</td>
+                <td>{Number(drop.isk_earned || 0).toLocaleString()} ISK</td>
+                <td>{drop.tier} {drop.storm_type}</td>
+                <td className="analytics-entry-actions">
+                  <button title="Delete" onClick={() => handleDeleteGlorified(drop.id)}>❌</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          </table>
+          <p style={{ marginTop: "1rem", fontWeight: "bold" }}>
+            Total Glorified ISK: {totalGlorified.toLocaleString()} ISK
+          </p>
+        </>
+      )}
+    </>
+  );
+}
+
+  async function handleDeleteGlorified(id) {
+  if (confirm("Delete this glorified drop?")) {
+    await window.api.deleteGlorified(id);
+    fetchGlorified(); // <- refresh the table
+  }
+}
+
+  const [glorified, setGlorified] = useState([]);
+
+  async function fetchGlorified() {
+    const data = await window.api.getGlorified();
+    setGlorified(data);
+  }
 
   async function fetchEntries() {
     const data = await window.api.getEntries("abyssals");
@@ -63,10 +126,18 @@ export default function Analytics() {
     fetchEntries();
   }
 
-  const totalProfit = entries.reduce(
-    (sum, e) => sum + (e.room1_isk + e.room2_isk + e.room3_isk - e.fillament_cost),
+  const abyssalProfit = entries.reduce(
+  (sum, e) => sum + (e.room1_isk + e.room2_isk + e.room3_isk - e.fillament_cost),
+  0
+  );
+
+  const glorifiedProfit = glorified.reduce(
+    (sum, drop) => sum + Number(drop.isk_earned || 0),
     0
   );
+
+  const totalProfit = abyssalProfit + glorifiedProfit;
+
 
   const totalTimeHours = entries.reduce((sum, e) => sum + e.time_taken / 60, 0);
   const iskPerHour = totalTimeHours > 0 ? totalProfit / totalTimeHours : 0;
@@ -151,6 +222,9 @@ export default function Analytics() {
         <h2>Summary Metrics</h2>
         <p>Total Runs: {entries.length}</p>
         <p>Total Profit: {totalProfit.toLocaleString()} ISK</p>
+        <p style={{ fontSize: "0.85rem", color: "#aaa" }}>
+          (Abyssals: {abyssalProfit.toLocaleString()} ISK + Glorified: {glorifiedProfit.toLocaleString()} ISK)
+        </p>
         <p>Average ISK/hour: {iskPerHour.toLocaleString()} ISK/hour</p>
 
         <h3>Profit Per Hour by Filament Type</h3>
@@ -175,6 +249,10 @@ export default function Analytics() {
             })}
           </tbody>
         </table>
+      </div>
+      <div className="analytics-glorified-section" style={{ marginTop: "3rem" }}>
+        <h2>Glorified Drops</h2>
+        <GlorifiedDrops />
       </div>
     </div>
   );

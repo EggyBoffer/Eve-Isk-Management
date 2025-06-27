@@ -8,8 +8,9 @@ import { fileURLToPath } from "node:url";
 import os from "os";
 import db from "./database.js";
 
-const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+console.log("DB path being used:", db.name);
 
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -25,12 +26,19 @@ function saveSettings(settings) {
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
 }
 
-function createWindow() {
+let mainWindow;
+let splash;
+
+function createMainWindow() {
   const preloadPath = path.join(__dirname, "preload.js");
-  const win = new BrowserWindow({
+
+  mainWindow = new BrowserWindow({
     width: 1300,
     height: 900,
-    title: "MainApp",
+    show: false,
+    icon: path.join(__dirname, "public", "iskonomy.ico"),
+    title: "ISKonomy",
+    autoHideMenuBar: true,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
@@ -41,14 +49,45 @@ function createWindow() {
 
   const isDev = !app.isPackaged;
   if (isDev) {
-    win.loadURL("http://localhost:5173");
+    mainWindow.loadURL("http://localhost:5173");
   } else {
-    win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
+
+  // After content loads, show the main window and close splash
+  mainWindow.webContents.on("did-finish-load", () => {
+    setTimeout(() => {
+      splash?.close();
+      mainWindow.show();
+    }, 2000); // 2 seconds splash duration
+  });
 }
 
-// ** Modified: store filament cost globally for overlay **
-let filamentCost = 0;
+function createSplash() {
+  splash = new BrowserWindow({
+    width: 320,
+    height: 320,
+    transparent: false,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    icon: path.join(__dirname, "public", "iskonomy.ico"),
+    center: true,
+    show: false,
+    webPreferences: {
+    nodeIntegration: true, // required for script to work
+    contextIsolation: false
+  }
+  });
+
+  const logoPath = path.join(process.resourcesPath, 'splash-assets', 'iskonomy.png');
+
+  splash.loadFile(path.join(__dirname, "splash.html"));
+  splash.webContents.once("did-finish-load", () => {
+    splash.webContents.send("logo-path", `file://${logoPath.replace(/\\/g, '/')}`);
+    splash.show();
+  });
+}
 
 function createOverlay() {
   const savedSettings = loadSettings();
@@ -61,7 +100,6 @@ function createOverlay() {
     title: "Overlay",
     alwaysOnTop: true,
     frame: false,
-    transparent: false,
     backgroundColor: "#121217",
     resizable: false,
     webPreferences: {
@@ -83,7 +121,6 @@ function createOverlay() {
     );
   }
 
-  // 🔑 Once the overlay renderer tells us it's ready, send filament cost
   ipcMain.once('overlay-ready', () => {
     overlayWin.webContents.send('set-filament-settings', {
       fillament_cost: filamentCost,
@@ -98,30 +135,68 @@ function createOverlay() {
   overlayWin.on('close', () => saveSettings(overlayWin.getBounds()));
 }
 
+let filamentCost = 0;
 
-// Listen for request to open overlay with cost
 ipcMain.on('open-overlay-with-cost', (event, cost) => {
-  filamentCost = cost; // save global filament cost
+  filamentCost = cost;
   createOverlay();
 });
 
-ipcMain.handle('add-entry', (event, category, entry) => {
-  const { date } = entry;
+ipcMain.handle("get-app-settings", () => loadSettings());
 
-  if (category === 'abyssals') {
-    const { room1_isk = 0, room2_isk = 0, room3_isk = 0, time_taken = 0, fillament_cost = 0 } = entry;
-    const stmt = db.prepare(
-      `INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost) 
-       VALUES (?, ?, ?, ?, ?, ?)`
-    );
-    stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost);
-  } else {
-    const { isk_earned } = entry;
-    const stmt = db.prepare(`INSERT INTO ${category} (date, isk_earned) VALUES (?, ?)`);
-    stmt.run(date, isk_earned);
-  }
-
+ipcMain.handle("save-app-settings", (event, newSettings) => {
+  saveSettings(newSettings);
   return { success: true };
+});
+
+ipcMain.handle('add-entry', (event, category, entry) => {
+  const { date = new Date().toISOString().slice(0, 10) } = entry;
+
+  try {
+    if (category === 'abyssals') {
+      const {
+        room1_isk = 0,
+        room2_isk = 0,
+        room3_isk = 0,
+        time_taken = 0,
+        fillament_cost = 0
+      } = entry;
+
+      const stmt = db.prepare(`
+        INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+      stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost);
+
+    } else if (category === 'glorified') {
+      const {
+        isk_earned = 0,
+        tier = '',
+        storm_type = ''
+      } = entry;
+
+      const stmt = db.prepare(`
+        INSERT INTO glorified (date, isk_earned, tier, storm_type)
+        VALUES (?, ?, ?, ?)
+      `);
+      stmt.run(date, isk_earned, tier, storm_type);
+
+    } else {
+      const { isk_earned = 0 } = entry;
+
+      const stmt = db.prepare(`
+        INSERT INTO ${category} (date, isk_earned)
+        VALUES (?, ?)
+      `);
+      stmt.run(date, isk_earned);
+    }
+
+    return { success: true };
+
+  } catch (err) {
+    console.error("Error occurred in handler for 'add-entry':", err);
+    return { success: false, error: err.message };
+  }
 });
 
 ipcMain.handle('get-entries', (event, category) => {
@@ -136,28 +211,61 @@ ipcMain.handle('delete-entry', (event, category, id) => {
 });
 
 ipcMain.handle('update-entry', (event, category, entry) => {
-  const { id, date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost } = entry;
-  const stmt = db.prepare(
-    `UPDATE ${category} 
-     SET date = ?, room1_isk = ?, room2_isk = ?, room3_isk = ?, time_taken = ?, fillament_cost = ? 
-     WHERE id = ?`
-  );
+  const {
+    id,
+    date,
+    room1_isk = 0,
+    room2_isk = 0,
+    room3_isk = 0,
+    time_taken = 0,
+    fillament_cost = 0
+  } = entry;
+
+  const stmt = db.prepare(`
+    UPDATE ${category}
+    SET date = ?, room1_isk = ?, room2_isk = ?, room3_isk = ?, time_taken = ?, fillament_cost = ?
+    WHERE id = ?
+  `);
+
   stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, id);
   return { success: true };
 });
 
-app.whenReady().then(() => {
-  createWindow();
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
-  });
+ipcMain.handle('add-glorified', (event, entry) => {
+  const { date, isk_earned, tier, storm_type, name } = entry;
+  const stmt = db.prepare(`
+    INSERT INTO glorified (date, isk_earned, tier, storm_type, name)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+  stmt.run(date, parseInt(isk_earned) || 0, tier, storm_type, name || '');
+  return { success: true };
 });
 
-app.on('window-all-closed', () => {
-  if (os.platform() !== 'darwin') app.quit();
+ipcMain.handle('get-glorified', () => {
+  const stmt = db.prepare(`SELECT * FROM glorified`);
+  return stmt.all();
+});
+
+ipcMain.handle('delete-glorified', (event, id) => {
+  const stmt = db.prepare(`DELETE FROM glorified WHERE id = ?`);
+  stmt.run(id);
+  return { success: true };
 });
 
 ipcMain.on('close-overlay', () => {
   const overlay = BrowserWindow.getAllWindows().find(w => w.getTitle() === "Overlay");
   if (overlay) overlay.close();
+});
+
+app.whenReady().then(() => {
+  createSplash();
+  createMainWindow();
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+  });
+});
+
+app.on('window-all-closed', () => {
+  if (os.platform() !== 'darwin') app.quit();
 });

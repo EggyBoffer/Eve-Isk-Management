@@ -337,18 +337,18 @@ nav a.active {
   display: flex;
   align-items: center;
   justify-content: center;
-  -webkit-app-region: drag;
+  cursor: grab;
 }
 
 .field-row {
   display: flex;
   flex-direction: row;
   padding-left: 10px;
+  height: 80px;
   align-items: center;
   gap: 0.3rem;
   width: 100%;
   max-width: 260px; /* narrower so it's compact */
-  -webkit-app-region: no-drag; /* allow interaction */
   
 }
 
@@ -369,6 +369,7 @@ nav a.active {
 .check-btn {
   margin-bottom: 32px;
   height: 2rem;
+  margin-right: 10px;
 }
 
 .field-row .check-btn {
@@ -608,6 +609,53 @@ nav a.active {
   color: #61dafb;
 }
 
+.analytics-glorified-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background-color: #1e1e2f;
+  color: #ddd;
+  font-size: 0.95rem;
+}
+
+.analytics-glorified-table th,
+.analytics-glorified-table td {
+  border: 1px solid #333;
+  padding: 10px;
+  text-align: left;
+}
+
+.analytics-glorified-table th {
+  background-color: #2a2a40;
+  color: #fff;
+}
+
+.analytics-glorified-table tr:nth-child(even) {
+  background-color: #252537;
+}
+
+.analytics-glorified-section {
+  padding: 1.5rem;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background-color: #181822;
+}
+
+.analytics-glorified-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #61dafb;
+  display: inline-block;
+  padding-bottom: 0.25rem;
+}
+
+input[type="text"] {
+  padding: 0.4rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+
 /* Style profit positive/negative */
 .profit-positive {
   color: #32ff7e; /* green */
@@ -718,4 +766,152 @@ body::-webkit-scrollbar-thumb:hover {
 
 .analytics-entries-wrapper::-webkit-scrollbar-thumb:hover {
   background: #21a1f1; /* darker blue on hover */
+}
+
+.settings-page {
+  padding: 3rem 2rem;
+  color: white;
+  max-width: 100vw;
+  margin: 0 auto;
+  height: 100vh;
+}
+
+.settings-page h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.settings-grid label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.settings-grid select,
+.settings-grid input[type="checkbox"] {
+  margin-top: 0.3rem;
+  padding: 0.4rem;
+  font-size: 1rem;
+  background: #222;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.settings-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.settings-buttons button {
+  background-color: #44c7f5;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  color: #000;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.settings-buttons button:hover {
+  background-color: #38bce2;
+}
+
+.overlay-info-popup {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  background: #20232a;
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+.overlay-info-dismiss {
+  background: none;
+  color: #aaa;
+  border: none;
+  margin-top: 0.5rem;
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+  float: right;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background-color: #111;
+  color: white;
+}
+
+.navbar-left a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+.navbar-right .navbar-logo {
+  height: 32px;
+  width: 32px;
+  object-fit: contain;
+}
+
+.support-tooltip-container {
+  position: relative;
+}
+
+.support-button {
+  background: none;
+  border: none;
+  color: #61dafb;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+.support-button:hover {
+  transform: scale(1.1);
+}
+
+.support-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 130%;
+  right: 0;
+  background-color: #1e1e2f;
+  color: #ccc;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  width: max-content;
+  z-index: 1000;
+}
+.support-tooltip a {
+  color: #61dafb;
+  text-decoration: none;
+}
+.support-tooltip strong {
+  color: #fff;
 }

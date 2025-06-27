@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ISKonomy Loading</title>
+  <style>
+    body {
+      background-color: #121217;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .splash-container {
+      position: relative;
+      width: 320px;
+      height: 320px;
+    }
+
+    .splash-container img {
+      width: 320px;
+      height: 320px;
+    }
+
+    .version {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #bbb;
+      font-family: monospace;
+    }
+
+    .splash-text {
+      position: absolute;
+      bottom: 45px;
+      width: 100%;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 1rem;
+      color: white;
+      text-shadow: 0 0 3px black;
+    }
+
+    .dots::after {
+      content: '...';
+      animation: blink 1.2s steps(3, end) infinite;
+    }
+
+    .loading-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 10%;
+      width: 80%;
+      height: 6px;
+      background-color: #2a2a38;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .loading-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #61dafb;
+      animation: fillBar 2.5s ease-in-out forwards;
+    }
+
+    @keyframes fillBar {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    @keyframes blink {
+      0%   { content: ''; }
+      33%  { content: '.'; }
+      66%  { content: '..'; }
+      100% { content: '...'; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <div class="version">
+      <script>
+        const version = require('../package.json').version;
+        document.currentScript.parentElement.textContent = `v${version}`;
+      </script>
+    </div>
+
+    <img id="logo" alt="ISKonomy Logo">
+    <script>
+      const { ipcRenderer } = require("electron");
+      ipcRenderer.on("logo-path", (event, logoUrl) => {
+        document.getElementById("logo").src = logoUrl;
+      });
+    </script>
+
+    <div class="splash-text">
+      Loading<span class="dots"></span>
+    </div>
+
+    <div class="loading-bar">
+      <div class="loading-fill"></div>
+    </div>
+  </div>
+</body>
+</html>

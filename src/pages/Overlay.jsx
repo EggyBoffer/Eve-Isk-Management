@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 
 export default function Overlay() {
-  const [step, setStep] = useState(0); // 0-3
+  const [step, setStep] = useState(0);
   const [values, setValues] = useState({ room1: "", room2: "", room3: "", timeTaken: "" });
-  const [error, setError] = useState(false); // validation error state
-  const [filamentCost, setFilamentCost] = useState(0); // store filament cost
+  const [error, setError] = useState(false);
+  const [filamentCost, setFilamentCost] = useState(0);
+  const [showInfo, setShowInfo] = useState(() => {
+    return localStorage.getItem("hideOverlayInfo") !== "true";
+  });
 
   const inputs = [
     { label: "Room 1 ISK", key: "room1" },
@@ -17,34 +20,35 @@ export default function Overlay() {
     const currentKey = inputs[step].key;
     const val = values[currentKey].trim();
 
-    // Validate: must not be empty and must be numeric
     if (val === "" || isNaN(Number(val))) {
       setError(true);
       return;
     }
 
-    setError(false); // reset error
+    setError(false);
 
     if (step < inputs.length - 1) {
       setStep(step + 1);
     } else {
-      // Submit entry
       await window.api.addEntry("abyssals", {
         date: new Date().toISOString().slice(0, 10),
         room1_isk: parseInt(values.room1) || 0,
         room2_isk: parseInt(values.room2) || 0,
         room3_isk: parseInt(values.room3) || 0,
         time_taken: parseInt(values.timeTaken) || 0,
-        fillament_cost: filamentCost || 0, // use filamentCost from listener
+        fillament_cost: filamentCost || 0,
       });
 
-      // Reset for next
       setValues({ room1: "", room2: "", room3: "", timeTaken: "" });
       setStep(0);
     }
   }
 
-  // Close the overlay on Escape
+  function dismissInfoPopup() {
+    localStorage.setItem("hideOverlayInfo", "true");
+    setShowInfo(false);
+  }
+
   useEffect(() => {
     function handleKeyDown(e) {
       if (e.key === "Escape") {
@@ -56,28 +60,36 @@ export default function Overlay() {
   }, []);
 
   useEffect(() => {
-  // Signal the main process that the overlay is ready
-  if (window.electron?.ipcRenderer) {
-    window.electron.ipcRenderer.send('overlay-ready');
-  }
+    if (window.electron?.ipcRenderer) {
+      window.electron.ipcRenderer.send("overlay-ready");
 
-  if (window.electron?.ipcRenderer?.on) {
-    window.electron.ipcRenderer.on('set-filament-settings', (_, settings) => {
-      setFilamentCost(settings.fillament_cost || 0);
-      console.log('Received filament cost:', settings.fillament_cost); // debug log
-    });
+      window.electron.ipcRenderer.on("set-filament-settings", (_, settings) => {
+        setFilamentCost(settings.fillament_cost || 0);
+        console.log("Received filament cost:", settings.fillament_cost);
+      });
 
-    return () => {
-      window.electron.ipcRenderer.removeAllListeners('set-filament-settings');
-    };
-  }
-}, []);
-
-
+      return () => {
+        window.electron.ipcRenderer.removeAllListeners("set-filament-settings");
+      };
+    }
+  }, []);
 
   return (
     <div className="overlay-box draggable-area">
-      <div className="field-row" style={{ WebkitAppRegion: "no-drag" }}>
+      {showInfo && (
+        <div className="overlay-info-popup">
+          <p>
+            Welcome to the ISK Overlay! This will guide you through logging your abyssal run step by step.
+            <br />
+            Press <strong>ESC</strong> anytime to close the overlay. Click and drag the overlay to move it around.
+          </p>
+          <button onClick={dismissInfoPopup} className="overlay-info-dismiss">
+            ✖ Don't show again
+          </button>
+        </div>
+      )}
+
+      <div className="field-row">
         <input
           autoFocus
           type="number"
