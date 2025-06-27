@@ -17,10 +17,20 @@ export default function Abyssals() {
   const [room3Isk, setRoom3Isk] = useState("");
   const [timeTaken, setTimeTaken] = useState("");
   const [fillamentCost, setFillamentCost] = useState("");
-  const [tier, setTier] = useState(() => sessionStorage.getItem("tier") || "T3");
-  const [stormType, setStormType] = useState(() => sessionStorage.getItem("stormType") || "Firestorm");
+  const [tier, setTier] = useState(() => {
+  const stored = JSON.parse(localStorage.getItem("settings"));
+  return stored?.filamentTier || sessionStorage.getItem("tier") || "T3";
+});
+const [stormType, setStormType] = useState(() => {
+  const stored = JSON.parse(localStorage.getItem("settings"));
+  return stored?.stormType || sessionStorage.getItem("stormType") || "Firestorm";
+});
+
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [showGlorifiedInput, setShowGlorifiedInput] = useState(false);
+  const [glorifiedValue, setGlorifiedValue] = useState("");
+  const [glorifiedName, setGlorifiedName] = useState("");
 
   const updateFilamentPrice = useCallback(async () => {
     const id = getFilamentTypeId(tier, stormType);
@@ -110,7 +120,7 @@ export default function Abyssals() {
     };
 
     if (editingId) {
-      await window.api.updateEntry("abyssals", editingId, entryData);
+      await window.api.updateEntry("abyssals", { id: editingId, ...entryData });
       setEditingId(null);
     } else {
       await window.api.addEntry("abyssals", entryData);
@@ -122,6 +132,33 @@ export default function Abyssals() {
     setTimeTaken("");
     fetchEntries();
   }
+
+  async function handleAddGlorified() {
+  if (glorifiedValue === "" || isNaN(glorifiedValue)) {
+    alert("Enter a valid ISK amount for the glorified drop.");
+    return;
+  }
+
+  if (!glorifiedName.trim()) {
+    alert("Please enter a name for the glorified drop.");
+    return;
+  }
+
+  await window.api.addGlorified({
+  date,
+  tier,
+  storm_type: stormType,
+  isk_earned: parseInt(glorifiedValue),
+  name: glorifiedName
+});
+
+
+  setShowGlorifiedInput(false);
+  setGlorifiedValue("");
+  setGlorifiedName("");
+  alert("Glorified drop recorded.");
+}
+
 
   const today = new Date().toISOString().slice(0, 10);
   const todaysEntries = entries
@@ -178,8 +215,34 @@ export default function Abyssals() {
                 <span className="tooltip-icon" title="Auto-updated from Jita market">?</span>
               </label>
               <button type="submit">{editingId ? "Update Entry" : "Add Entry"}</button>
-              
             </form>
+
+            <button
+              onClick={() => setShowGlorifiedInput(!showGlorifiedInput)}
+              style={{ marginTop: "1rem" }}
+            >
+              {showGlorifiedInput ? "Cancel" : "Add Glorified Drop"}
+            </button>
+
+            {showGlorifiedInput && (
+            <div style={{ marginTop: "1rem" }}>
+              <input
+                type="text"
+                placeholder="Name of Drop"
+                value={glorifiedName}
+                onChange={(e) => setGlorifiedName(e.target.value)}
+                style={{ marginBottom: "0.5rem", display: "block" }}
+              />
+              <input
+                type="number"
+                placeholder="Glorified Drop ISK"
+                value={glorifiedValue}
+                onChange={(e) => setGlorifiedValue(e.target.value)}
+              />
+              <button onClick={handleAddGlorified}>Submit Drop</button>
+            </div>
+          )}
+
           </div>
 
           <div className="abyssals-entries-column">
@@ -197,8 +260,7 @@ export default function Abyssals() {
                       <span>Room 3: {entry.room3_isk.toLocaleString()}</span>
                     </div>
                     <div className="entry-info">
-                      Time: {entry.time_taken} mins | Filament: {entry.fillament_cost.toLocaleString()} ISK | Profit:{" "}
-                      {((entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost).toLocaleString()} ISK
+                      Time: {entry.time_taken} mins | Filament: {entry.fillament_cost.toLocaleString()} ISK | Profit: {((entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost).toLocaleString()} ISK
                     </div>
                     <div className="entry-actions">
                       <button title="Edit" onClick={() => handleEdit(entry)}>✏️</button>

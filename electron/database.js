@@ -7,6 +7,8 @@ const dbPath = path.join(userDataPath, "isk-tracker.sqlite");
 
 const db = new Database(dbPath);
 
+
+
 // Create abyssals table if not exists (basic columns)
 db.exec(`
 CREATE TABLE IF NOT EXISTS abyssals (
@@ -24,11 +26,28 @@ function addColumnIfNotExists(table, column, definition) {
   }
 }
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS glorified (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,
+    isk_earned INTEGER NOT NULL,
+    tier TEXT,
+    storm_type TEXT,
+    name TEXT DEFAULT ''
+  );
+`);
+
+
 // Add missing columns one by one
 addColumnIfNotExists("abyssals", "room1_isk", "INTEGER DEFAULT 0");
 addColumnIfNotExists("abyssals", "room2_isk", "INTEGER DEFAULT 0");
 addColumnIfNotExists("abyssals", "room3_isk", "INTEGER DEFAULT 0");
 addColumnIfNotExists("abyssals", "time_taken", "INTEGER DEFAULT 0");
 addColumnIfNotExists("abyssals", "fillament_cost", "INTEGER DEFAULT 0");
+addColumnIfNotExists("glorified", "name", "TEXT DEFAULT ''");
+
+
+
+
 
 export default db;

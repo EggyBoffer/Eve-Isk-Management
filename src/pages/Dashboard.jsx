@@ -6,8 +6,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [showFilamentPrompt, setShowFilamentPrompt] = useState(false);
-  const [tier, setTier] = useState("T3");
-  const [stormType, setStormType] = useState("Firestorm");
+  const storedSettings = JSON.parse(localStorage.getItem("settings")) || {};
+
+  const [tier, setTier] = useState(() =>
+    storedSettings.filamentTier || sessionStorage.getItem("tier") || "T3"
+  );
+
+  const [stormType, setStormType] = useState(() =>
+    storedSettings.stormType || sessionStorage.getItem("stormType") || "Firestorm"
+  );
 
   const [latestVersion, setLatestVersion] = useState(null); // state for version check
   const [updateUrl, setUpdateUrl] = useState(null); // GitHub release URL
@@ -119,8 +126,8 @@ export default function Dashboard() {
       )}
 
       {/* Centered title */}
-      <h1 className="dashboard-title">ISK Tracker</h1>
-      <p className="dashboard-subtitle">Your EVE Online ISK management hub</p>
+      <h1 className="dashboard-title">ISKONOMY!</h1>
+      <p className="dashboard-subtitle">From plex to profit—stay in control.</p>
 
       {/* Left-aligned links */}
       <div className="dashboard-links">
@@ -131,11 +138,43 @@ export default function Dashboard() {
         <button onClick={() => navigate("/analytics")}>Analytics</button>
       </div>
 
-      {/* Patch Notes + Version */}
+      
+
       <div className="dashboard-footer">
-        <button className="patch-notes-btn" onClick={() => navigate("/patch-notes")}>Patch Notes</button>
+      <button className="patch-notes-btn" onClick={() => navigate("/patch-notes")}>
+        Patch Notes
+      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
         <span className="version-label">Version {pkg.version}</span>
+
+        <div className="support-tooltip-container">
+          <button
+            className="support-button"
+            onClick={() => {
+              const el = document.querySelector(".support-tooltip");
+              el.style.display = el.style.display === "block" ? "none" : "block";
+            }}
+            title="Support Development"
+          >
+            💖
+          </button>
+          <div className="support-tooltip">
+            <p style={{ margin: 0 }}>
+              Help out on{" "}
+              <a
+                href="https://github.com/EggyBoffer/Eve-Isk-Management/discussions"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GitHub
+              </a>
+              <br />
+              or donate ISK to <strong>Death Killer21</strong>
+            </p>
+          </div>
+        </div>
       </div>
+    </div>
     </div>
   );
 }

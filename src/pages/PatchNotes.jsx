@@ -5,6 +5,29 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.0.4",
+      date: "2025-06-27",
+      changes: [
+        "App renamed to ISKONOMY!",
+        "Added logo to app to match new name!",
+        "Fix an issue with scrollbar showing on overlay, This should no longer show.",
+        "Fix an issue with editing entries not working, This should now function as expected.",
+        "Added Settings page, and removed the old toolbar from the app.",
+        "Added a setting to allow you to change the default filament tier and storm type.",
+        "Fixed an issue with dragging the overlay, It should now work as expected.",
+        "Added a glorified tracker to the app, This will allow you to track your glorified drops.",
+        "Due to some file structure changes, App may have lost all previous data, This is a one time thing, and will not happen again.",
+        "Updated analytics page to show total profit from both abyssals and glorified drops.",
+        "Added Glorified tracker to the analytics page, This will allow you to see your total glorified drops.",
+        "Added Splash Screen to the app, This will show when the app is loading.",
+        "Added better image processing for the app, This will improve the performance of the app.",
+        "Added a info screen that loads of first launch of the overlay, Explaining how to use the overlay. You can turn this off in the settings, and will only display once.",
+        "Changed the way the overlay loads, This will improve the performance of the overlay.",
+        "Added some cool loading animations to the splash screen.",
+
+      ]
+    },
+    {
       version: "0.0.3",
       date: "2025-06-26",
       changes: [

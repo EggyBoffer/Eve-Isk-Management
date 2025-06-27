@@ -1,10 +1,20 @@
 import { NavLink } from "react-router-dom";
+import { Settings } from "lucide-react";
+import iskonomylogo from "../assets/iskonomy.png";
+
 
 export default function Navbar() {
   return (
     <nav style={navStyle}>
       <div style={containerStyle}>
-        <div style={logoStyle}>ISK Tracker</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <img
+          src={iskonomylogo}
+          alt="ISKonomy logo"
+          style={{ height: "55px", width: "70px", objectFit: "contain" }}
+        />
+        <div style={logoStyle}>ISKONOMY</div>
+      </div>
         <div style={linksStyle}>
           <NavLink
             to="/"
@@ -56,6 +66,9 @@ export default function Navbar() {
           >
             Misc
           </NavLink>
+          <NavLink to="/settings" style={getIconLinkStyle}>
+            <Settings size={20} />
+          </NavLink>
         </div>
       </div>
     </nav>
@@ -89,6 +102,7 @@ const containerStyle = {
 const logoStyle = {
   fontWeight: "bold",
   fontSize: "1.5rem",
+  paddingLeft: "40px",
 };
 
 const linksStyle = {
@@ -103,3 +117,15 @@ const linkStyle = {
   paddingBottom: "2px",
   transition: "color 0.3s ease, border-bottom 0.3s ease",
 };
+
+function getIconLinkStyle({ isActive }) {
+  return {
+    ...linkStyle,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0 5px",
+    color: isActive ? "#61dafb" : "#ccc",
+    borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+  };
+}
