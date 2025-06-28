@@ -140,7 +140,7 @@ export default function Analytics() {
 
 
   const totalTimeHours = entries.reduce((sum, e) => sum + e.time_taken / 60, 0);
-  const iskPerHour = totalTimeHours > 0 ? totalProfit / totalTimeHours : 0;
+  const iskPerHour = totalTimeHours > 0 ? abyssalProfit / totalTimeHours : 0;
 
   // ISK/hour per filament type
   const perFilament = entries.reduce((acc, entry) => {
