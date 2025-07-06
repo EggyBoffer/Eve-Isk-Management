@@ -1,5 +1,9 @@
 [![PR Validation](https://github.com/EggyBoffer/Eve-Isk-Management/actions/workflows/pr-verification.yaml/badge.svg)](https://github.com/EggyBoffer/Eve-Isk-Management/actions/workflows/pr-verification.yaml)
 
+![GitHub package.json version](https://img.shields.io/github/package-json/v/EggyBoffer/Eve-Isk-Management)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/EggyBoffer/Eve-Isk-Management/total)
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
