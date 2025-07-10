@@ -10,7 +10,8 @@ contextBridge.exposeInMainWorld('api', {
   deleteEntry: (category, id) => ipcRenderer.invoke('delete-entry', category, id),
 
   openOverlay: () => ipcRenderer.send('open-overlay'),
-  openOverlayWithCost: (cost) => ipcRenderer.send('open-overlay-with-cost', cost),
+  openOverlayWithCost: (cost, shipType, tier, stormType) =>
+  ipcRenderer.send("open-overlay-with-cost", cost, shipType, tier, stormType),
   closeOverlay: () => ipcRenderer.send('close-overlay'),
 
   getAppSettings: () => ipcRenderer.invoke('get-app-settings'),

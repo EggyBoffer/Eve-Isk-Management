@@ -5,6 +5,37 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.0.7",
+      date: "2025-07-10",
+      changes: [
+        "Fix for the Unknown fillament error when adding abyssal entries.",
+        "Fix for sorting in the abyssals analytics.",
+        "Fix for a odd bug that caused the glorified tracker to glitch out and become unusable after adding one drop.",
+        "Added a new setting to allow you to change the default filament tier and storm type.",
+        "Fixed an issue where you were unable to edit abyssal entries on alaytics page.",
+        "Added version check to ensure up to date, This was added minimally before but it never worked, it should now work as expected.",
+        "Added a discord button to the top of the dashboard, This will allow you to join the community discord.",
+        "Added the option to pick between Frigate, cruiser and destroyer for the abyssal entries, This will allow you to track your abyssal runs more accurately.",
+        "Improved calculation logic to calculate isk/hour more accurately, Including the cost of the fillaments.",
+        "Added Per ship tracking to Analytics",
+        "Added default ship type setting,",
+        "Polished the UI for the settings page.",
+        "Added an Isk/day Summary metric, This will allow you to see how much isk you are making per day.",
+        "Isk/Day will show the last 4 Days, With an average.",
+
+      ]
+    },
+    {
+      version: "0.0.5 + 0.0.6",
+      date: "2025-07-01",
+      changes: [
+        "Some changes to the backend to improve workflows.",
+        "Some changes to the readme to add preformance metrics",
+        "Some discord integrations coming soon to the community discord. Link will be provided soon!",
+        "No frontend changes in this patch, but backend changes to improve performance and stability.",
+      ]
+    },
+    {
       version: "0.0.4",
       date: "2025-06-27",
       changes: [

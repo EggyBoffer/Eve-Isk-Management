@@ -16,15 +16,20 @@ export default function Abyssals() {
   const [room2Isk, setRoom2Isk] = useState("");
   const [room3Isk, setRoom3Isk] = useState("");
   const [timeTaken, setTimeTaken] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const [fillamentCost, setFillamentCost] = useState("");
   const [tier, setTier] = useState(() => {
-  const stored = JSON.parse(localStorage.getItem("settings"));
-  return stored?.filamentTier || sessionStorage.getItem("tier") || "T3";
-});
-const [stormType, setStormType] = useState(() => {
-  const stored = JSON.parse(localStorage.getItem("settings"));
-  return stored?.stormType || sessionStorage.getItem("stormType") || "Firestorm";
-});
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    return stored?.filamentTier || sessionStorage.getItem("tier") || "T3";
+  });
+  const [stormType, setStormType] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    return stored?.stormType || sessionStorage.getItem("stormType") || "Firestorm";
+  });
+  const [shipType, setShipType] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem("settings"));
+    return stored?.shipType || sessionStorage.getItem("shipType") || "Cruiser";
+  });
 
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -54,8 +59,9 @@ const [stormType, setStormType] = useState(() => {
   useEffect(() => {
     sessionStorage.setItem("tier", tier);
     sessionStorage.setItem("stormType", stormType);
+    sessionStorage.setItem("shipType", shipType);
     updateFilamentPrice();
-  }, [tier, stormType, updateFilamentPrice]);
+  }, [tier, stormType, shipType, updateFilamentPrice]);
 
   async function fetchFilamentPrice(typeId) {
     const regionId = 10000002;
@@ -101,6 +107,7 @@ const [stormType, setStormType] = useState(() => {
     setRoom3Isk(entry.room3_isk);
     setTimeTaken(entry.time_taken);
     setFillamentCost(entry.fillament_cost);
+    setShipType(entry.ship_type || "Cruiser");
   }
 
   async function handleSubmit(e) {
@@ -110,13 +117,18 @@ const [stormType, setStormType] = useState(() => {
       return;
     }
 
+    const multiplier = shipType === "Frigate" ? 3 : shipType === "Destroyer" ? 2 : 1;
+
     const entryData = {
       date,
       room1_isk: parseInt(room1Isk),
       room2_isk: parseInt(room2Isk),
       room3_isk: parseInt(room3Isk),
       time_taken: parseInt(timeTaken),
-      fillament_cost: parseInt(fillamentCost),
+      fillament_cost: parseInt(fillamentCost) * multiplier,
+      tier,
+      storm_type: stormType,
+      ship_type: shipType,
     };
 
     if (editingId) {
@@ -134,31 +146,29 @@ const [stormType, setStormType] = useState(() => {
   }
 
   async function handleAddGlorified() {
-  if (glorifiedValue === "" || isNaN(glorifiedValue)) {
-    alert("Enter a valid ISK amount for the glorified drop.");
-    return;
+    if (glorifiedValue === "" || isNaN(glorifiedValue)) {
+      alert("Enter a valid ISK amount for the glorified drop.");
+      return;
+    }
+
+    if (!glorifiedName.trim()) {
+      alert("Please enter a name for the glorified drop.");
+      return;
+    }
+
+    await window.api.addGlorified({
+      date,
+      tier,
+      storm_type: stormType,
+      isk_earned: parseInt(glorifiedValue),
+      name: glorifiedName
+    });
+
+    setGlorifiedValue("");
+    setGlorifiedName("");
+    setStatusMessage("✅ Glorified drop recorded!");
+    setTimeout(() => setStatusMessage(""), 3000);
   }
-
-  if (!glorifiedName.trim()) {
-    alert("Please enter a name for the glorified drop.");
-    return;
-  }
-
-  await window.api.addGlorified({
-  date,
-  tier,
-  storm_type: stormType,
-  isk_earned: parseInt(glorifiedValue),
-  name: glorifiedName
-});
-
-
-  setShowGlorifiedInput(false);
-  setGlorifiedValue("");
-  setGlorifiedName("");
-  alert("Glorified drop recorded.");
-}
-
 
   const today = new Date().toISOString().slice(0, 10);
   const todaysEntries = entries
@@ -172,6 +182,9 @@ const [stormType, setStormType] = useState(() => {
         <h1 style={{ textAlign: "center", marginBottom: "2rem" }}>Abyssals</h1>
         <div className="abyssals-container">
           <div className="abyssals-form-column">
+            {statusMessage && (
+              <div className="status-message">{statusMessage}</div>
+            )}
             <form onSubmit={handleSubmit}>
               <label>
                 <span>Date:</span>
@@ -189,6 +202,14 @@ const [stormType, setStormType] = useState(() => {
                 Storm Type:
                 <select value={stormType} onChange={(e) => setStormType(e.target.value)}>
                   {Object.keys(FILAMENT_TYPES["T1"]).map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Ship Type:
+                <select value={shipType} onChange={(e) => setShipType(e.target.value)}>
+                  {["Cruiser", "Destroyer", "Frigate"].map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
@@ -225,24 +246,23 @@ const [stormType, setStormType] = useState(() => {
             </button>
 
             {showGlorifiedInput && (
-            <div style={{ marginTop: "1rem" }}>
-              <input
-                type="text"
-                placeholder="Name of Drop"
-                value={glorifiedName}
-                onChange={(e) => setGlorifiedName(e.target.value)}
-                style={{ marginBottom: "0.5rem", display: "block" }}
-              />
-              <input
-                type="number"
-                placeholder="Glorified Drop ISK"
-                value={glorifiedValue}
-                onChange={(e) => setGlorifiedValue(e.target.value)}
-              />
-              <button onClick={handleAddGlorified}>Submit Drop</button>
-            </div>
-          )}
-
+              <div style={{ marginTop: "1rem" }}>
+                <input
+                  type="text"
+                  placeholder="Name of Drop"
+                  value={glorifiedName}
+                  onChange={(e) => setGlorifiedName(e.target.value)}
+                  style={{ marginBottom: "0.5rem", display: "block" }}
+                />
+                <input
+                  type="number"
+                  placeholder="Glorified Drop ISK"
+                  value={glorifiedValue}
+                  onChange={(e) => setGlorifiedValue(e.target.value)}
+                />
+                <button onClick={handleAddGlorified}>Submit Drop</button>
+              </div>
+            )}
           </div>
 
           <div className="abyssals-entries-column">
@@ -260,7 +280,7 @@ const [stormType, setStormType] = useState(() => {
                       <span>Room 3: {entry.room3_isk.toLocaleString()}</span>
                     </div>
                     <div className="entry-info">
-                      Time: {entry.time_taken} mins | Filament: {entry.fillament_cost.toLocaleString()} ISK | Profit: {((entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost).toLocaleString()} ISK
+                      Time: {entry.time_taken} mins | Ship: {entry.ship_type || "Cruiser"} | Filament: {entry.fillament_cost.toLocaleString()} ISK | Profit: {((entry.room1_isk + entry.room2_isk + entry.room3_isk) - entry.fillament_cost).toLocaleString()} ISK
                     </div>
                     <div className="entry-actions">
                       <button title="Edit" onClick={() => handleEdit(entry)}>✏️</button>

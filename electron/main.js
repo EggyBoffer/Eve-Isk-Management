@@ -10,6 +10,28 @@ import db from "./database.js";
 
 console.log("DB path being used:", db.name);
 
+// Ensure necessary columns exist
+try {
+  db.prepare(`ALTER TABLE abyssals ADD COLUMN tier TEXT`).run();
+  console.log("✅ Added 'tier' column to abyssals");
+} catch (err) {
+  if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'tier':", err.message);
+}
+
+try {
+  db.prepare(`ALTER TABLE abyssals ADD COLUMN storm_type TEXT`).run();
+  console.log("✅ Added 'storm_type' column to abyssals");
+} catch (err) {
+  if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'storm_type':", err.message);
+}
+
+try {
+  db.prepare(`ALTER TABLE abyssals ADD COLUMN ship_type TEXT`).run();
+  console.log("✅ Added 'ship_type' column to abyssals");
+} catch (err) {
+  if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'ship_type':", err.message);
+}
+
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,12 +76,11 @@ function createMainWindow() {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
-  // After content loads, show the main window and close splash
   mainWindow.webContents.on("did-finish-load", () => {
     setTimeout(() => {
       splash?.close();
       mainWindow.show();
-    }, 2000); // 2 seconds splash duration
+    }, 2000);
   });
 }
 
@@ -75,9 +96,9 @@ function createSplash() {
     center: true,
     show: false,
     webPreferences: {
-    nodeIntegration: true, // required for script to work
-    contextIsolation: false
-  }
+      nodeIntegration: true,
+      contextIsolation: false
+    }
   });
 
   const logoPath = path.join(process.resourcesPath, 'splash-assets', 'iskonomy.png');
@@ -122,10 +143,14 @@ function createOverlay() {
   }
 
   ipcMain.once('overlay-ready', () => {
-    overlayWin.webContents.send('set-filament-settings', {
-      fillament_cost: filamentCost,
-    });
+  overlayWin.webContents.send('set-filament-settings', {
+    fillament_cost: filamentCost,
+    ship_type: activeShipType,
+    tier: activeTier,
+    storm_type: activeStormType,
   });
+});
+
 
   globalShortcut.register('Escape', () => {
     overlayWin.close();
@@ -136,11 +161,18 @@ function createOverlay() {
 }
 
 let filamentCost = 0;
+let activeShipType = '';
+let activeTier = '';
+let activeStormType = '';
 
-ipcMain.on('open-overlay-with-cost', (event, cost) => {
+ipcMain.on('open-overlay-with-cost', (event, cost, shipType, tier, stormType) => {
   filamentCost = cost;
+  activeShipType = shipType;
+  activeTier = tier;
+  activeStormType = stormType;
   createOverlay();
 });
+
 
 ipcMain.handle("get-app-settings", () => loadSettings());
 
@@ -155,18 +187,21 @@ ipcMain.handle('add-entry', (event, category, entry) => {
   try {
     if (category === 'abyssals') {
       const {
-        room1_isk = 0,
-        room2_isk = 0,
-        room3_isk = 0,
-        time_taken = 0,
-        fillament_cost = 0
-      } = entry;
+      room1_isk = 0,
+      room2_isk = 0,
+      room3_isk = 0,
+      time_taken = 0,
+      fillament_cost = 0,
+      tier = '',
+      storm_type = '',
+      ship_type = ''
+    } = entry;
 
       const stmt = db.prepare(`
-        INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost);
+      stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type);
 
     } else if (category === 'glorified') {
       const {
@@ -218,16 +253,19 @@ ipcMain.handle('update-entry', (event, category, entry) => {
     room2_isk = 0,
     room3_isk = 0,
     time_taken = 0,
-    fillament_cost = 0
+    fillament_cost = 0,
+    tier = '',
+    storm_type = '',
+    ship_type = ''
   } = entry;
 
   const stmt = db.prepare(`
     UPDATE ${category}
-    SET date = ?, room1_isk = ?, room2_isk = ?, room3_isk = ?, time_taken = ?, fillament_cost = ?
+    SET date = ?, room1_isk = ?, room2_isk = ?, room3_isk = ?, time_taken = ?, fillament_cost = ?, tier = ?, storm_type = ?, ship_type = ?
     WHERE id = ?
   `);
 
-  stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, id);
+  stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type, id);
   return { success: true };
 });
 
@@ -245,6 +283,18 @@ ipcMain.handle('get-glorified', () => {
   const stmt = db.prepare(`SELECT * FROM glorified`);
   return stmt.all();
 });
+
+import fs from "fs";
+
+ipcMain.handle('get-db-size', () => {
+  try {
+    const stats = fs.statSync(db.name);
+    return { size: stats.size };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
 
 ipcMain.handle('delete-glorified', (event, id) => {
   const stmt = db.prepare(`DELETE FROM glorified WHERE id = ?`);
