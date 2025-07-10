@@ -284,8 +284,6 @@ ipcMain.handle('get-glorified', () => {
   return stmt.all();
 });
 
-import fs from "fs";
-
 ipcMain.handle('get-db-size', () => {
   try {
     const stats = fs.statSync(db.name);
