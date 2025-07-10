@@ -42,7 +42,6 @@ jobs:
       - name: List dist directory
         run: dir dist
 
-      # ✅ Rename the file
       - name: Rename installer file
         run: |
           ren "dist/Iskonomy Setup ${{ env.VERSION }}.exe" "Iskonomy-Setup-${{ env.VERSION }}.exe"
