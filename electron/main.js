@@ -293,6 +293,19 @@ ipcMain.handle('get-db-size', () => {
   }
 });
 
+import { shell } from "electron";
+
+ipcMain.handle('open-external', (event, url) => {
+  try {
+    shell.openExternal(url);
+    return { success: true };
+  } catch (err) {
+    console.error("❌ Failed to open external URL:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+
 
 ipcMain.handle('delete-glorified', (event, id) => {
   const stmt = db.prepare(`DELETE FROM glorified WHERE id = ?`);

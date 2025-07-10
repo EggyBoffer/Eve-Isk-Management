@@ -21,6 +21,8 @@ contextBridge.exposeInMainWorld('api', {
   addGlorified: (entry) => ipcRenderer.invoke('add-glorified', entry),
   getGlorified: () => ipcRenderer.invoke('get-glorified'),
   deleteGlorified: (id) => ipcRenderer.invoke('delete-glorified', id),
+
+   openExternal: (url) => ipcRenderer.invoke("open-external", url), // ✅ IPC handler here
 });
 
 contextBridge.exposeInMainWorld('electron', {

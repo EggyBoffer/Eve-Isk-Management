@@ -5,6 +5,13 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.0.8",
+      date: "2025-07-10",
+      changes: [
+        "Fix to fatal error caused by discord button.",
+      ]
+    },
+    {
       version: "0.0.7",
       date: "2025-07-10",
       changes: [
