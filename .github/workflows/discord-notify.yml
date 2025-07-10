@@ -1,0 +1,21 @@
+name: Notify Discord
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send push update to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d '{
+            "username": "ISKonomy Bot",
+            "content": "🚀 New push to `main` by ${{ github.actor }}\nRepo: ${{ github.repository }}\n[View Commit](https://github.com/${{ github.repository }}/commits/main)"
+          }' $DISCORD_WEBHOOK
