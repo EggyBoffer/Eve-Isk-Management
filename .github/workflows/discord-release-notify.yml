@@ -1,0 +1,29 @@
+name: Notify Discord on Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post release info to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          TAG_NAME=${GITHUB_REF##*/}
+          curl -H "Content-Type: application/json" \
+          -X POST \
+          -d "{
+            \"username\": \"ISKonomy Bot\",
+            \"embeds\": [{
+              \"title\": \"✨ ISKonomy ${TAG_NAME} Released!\",
+              \"description\": \"Check out the latest version now.\",
+              \"url\": \"https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}\",
+              \"color\": 5814783,
+              \"footer\": { \"text\": \"Published by ${{ github.actor }}\" },
+              \"timestamp\": \"$(date --utc +%Y-%m-%dT%H:%M:%SZ)\"
+            }]
+          }" $DISCORD_WEBHOOK
