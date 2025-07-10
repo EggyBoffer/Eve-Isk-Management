@@ -152,20 +152,19 @@ export default function Dashboard() {
       <p className="dashboard-subtitle">From plex to profit—stay in control.</p>
 
       <div className="discord-wrapper">
-        <a
-          className="discord-button"
-          href="https://discord.gg/M87HtnjBYg"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img
-            src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg"
-            alt="Join Discord"
-            style={{ height: "20px", marginRight: "0.5rem" }}
-          />
-          Join Discord
-        </a>
-      </div>
+      <button
+        className="discord-button"
+        onClick={() => window.api?.openExternal("https://discord.gg/M87HtnjBYg")}
+      >
+        <img
+          src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/discord.svg"
+          alt="Join Discord"
+          style={{ height: "20px", marginRight: "0.5rem" }}
+        />
+        Join Discord
+      </button>
+    </div>
+
 
       <div className="dashboard-links">
         <button onClick={() => navigate("/abyssals")}>Abyssals</button>
