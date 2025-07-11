@@ -1,6 +1,6 @@
 # ISKonomy
 
-[![PR Validation](https://github.com/EggyBoffer/Eve-Isk-Management/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/EggyBoffer/Eve-Isk-Management/actions/workflows/pr-validation.yml)
+[![PR Validation](https://github.com/EggyBoffer/Eve-Isk-Management/actions/workflows/pr-verification.yaml/badge.svg)](https://github.com/EggyBoffer/Eve-Isk-Management/actions/workflows/pr-verification.yaml)
 ![Version](https://img.shields.io/github/package-json/v/EggyBoffer/Eve-Isk-Management?style=flat-square)
 ![Downloads](https://img.shields.io/github/downloads/EggyBoffer/Eve-Isk-Management/total?style=flat-square)
 [![Discord](https://img.shields.io/discord/1392840871044583505?label=Join%20our%20Discord&logo=discord&style=flat-square)](https://discord.gg/M87HtnjBYg)
