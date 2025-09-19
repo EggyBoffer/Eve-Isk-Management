@@ -28,7 +28,7 @@ function isJunkLine(line) {
   if (!l) return true;
   if (HEADER_PATTERNS.some((r) => r.test(l))) return true;
   if (FOOTER_PATTERNS.some((r) => r.test(l))) return true;
-  if (/^[\-\=\_\.]{3,}$/.test(l)) return true; // separators
+  if (/^[-=_.]{3,}$/.test(l)) return true; // separators
   return false;
 }
 

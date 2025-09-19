@@ -7,12 +7,22 @@ const JITA_REGION_ID = 10000002; // The Forge (Jita)
 const TYPEID_CACHE_KEY = "ded:typeid-cache:v1";
 
 function loadTypeIdCache() {
-  try { return JSON.parse(localStorage.getItem(TYPEID_CACHE_KEY) || "{}"); }
-  catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem(TYPEID_CACHE_KEY) || "{}");
+  } catch {
+    return {};
+  }
 }
+
 function saveTypeIdCache(map) {
-  try { localStorage.setItem(TYPEID_CACHE_KEY, JSON.stringify(map)); }
-  catch {}
+  try {
+    localStorage.setItem(TYPEID_CACHE_KEY, JSON.stringify(map));
+  } catch (err) {
+    // Some environments (private mode / quota exceeded) can fail writes.
+    // Swallow but leave a debug breadcrumb to satisfy no-empty.
+    // eslint-disable-next-line no-console
+    console.debug && console.debug("marketClient: failed to save typeId cache", err);
+  }
 }
 
 async function fetchTypeIdForName(name) {
@@ -97,7 +107,7 @@ export async function priceItemsJita(items) {
   const withIds = await resolveTypeIds(items);
 
   // Step 2: Jita aggregates
-  const ids = withIds.map(x => x.typeId).filter((id) => typeof id === "number");
+  const ids = withIds.map((x) => x.typeId).filter((id) => typeof id === "number");
   const uniqueIds = Array.from(new Set(ids));
   const aggregates = await fetchAggregates(uniqueIds);
 

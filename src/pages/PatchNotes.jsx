@@ -6,6 +6,13 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.1.1",
+      date: "2025-09-20",
+      changes: [
+        "Fix to a error behind the scenes."
+      ]
+    },
+    {
       version: "0.1.0",
       date: "2025-09-19",
       changes: [
