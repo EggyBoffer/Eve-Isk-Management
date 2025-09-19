@@ -2,10 +2,11 @@ name: Build and Release ISK App
 
 on:
   push:
-    branches:
-      - main
     tags:
-      - 'v*'
+      - 'v*'            # push a tag like v0.1.1 to trigger
+
+permissions:
+  contents: write       # <— REQUIRED so GH_TOKEN can create releases/assets
 
 jobs:
   build:
@@ -13,19 +14,12 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-
-      - name: Get version from package.json
-        id: get_version
-        shell: pwsh
-        run: |
-          $version = (Get-Content package.json | ConvertFrom-Json).version
-          echo "VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Install dependencies
         run: npm ci
@@ -33,34 +27,10 @@ jobs:
       - name: Build frontend (Vite)
         run: npm run build
 
-      - name: Install electron-builder dependencies
+      - name: Install electron-builder deps
         run: npx electron-builder install-app-deps
 
-      - name: Build Electron app installer
+      - name: Build & publish (electron-builder)
         run: npm run dist
         env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-      - name: List dist directory
-        run: dir dist
-
-      - name: Rename installer file
-        run: |
-          ren "dist/Iskonomy Setup ${{ env.VERSION }}.exe" "Iskonomy-Setup-${{ env.VERSION }}.exe"
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ env.VERSION }}
-          token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Upload release asset
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "dist/Iskonomy-Setup-${{ env.VERSION }}.exe"
-          asset_name: "Iskonomy-Setup-${{ env.VERSION }}.exe"
-          asset_content_type: application/octet-stream
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # <— IMPORTANT
