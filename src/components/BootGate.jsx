@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { runBootTasks } from "../lib/bootTasks";
 
-// If you already have a fancy loader, import and use it here instead.
 function DefaultLoader({ message }) {
   return (
     <div style={{
@@ -21,7 +20,8 @@ function DefaultLoader({ message }) {
   );
 }
 
-export default function BootGate({ children, Loader = DefaultLoader }) {
+export default function BootGate({ children, loader }) {
+  const LoaderComp = loader || DefaultLoader; // <- linter-friendly
   const [ready, setReady] = useState(false);
   const [message, setMessage] = useState("Preparing…");
 
@@ -47,6 +47,6 @@ export default function BootGate({ children, Loader = DefaultLoader }) {
     return () => { mounted = false; };
   }, []);
 
-  if (!ready) return <Loader message={message} />;
+  if (!ready) return <LoaderComp message={message} />;
   return children;
 }
