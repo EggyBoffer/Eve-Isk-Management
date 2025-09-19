@@ -171,7 +171,6 @@ export default function Dashboard() {
         <button onClick={() => navigate("/industry")}>Industry</button>
         <button onClick={() => navigate("/market")}>Market</button>
         <button onClick={() => navigate("/misc")}>Misc</button>
-        <button onClick={() => navigate("/analytics")}>Analytics</button>
       </div>
 
       <div className="dashboard-footer">

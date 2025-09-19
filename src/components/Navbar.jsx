@@ -37,14 +37,14 @@ export default function Navbar() {
             Abyssals
           </NavLink>
           <NavLink
-            to="/industry"
+            to="/ded-tracking"
             style={({ isActive }) => ({
               ...linkStyle,
               color: isActive ? "#fff" : "#ccc",
               borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
             })}
           >
-            Industry
+            DED!
           </NavLink>
           <NavLink
             to="/market"

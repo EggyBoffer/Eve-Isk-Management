@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 const FILAMENT_TYPES = {
   T0: { Firestorm: 56134, Dark: 56132, Gamma: 56136, Electrical: 56131, Exotic: 56133 },
@@ -10,7 +12,9 @@ const FILAMENT_TYPES = {
   T6: { Firestorm: 56142, Dark: 56140, Gamma: 56143, Electrical: 56139, Exotic: 56141 },
 };
 
+
 export default function Abyssals() {
+  const navigate = useNavigate();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [room1Isk, setRoom1Isk] = useState("");
   const [room2Isk, setRoom2Isk] = useState("");
@@ -238,12 +242,19 @@ export default function Abyssals() {
               <button type="submit">{editingId ? "Update Entry" : "Add Entry"}</button>
             </form>
 
+            <div style={{ marginTop: "1rem", display: "flex", gap: "1rem", alignItems: "center" }}>
             <button
               onClick={() => setShowGlorifiedInput(!showGlorifiedInput)}
-              style={{ marginTop: "1rem" }}
             >
               {showGlorifiedInput ? "Cancel" : "Add Glorified Drop"}
             </button>
+
+            <button onClick={() => navigate("/analytics")}>
+              Analytics
+            </button>
+          </div>
+          
+
 
             {showGlorifiedInput && (
               <div style={{ marginTop: "1rem" }}>
