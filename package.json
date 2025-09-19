@@ -2,7 +2,7 @@
   "name": "iskonomy",
   "description": "Iskonomy is a tool to track income. From plex to profit—stay in control.",
   "private": true,
-  "version": "0.0.8",
+  "version": "0.1.0",
   "author": "Death Killer21",
   "type": "module",
   "main": "electron/main.js",
@@ -25,6 +25,7 @@
     "lucide-react": "^0.522.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
@@ -53,28 +54,28 @@
     "wait-on": "^8.0.3"
   },
   "build": {
-  "icon": "public/iskonomy.ico",
-  "appId": "com.isktracker.app",
-  "files": [
-    "dist/**",
-    "electron/**",
-    "electron/splash-assets/**"     
-  ],
-  "extraResources": [
-    {
-      "from": "electron/splash-assets",
-      "to": "splash-assets"
+    "icon": "public/iskonomy.ico",
+    "appId": "com.isktracker.app",
+    "files": [
+      "dist/**",
+      "electron/**",
+      "electron/splash-assets/**"
+    ],
+    "extraResources": [
+      {
+        "from": "electron/splash-assets",
+        "to": "splash-assets"
+      }
+    ],
+    "asarUnpack": [
+      "dist/**"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis",
+      "artifactName": "Iskonomy Setup ${version}.exe"
     }
-  ],
-  "asarUnpack": [
-    "dist/**"
-  ],
-  "directories": {
-    "buildResources": "assets"
-  },
-  "win": {
-    "target": "nsis",
-    "artifactName": "Iskonomy Setup ${version}.exe"
   }
-}
 }

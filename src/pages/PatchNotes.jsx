@@ -1,35 +1,52 @@
 import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 
 export default function PatchNotes() {
   const navigate = useNavigate();
 
   const patches = [
     {
+      version: "0.1.0",
+      date: "2025-09-19",
+      changes: [
+        "In preparation for the DED tracker, the Abyssal Analytics button has been moved to the Abyssals page to separate the Analytics sections.",
+        "**New Feature** - DED Tracker",
+        "Added the DED Tracker, a tool to track income from DED sites. Includes market prices pulled directly from the EVE API (Jita).",
+        "Added a cargo parser to the DED Tracker, allowing you to copy and paste your loot can directly into the app to track income.",
+        "Updated backend logic for pulling Jita prices. This new system will also be applied to the Abyssals section in the future.",
+        "**New Feature** - DED Analytics",
+        "DED Analytics provide insights into drop rates, item percentages, ISK/hour, ISK/run, and other key statistics.",
+        "Improved the way Abyssal run data is stored for better long-term reliability.",
+        "Updated app loading: market prices now refresh automatically during initialization, ensuring up-to-date valuations on startup.",
+        "Settings now include options specifically for the DED tracker.",
+        "Improvements to the loading model."
+      ]
+    },
+    {
       version: "0.0.8",
       date: "2025-07-10",
       changes: [
-        "Fix to fatal error caused by discord button.",
+        "Fix to fatal error caused by discord button."
       ]
     },
     {
       version: "0.0.7",
       date: "2025-07-10",
       changes: [
-        "Fix for the Unknown fillament error when adding abyssal entries.",
+        "Fix for the Unknown filament error when adding abyssal entries.",
         "Fix for sorting in the abyssals analytics.",
         "Fix for a odd bug that caused the glorified tracker to glitch out and become unusable after adding one drop.",
         "Added a new setting to allow you to change the default filament tier and storm type.",
-        "Fixed an issue where you were unable to edit abyssal entries on alaytics page.",
+        "Fixed an issue where you were unable to edit abyssal entries on analytics page.",
         "Added version check to ensure up to date, This was added minimally before but it never worked, it should now work as expected.",
         "Added a discord button to the top of the dashboard, This will allow you to join the community discord.",
         "Added the option to pick between Frigate, cruiser and destroyer for the abyssal entries, This will allow you to track your abyssal runs more accurately.",
-        "Improved calculation logic to calculate isk/hour more accurately, Including the cost of the fillaments.",
+        "Improved calculation logic to calculate isk/hour more accurately, Including the cost of the filaments.",
         "Added Per ship tracking to Analytics",
-        "Added default ship type setting,",
+        "Added default ship type setting.",
         "Polished the UI for the settings page.",
-        "Added an Isk/day Summary metric, This will allow you to see how much isk you are making per day.",
-        "Isk/Day will show the last 4 Days, With an average.",
-
+        "Added an ISK/day Summary metric, This will allow you to see how much ISK you are making per day.",
+        "ISK/Day will show the last 4 Days, With an average."
       ]
     },
     {
@@ -104,7 +121,6 @@ export default function PatchNotes() {
       ]
     },
     
-    // Add more patches as your app evolves!
   ];
 
   return (
@@ -116,13 +132,17 @@ export default function PatchNotes() {
             <h2>{patch.version} — {patch.date}</h2>
             <ul>
               {patch.changes.map((change, i) => (
-                <li key={i}>✅ {change}</li>
+                <li key={i}>
+                  ✅ <ReactMarkdown>{change}</ReactMarkdown>
+                </li>
               ))}
             </ul>
           </div>
         ))}
       </div>
-      <button className="patch-notes-btn" onClick={() => navigate("/")}>Back to Dashboard</button>
+      <button className="patch-notes-btn" onClick={() => navigate("/")}>
+        Back to Dashboard
+      </button>
     </div>
   );
 }

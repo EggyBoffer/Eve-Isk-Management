@@ -1,0 +1,93 @@
+.ded-analytics-page {
+  padding: 2rem;
+  color: #fff;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Header (spaced below navbar) */
+.ded-analytics-header {
+  text-align: center;
+  margin: 50px 0 1.5rem 0;
+}
+.ded-analytics-header h1 {
+  font-size: 2.2rem;
+  margin: 0;
+  color: #61dafb;
+}
+.ded-analytics-header p {
+  color: #aab0c0;
+  margin-top: 0.5rem;
+}
+
+/* Cards */
+.ded-cards {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 0.75rem;
+}
+@media (max-width: 1024px) {
+  .ded-cards { grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .ded-cards { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+.ded-card {
+  background: #1e1e2f;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 0.9rem;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+}
+.ded-card-title {
+  font-size: 0.9rem;
+  color: #c7cedb;
+}
+.ded-card-value {
+  font-size: 1.25rem;
+  margin-top: 0.25rem;
+  color: #eef4ff;
+}
+
+/* Sections */
+.ded-section {
+  margin-top: 1.25rem;
+}
+.ded-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.ded-section h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.ded-muted {
+  color: #97a0b4;
+}
+
+/* Tables */
+.ded-table-wrap {
+  background: #151525;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ded-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.ded-table th, .ded-table td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  text-align: left;
+}
+.ded-table thead th {
+  color: #dfe6f2;
+  font-weight: 600;
+}
+.ded-table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
