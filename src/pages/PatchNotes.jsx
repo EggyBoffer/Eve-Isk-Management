@@ -6,6 +6,14 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.1.2",
+      date: "2025-09-28",
+      changes: [
+        "Change to the logic for how we calculate Drop %. This should resolve drop percentage being totaled and no individual to DED's",
+        "Added a DED Level filter to DED Analytics.",
+      ]
+    },
+    {
       version: "0.1.1",
       date: "2025-09-20",
       changes: [
