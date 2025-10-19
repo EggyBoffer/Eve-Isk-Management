@@ -2,8 +2,8 @@
   "name": "iskonomy",
   "description": "Iskonomy is a tool to track income. From plex to profit—stay in control.",
   "private": true,
-  "version": "0.1.2",
-  "author": "Death Killer21",
+  "version": "0.1.3",
+  "author": "ISKONOMY Corporation",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {

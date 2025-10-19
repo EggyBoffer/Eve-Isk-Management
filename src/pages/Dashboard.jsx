@@ -227,7 +227,7 @@ export default function Dashboard() {
                   GitHub
                 </a>
                 <br />
-                or donate ISK to <strong>Death Killer21</strong>
+                or donate ISK to <strong>ISKONOMY Corporation</strong>
               </p>
             </div>
           </div>
