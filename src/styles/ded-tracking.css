@@ -87,7 +87,7 @@
   margin-top: 0.25rem;
 }
 
-/* Actions */
+
 .ded-actions {
   display: flex;
   justify-content: flex-end;
@@ -123,7 +123,7 @@
   border-color: rgba(255,255,255,0.28);
 }
 
-/* Run list / table */
+
 .ded-run-list {
   margin-top: 1.25rem;
   background: #151525;
@@ -164,7 +164,7 @@
   border-color: rgba(255, 99, 99, 0.55);
 }
 
-/* Floating Action Button (Settings Cog) */
+
 .ded-fab {
   position: fixed;
   right: calc(16px + env(safe-area-inset-right));
@@ -192,11 +192,11 @@
   transform: translateY(1px);
 }
 
-/* Cog pop menu */
+
 .ded-fab-menu {
   position: absolute;
   right: 0;
-  bottom: 56px; /* sits above the fab */
+  bottom: 56px; 
   background: #1e1e2f;
   border: 1px solid rgba(255,255,255,0.10);
   border-radius: 10px;
@@ -229,14 +229,14 @@
   background: rgba(255,99,99,0.12);
 }
 
-/* Close menu by clicking outside */
+
 .ded-fab-backdrop {
   position: fixed;
   inset: 0;
-  z-index: -1; /* behind menu but inside .ded-fab stacking context */
+  z-index: -1; 
 }
 
-/* tiny pop animation */
+
 @keyframes ded-fab-pop {
   from { opacity: 0; transform: translateY(6px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
@@ -271,7 +271,7 @@
   white-space: pre-wrap;
 }
 
-/* Little badge used while pricing */
+
 .ded-badge {
   display: inline-block;
   font-size: 0.85rem;
@@ -282,7 +282,7 @@
   border: 1px solid rgba(97,218,251,0.35);
 }
 
-/* Error message */
+
 .ded-error {
   margin-top: 0.75rem;
   background: rgba(255, 120, 120, 0.09);
@@ -292,7 +292,7 @@
   border-radius: 8px;
 }
 
-/* small helper class used in footer */
+
 .ded-muted { 
   color: #97a0b4; 
 }
@@ -318,3 +318,272 @@
   text-decoration: underline;
 }
 
+
+.event-input-columns {
+  display: flex;
+  gap: 25px;
+  margin-bottom: 25px;
+  z-index: 1; 
+  position: relative;
+}
+
+.event-input-box {
+  flex: 1;
+  background: rgba(20, 20, 35, 0.75);
+  border: 1px solid rgba(150, 220, 255, 0.25);
+  border-radius: 14px;
+  padding: 20px;
+  backdrop-filter: blur(6px);
+}
+
+
+.event-input-box.loot-box {
+  flex: 1.2;
+}
+
+
+.event-input-box.bounty-box {
+  flex: 0.8;
+}
+
+
+.event-page {
+  
+  background: radial-gradient(circle at top, #1e2740 0, #090b16 55%, #050611 100%);
+}
+
+.event-page::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("https://i.imgur.com/8O7Z4Ss.png"); 
+  background-repeat: repeat;
+  animation: snowFall 12s linear infinite;
+  opacity: 0.25; 
+}
+
+
+.event-page::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image: url("https://i.imgur.com/8O7Z4Ss.png");
+  background-repeat: repeat;
+  animation: snowFall 20s linear infinite;
+  opacity: 0.15;
+}
+
+@keyframes snowFall {
+  from {
+    transform: translateY(-200px);
+  }
+  to {
+    transform: translateY(200px);
+  }
+}
+
+
+.event-summary-card {
+  position: relative;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  border-radius: 16px;
+  background: radial-gradient(circle at top, #212845 0, #121522 65%, #0a0c15 100%);
+  border: 1px solid rgba(150, 220, 255, 0.28);
+  box-shadow:
+    0 0 35px rgba(120, 200, 255, 0.22),
+    0 0 0 1px rgba(5, 10, 25, 0.8);
+}
+
+
+.event-summary-card::before {
+  content: "";
+  position: absolute;
+  inset: -40px;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 0),
+    radial-gradient(rgba(160, 220, 255, 0.18) 1px, transparent 0);
+  background-size: 120px 120px, 180px 180px;
+  mix-blend-mode: screen;
+}
+
+
+.event-summary-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.event-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.event-summary-header .ded-card-title {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c4e7ff;
+}
+
+
+.event-summary-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(156, 222, 255, 0.7);
+  background: radial-gradient(circle at top, rgba(180, 240, 255, 0.28), transparent 60%);
+  color: #e8f9ff;
+}
+
+
+.event-summary-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+  margin-top: 0.75rem;
+}
+
+.event-summary-block {
+  min-width: 220px;
+}
+
+
+.event-summary-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9fd3ff;
+  margin-bottom: 0.15rem;
+}
+
+
+.event-summary-total {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #e7f7ff;
+}
+
+
+.event-summary-lines {
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.event-summary-line {
+  font-size: 0.85rem;
+  color: #c4d6f4;
+  opacity: 0.9;
+}
+
+
+@media (max-width: 900px) {
+  .event-summary-grid {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}
+
+.event-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.event-card {
+  flex: 1 1 0;
+}
+
+
+/* Loot card a bit wider */
+.event-card-loot {
+  flex: 1.2 1 0;
+}
+
+/* Bounty card a bit narrower */
+.event-card-bounty {
+  flex: 0.8 1 0;
+}
+
+/* Only stack on *very* small screens */
+@media (max-width: 720px) {
+  .event-row {
+    flex-direction: column;
+  }
+}
+
+.event-page {
+  position: relative;
+  background: radial-gradient(circle at top, #1e2740 0, #090b16 55%, #050611 100%);
+  overflow: hidden;
+}
+
+/* base snow layer */
+.event-page::before,
+.event-page::after {
+  content: "";
+  position: fixed;
+  inset: -50px;
+  pointer-events: none;
+  z-index: 0;
+  /* tiny white dots as "snow" using gradients, no images */
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+    radial-gradient(circle, rgba(180, 220, 255, 0.25) 1px, transparent 1px);
+  background-repeat: repeat;
+  opacity: 0.35;
+}
+
+/* slow layer */
+.event-page::before {
+  background-size: 140px 140px, 220px 220px;
+  animation: snow-fall-slow 26s linear infinite;
+}
+
+/* faster, smaller "foreground" snow */
+.event-page::after {
+  background-size: 90px 90px, 160px 160px;
+  animation: snow-fall-fast 16s linear infinite;
+  opacity: 0.25;
+}
+
+@keyframes snow-fall-slow {
+  from {
+    transform: translate3d(0, -80px, 0);
+  }
+  to {
+    transform: translate3d(0, 80px, 0);
+  }
+}
+
+@keyframes snow-fall-fast {
+  from {
+    transform: translate3d(0, -120px, 0);
+  }
+  to {
+    transform: translate3d(0, 120px, 0);
+  }
+}
+
+/* make sure content sits above snow */
+.event-page > * {
+  position: relative;
+  z-index: 1;
+}

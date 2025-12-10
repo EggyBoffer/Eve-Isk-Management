@@ -150,6 +150,7 @@ export default function Dashboard() {
 
       <h1 className="dashboard-title">ISKONOMY!</h1>
       <p className="dashboard-subtitle">From plex to profit—stay in control.</p>
+      <p className="dashboard-subtitle">Happy Holidays from the Iskonomy team</p>
 
       <div className="discord-wrapper">
       <button
@@ -168,7 +169,8 @@ export default function Dashboard() {
 
       <div className="dashboard-links">
         <button onClick={() => navigate("/abyssals")}>Abyssals</button>
-        <button onClick={() => navigate("/industry")}>Industry</button>
+        <button onClick={() => navigate("/event-tracking")}>Winter Nexus!</button>
+        <button onClick={() => navigate("/industry")}>Exploration (Coming Soon)</button>
         <button onClick={() => navigate("/market")}>Market</button>
         <button onClick={() => navigate("/misc")}>Misc</button>
       </div>

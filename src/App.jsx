@@ -12,6 +12,8 @@ import PatchNotes from "./pages/PatchNotes";
 import Settings from "./pages/settings";
 import DEDAnalytics from "./pages/ded-analytics";
 import BootGate from "./components/BootGate";  
+import EventTracking from "./pages/event-tracking";
+import EventAnalytics from "./pages/event-analytics";
 import "./styles/global.css";
 
 function AppContent() {
@@ -32,6 +34,8 @@ function AppContent() {
           <Route path="/overlay" element={<Overlay />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/ded-analytics" element={<DEDAnalytics />} />
+          <Route path="/event-tracking" element={<EventTracking />} />
+          <Route path="/event-analytics" element={<EventAnalytics />} />
         </Routes>
       </main>
     </>

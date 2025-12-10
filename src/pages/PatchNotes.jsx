@@ -6,6 +6,16 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.2.0",
+      date: "2025-12-10",
+      changes: [
+        "HAPPY HOLIDAYS FROM THE ISKONOMY TEAM!",
+        "Added Event tracker for Winter Nexus.",
+        "Track your isk/hour from the Winter Nexus event sites!",
+        "In the new year, We will be working hard to bring the Exploration tracker and Market tracker.",
+      ]
+    },
+    {
       version: "0.1.2",
       date: "2025-09-28",
       changes: [

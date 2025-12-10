@@ -2,19 +2,18 @@ import { NavLink } from "react-router-dom";
 import { Settings } from "lucide-react";
 import iskonomylogo from "../assets/iskonomy.png";
 
-
 export default function Navbar() {
   return (
     <nav style={navStyle}>
       <div style={containerStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <img
-          src={iskonomylogo}
-          alt="ISKonomy logo"
-          style={{ height: "55px", width: "70px", objectFit: "contain" }}
-        />
-        <div style={logoStyle}>ISKONOMY</div>
-      </div>
+          <img
+            src={iskonomylogo}
+            alt="ISKonomy logo"
+            style={{ height: "55px", width: "70px", objectFit: "contain" }}
+          />
+          <div style={logoStyle}>ISKONOMY</div>
+        </div>
         <div style={linksStyle}>
           <NavLink
             to="/"
@@ -45,6 +44,31 @@ export default function Navbar() {
             })}
           >
             DED!
+          </NavLink>
+          <NavLink
+            to="/event-tracking"
+            style={({ isActive }) => ({
+              ...linkStyle,
+              color: isActive ? "#fff" : "#ccc",
+              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
+            })}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              Winter Nexus!
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  padding: "1px 6px",
+                  borderRadius: "999px",
+                  background: "#ff6b6b",
+                  color: "#fff",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.03em",
+                }}
+              >
+                Limited
+              </span>
+            </span>
           </NavLink>
           <NavLink
             to="/market"
