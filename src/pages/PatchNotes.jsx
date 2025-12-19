@@ -6,6 +6,19 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.3.0",
+      date: "2025-12-19",
+      changes: [
+        "Improvements made to loading logic to fix the 'loading' bug you see in instances where the app is loading a lot of data.",
+        "Loading should now be all completed during the splash screen not once the app is launched or when switching between pages.",
+        "NEW FEATURE",
+        "Incursion tracker - Copy your wallet logs directly in and see how much isk and LP you have earnt.",
+        "Added highsec and Nullsec names for Winter Nexus",
+        "Some Future proofing updates to help with longevity as the app grows.",
+        "Some file system changes to help with future proofing.  Please report any bugs you notice following from this.",
+      ]
+    },
+    {
       version: "0.2.0",
       date: "2025-12-10",
       changes: [

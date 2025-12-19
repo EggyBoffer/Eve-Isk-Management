@@ -19,14 +19,15 @@ export async function repriceAllDEDRuns(opts = {}) {
   let updated = 0;
   let failed = 0;
 
-  // Sequential keeps it simple and gentle on the API; change to small batches if you like.
   for (let i = 0; i < runs.length; i++) {
     const r = runs[i];
+
     onProgress({
-      current: i,
+      current: i + 1,
       total,
-      label: `Repricing DED run ${i + 1} / ${total}…`,
+      label: "Repricing DED runs…",
     });
+
     try {
       const { items, iskTotal } = await priceItemsJita(r.items || []);
       updateDEDRun(r.id, {
@@ -56,5 +57,7 @@ export async function runBootTasks({ onProgress } = {}) {
   if (autoReprice) {
     return await repriceAllDEDRuns({ onProgress });
   }
+
+  onProgress?.({ current: 0, total: 0, label: "Auto repricing disabled" });
   return { updated: 0, failed: 0, skipped: true };
 }

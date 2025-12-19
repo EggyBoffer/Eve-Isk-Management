@@ -14,6 +14,8 @@ import DEDAnalytics from "./pages/ded-analytics";
 import BootGate from "./components/BootGate";  
 import EventTracking from "./pages/event-tracking";
 import EventAnalytics from "./pages/event-analytics";
+import IncursionTracker from "./pages/IncursionTracker";
+import IncursionAnalytics from "./pages/IncursionAnalytics";
 import "./styles/global.css";
 
 function AppContent() {
@@ -36,6 +38,8 @@ function AppContent() {
           <Route path="/ded-analytics" element={<DEDAnalytics />} />
           <Route path="/event-tracking" element={<EventTracking />} />
           <Route path="/event-analytics" element={<EventAnalytics />} />
+          <Route path="/incursions" element={<IncursionTracker />} />
+          <Route path="/incursions/analytics" element={<IncursionAnalytics />} />
         </Routes>
       </main>
     </>

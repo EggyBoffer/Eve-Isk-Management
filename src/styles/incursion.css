@@ -1,0 +1,195 @@
+/* ============================
+   Incursion Pages (Tracker + Analytics)
+   ============================ */
+
+.incursionPage,
+.incursionPage * {
+  box-sizing: border-box;
+}
+
+.incursionPage {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+
+  padding: 16px;
+
+  color: rgba(225, 235, 255, 0.92);
+}
+
+/* Backdrop image layer */
+.incursionBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+
+  filter: saturate(1.05) contrast(1.05);
+}
+
+/* Dark overlay so text stays readable */
+.incursionBackdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 20, 0.62) 0%,
+    rgba(5, 8, 20, 0.80) 55%,
+    rgba(5, 8, 20, 0.92) 100%
+  );
+}
+
+/* ---------- Header ---------- */
+
+.incursionHeader h1 {
+  margin: 0 0 6px 0;
+  line-height: 1.1;
+  text-shadow: 0 0 18px rgba(130, 170, 255, 0.35);
+}
+
+.incursionHeader p {
+  margin: 0;
+  opacity: 0.75;
+}
+
+/* ---------- Layout ---------- */
+
+.incursionTwoCol {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 1100px) {
+  .incursionTwoCol {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Panels ---------- */
+
+.incursionPanel {
+  padding: 16px;
+  background: rgba(12, 16, 32, 0.70);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  border-radius: 14px;
+}
+
+.incursionPanel h2 {
+  margin: 0 0 12px 0;
+  line-height: 1.15;
+}
+
+.incursionPanelSpacer {
+  margin-top: 16px;
+}
+
+/* ---------- Wallet Input ---------- */
+
+.incursionTextarea {
+  width: 100%;
+  min-height: 260px;
+  resize: vertical;
+
+  padding: 12px;
+  border-radius: 12px;
+
+  border: 1px solid rgba(120, 160, 255, 0.12);
+  background: rgba(5, 8, 20, 0.35);
+  color: rgba(225, 235, 255, 0.92);
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+.incursionInputRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ---------- Summary ---------- */
+
+.incursionSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.incursionSummaryBlock {
+  padding: 12px 14px;
+  border: 1px solid rgba(120, 160, 255, 0.10);
+  border-radius: 12px;
+  background: rgba(5, 8, 20, 0.35);
+}
+
+.incursionSummaryLabel {
+  opacity: 0.75;
+  font-size: 0.9em;
+}
+
+.incursionSummaryValue {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-top: 4px;
+  text-shadow: 0 0 10px rgba(120, 160, 255, 0.25);
+}
+
+.incursionLinkRow {
+  margin-top: 10px;
+}
+
+/* ---------- Tables ---------- */
+
+.incursionTableWrap {
+  border: 1px solid rgba(120, 160, 255, 0.10);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(5, 8, 20, 0.25);
+}
+
+.incursionTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.incursionTable th,
+.incursionTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(120, 160, 255, 0.10);
+}
+
+.incursionTable thead th {
+  opacity: 0.85;
+  font-weight: 600;
+  background: rgba(5, 8, 20, 0.35);
+}
+
+.incursionTable tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.incursionRowUnknown td {
+  opacity: 0.75;
+}
+
+/* ---------- Buttons ---------- */
+
+.incursionBtn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  background: rgba(5, 8, 20, 0.35);
+  color: inherit;
+  cursor: pointer;
+}
+
+.incursionBtn:hover {
+  filter: brightness(1.1);
+}

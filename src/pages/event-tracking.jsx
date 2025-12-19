@@ -17,7 +17,7 @@ import {
   loadEventBounties,
 } from "../lib/eventBountiesStore.js";
 
-const DEFAULT_SITES = ["Wightstorm Muster Point", "Event Site"];
+const DEFAULT_SITES = ["Wightstorm Muster Point", "Wightstorm Forward Base", "Wightstorm Transit Site", "Event Site"];
 
 export default function EventTracking() {
   const [siteType, setSiteType] = useState(DEFAULT_SITES[0]);

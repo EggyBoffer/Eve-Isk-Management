@@ -71,14 +71,14 @@ export default function Navbar() {
             </span>
           </NavLink>
           <NavLink
-            to="/market"
+            to="/incursions"
             style={({ isActive }) => ({
               ...linkStyle,
               color: isActive ? "#fff" : "#ccc",
               borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
             })}
           >
-            Market
+            Incursions
           </NavLink>
           <NavLink
             to="/misc"

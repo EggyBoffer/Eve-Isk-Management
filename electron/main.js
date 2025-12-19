@@ -1,7 +1,7 @@
 /* eslint-env node */
 /* global process */
 
-import { app, BrowserWindow, ipcMain, globalShortcut } from "electron";
+import { app, BrowserWindow, ipcMain, globalShortcut, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -32,7 +32,7 @@ try {
   if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'ship_type':", err.message);
 }
 
-const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+const settingsPath = path.join(app.getPath("userData"), "settings.json");
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -57,7 +57,7 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1300,
     height: 900,
-    show: false,
+    show: false, // IMPORTANT: stay hidden until boot completes
     icon: path.join(__dirname, "public", "iskonomy.ico"),
     title: "ISKonomy",
     autoHideMenuBar: true,
@@ -76,11 +76,19 @@ function createMainWindow() {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
 
+  // IMPORTANT:
+  // We do NOT show the main window here.
+  // The renderer will run boot tasks (BootGate / bootTasks) and then send "boot:done".
   mainWindow.webContents.on("did-finish-load", () => {
-    setTimeout(() => {
-      splash?.close();
-      mainWindow.show();
-    }, 2000);
+    // Optional: you can show a default status while the renderer finishes boot tasks.
+    splash?.webContents?.send("boot:progress", "Starting ISKONOMY!...");
+  });
+
+  // If the user closes the main window, also close splash
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+    if (splash && !splash.isDestroyed()) splash.close();
+    splash = null;
   });
 }
 
@@ -97,18 +105,50 @@ function createSplash() {
     show: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
-    }
+      contextIsolation: false,
+    },
   });
 
-  const logoPath = path.join(process.resourcesPath, 'splash-assets', 'iskonomy.png');
+  const logoPath = path.join(process.resourcesPath, "splash-assets", "iskonomy.png");
 
   splash.loadFile(path.join(__dirname, "splash.html"));
   splash.webContents.once("did-finish-load", () => {
-    splash.webContents.send("logo-path", `file://${logoPath.replace(/\\/g, '/')}`);
+    splash.webContents.send("logo-path", `file://${logoPath.replace(/\\/g, "/")}`);
     splash.show();
   });
+
+  splash.on("closed", () => {
+    splash = null;
+  });
 }
+
+/**
+ * Boot message plumbing:
+ * - Renderer sends "boot:progress" with a message string
+ * - Main forwards it to splash.html so the splash UI displays it
+ * - Renderer sends "boot:done" when all boot tasks are finished
+ * - Main shows mainWindow and closes splash
+ */
+ipcMain.on("boot:progress", (_event, msg) => {
+  if (splash && !splash.isDestroyed()) {
+    splash.webContents.send("boot:progress", String(msg || ""));
+  }
+});
+
+ipcMain.on("boot:done", () => {
+  // Show the main window now that boot is finished
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
+
+  // Close the splash
+  if (splash && !splash.isDestroyed()) {
+    splash.close();
+  }
+});
+
+/* ---------------- Overlay (unchanged) ---------------- */
 
 function createOverlay() {
   const savedSettings = loadSettings();
@@ -134,38 +174,37 @@ function createOverlay() {
   overlayWin.setAlwaysOnTop(true, "screen-saver");
 
   if (!app.isPackaged) {
-    overlayWin.loadURL('http://localhost:5173/#/overlay');
+    overlayWin.loadURL("http://localhost:5173/#/overlay");
   } else {
     overlayWin.loadFile(
-      path.join(process.resourcesPath, 'app.asar.unpacked', 'dist', 'index.html'),
-      { hash: '/overlay' }
+      path.join(process.resourcesPath, "app.asar.unpacked", "dist", "index.html"),
+      { hash: "/overlay" }
     );
   }
 
-  ipcMain.once('overlay-ready', () => {
-  overlayWin.webContents.send('set-filament-settings', {
-    fillament_cost: filamentCost,
-    ship_type: activeShipType,
-    tier: activeTier,
-    storm_type: activeStormType,
+  ipcMain.once("overlay-ready", () => {
+    overlayWin.webContents.send("set-filament-settings", {
+      fillament_cost: filamentCost,
+      ship_type: activeShipType,
+      tier: activeTier,
+      storm_type: activeStormType,
+    });
   });
-});
 
-
-  globalShortcut.register('Escape', () => {
+  globalShortcut.register("Escape", () => {
     overlayWin.close();
-    globalShortcut.unregister('Escape');
+    globalShortcut.unregister("Escape");
   });
 
-  overlayWin.on('close', () => saveSettings(overlayWin.getBounds()));
+  overlayWin.on("close", () => saveSettings(overlayWin.getBounds()));
 }
 
 let filamentCost = 0;
-let activeShipType = '';
-let activeTier = '';
-let activeStormType = '';
+let activeShipType = "";
+let activeTier = "";
+let activeStormType = "";
 
-ipcMain.on('open-overlay-with-cost', (event, cost, shipType, tier, stormType) => {
+ipcMain.on("open-overlay-with-cost", (event, cost, shipType, tier, stormType) => {
   filamentCost = cost;
   activeShipType = shipType;
   activeTier = tier;
@@ -173,6 +212,7 @@ ipcMain.on('open-overlay-with-cost', (event, cost, shipType, tier, stormType) =>
   createOverlay();
 });
 
+/* ---------------- Settings + DB IPC (unchanged) ---------------- */
 
 ipcMain.handle("get-app-settings", () => loadSettings());
 
@@ -181,41 +221,35 @@ ipcMain.handle("save-app-settings", (event, newSettings) => {
   return { success: true };
 });
 
-ipcMain.handle('add-entry', (event, category, entry) => {
+ipcMain.handle("add-entry", (event, category, entry) => {
   const { date = new Date().toISOString().slice(0, 10) } = entry;
 
   try {
-    if (category === 'abyssals') {
+    if (category === "abyssals") {
       const {
-      room1_isk = 0,
-      room2_isk = 0,
-      room3_isk = 0,
-      time_taken = 0,
-      fillament_cost = 0,
-      tier = '',
-      storm_type = '',
-      ship_type = ''
-    } = entry;
+        room1_isk = 0,
+        room2_isk = 0,
+        room3_isk = 0,
+        time_taken = 0,
+        fillament_cost = 0,
+        tier = "",
+        storm_type = "",
+        ship_type = "",
+      } = entry;
 
       const stmt = db.prepare(`
         INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type);
-
-    } else if (category === 'glorified') {
-      const {
-        isk_earned = 0,
-        tier = '',
-        storm_type = ''
-      } = entry;
+    } else if (category === "glorified") {
+      const { isk_earned = 0, tier = "", storm_type = "" } = entry;
 
       const stmt = db.prepare(`
         INSERT INTO glorified (date, isk_earned, tier, storm_type)
         VALUES (?, ?, ?, ?)
       `);
       stmt.run(date, isk_earned, tier, storm_type);
-
     } else {
       const { isk_earned = 0 } = entry;
 
@@ -227,25 +261,24 @@ ipcMain.handle('add-entry', (event, category, entry) => {
     }
 
     return { success: true };
-
   } catch (err) {
     console.error("Error occurred in handler for 'add-entry':", err);
     return { success: false, error: err.message };
   }
 });
 
-ipcMain.handle('get-entries', (event, category) => {
+ipcMain.handle("get-entries", (event, category) => {
   const stmt = db.prepare(`SELECT * FROM ${category}`);
   return stmt.all();
 });
 
-ipcMain.handle('delete-entry', (event, category, id) => {
+ipcMain.handle("delete-entry", (event, category, id) => {
   const stmt = db.prepare(`DELETE FROM ${category} WHERE id = ?`);
   stmt.run(id);
   return { success: true };
 });
 
-ipcMain.handle('update-entry', (event, category, entry) => {
+ipcMain.handle("update-entry", (event, category, entry) => {
   const {
     id,
     date,
@@ -254,9 +287,9 @@ ipcMain.handle('update-entry', (event, category, entry) => {
     room3_isk = 0,
     time_taken = 0,
     fillament_cost = 0,
-    tier = '',
-    storm_type = '',
-    ship_type = ''
+    tier = "",
+    storm_type = "",
+    ship_type = "",
   } = entry;
 
   const stmt = db.prepare(`
@@ -269,22 +302,22 @@ ipcMain.handle('update-entry', (event, category, entry) => {
   return { success: true };
 });
 
-ipcMain.handle('add-glorified', (event, entry) => {
+ipcMain.handle("add-glorified", (event, entry) => {
   const { date, isk_earned, tier, storm_type, name } = entry;
   const stmt = db.prepare(`
     INSERT INTO glorified (date, isk_earned, tier, storm_type, name)
     VALUES (?, ?, ?, ?, ?)
   `);
-  stmt.run(date, parseInt(isk_earned) || 0, tier, storm_type, name || '');
+  stmt.run(date, parseInt(isk_earned) || 0, tier, storm_type, name || "");
   return { success: true };
 });
 
-ipcMain.handle('get-glorified', () => {
+ipcMain.handle("get-glorified", () => {
   const stmt = db.prepare(`SELECT * FROM glorified`);
   return stmt.all();
 });
 
-ipcMain.handle('get-db-size', () => {
+ipcMain.handle("get-db-size", () => {
   try {
     const stats = fs.statSync(db.name);
     return { size: stats.size };
@@ -293,9 +326,7 @@ ipcMain.handle('get-db-size', () => {
   }
 });
 
-import { shell } from "electron";
-
-ipcMain.handle('open-external', (event, url) => {
+ipcMain.handle("open-external", (event, url) => {
   try {
     shell.openExternal(url);
     return { success: true };
@@ -305,16 +336,14 @@ ipcMain.handle('open-external', (event, url) => {
   }
 });
 
-
-
-ipcMain.handle('delete-glorified', (event, id) => {
+ipcMain.handle("delete-glorified", (event, id) => {
   const stmt = db.prepare(`DELETE FROM glorified WHERE id = ?`);
   stmt.run(id);
   return { success: true };
 });
 
-ipcMain.on('close-overlay', () => {
-  const overlay = BrowserWindow.getAllWindows().find(w => w.getTitle() === "Overlay");
+ipcMain.on("close-overlay", () => {
+  const overlay = BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Overlay");
   if (overlay) overlay.close();
 });
 
@@ -322,11 +351,11 @@ app.whenReady().then(() => {
   createSplash();
   createMainWindow();
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
   });
 });
 
-app.on('window-all-closed', () => {
-  if (os.platform() !== 'darwin') app.quit();
+app.on("window-all-closed", () => {
+  if (os.platform() !== "darwin") app.quit();
 });

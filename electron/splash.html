@@ -34,17 +34,39 @@
       font-size: 0.85rem;
       color: #bbb;
       font-family: monospace;
+      user-select: none;
     }
 
+    /* Base "Loading..." line */
     .splash-text {
       position: absolute;
-      bottom: 45px;
+      bottom: 52px;
       width: 100%;
       text-align: center;
       font-family: sans-serif;
       font-size: 1rem;
       color: white;
       text-shadow: 0 0 3px black;
+      user-select: none;
+    }
+
+    /* Dynamic boot progress line */
+    #statusText {
+      position: absolute;
+      bottom: 34px;
+      width: 100%;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 0.85rem;
+      color: #cfe8ff;
+      opacity: 0.9;
+      text-shadow: 0 0 3px black;
+      padding: 0 12px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: none;
     }
 
     .dots::after {
@@ -54,7 +76,7 @@
 
     .loading-bar {
       position: absolute;
-      bottom: 20px;
+      bottom: 18px;
       left: 10%;
       width: 80%;
       height: 6px;
@@ -67,12 +89,15 @@
       height: 100%;
       width: 0%;
       background-color: #61dafb;
-      animation: fillBar 2.5s ease-in-out forwards;
+
+      /* Loop instead of "complete and stop" */
+      animation: fillBar 1.8s ease-in-out infinite;
     }
 
     @keyframes fillBar {
-      0% { width: 0%; }
-      100% { width: 100%; }
+      0%   { width: 0%; opacity: 0.6; }
+      60%  { width: 100%; opacity: 1; }
+      100% { width: 100%; opacity: 0.0; }
     }
 
     @keyframes blink {
@@ -93,16 +118,27 @@
     </div>
 
     <img id="logo" alt="ISKonomy Logo">
+
     <script>
       const { ipcRenderer } = require("electron");
-      ipcRenderer.on("logo-path", (event, logoUrl) => {
+
+      ipcRenderer.on("logo-path", (_event, logoUrl) => {
         document.getElementById("logo").src = logoUrl;
+      });
+
+      // NEW: receive boot progress text from main process
+      ipcRenderer.on("boot:progress", (_event, msg) => {
+        const el = document.getElementById("statusText");
+        if (el) el.textContent = String(msg || "");
       });
     </script>
 
     <div class="splash-text">
       Loading<span class="dots"></span>
     </div>
+
+    <!-- NEW: dynamic status line -->
+    <div id="statusText">Starting…</div>
 
     <div class="loading-bar">
       <div class="loading-fill"></div>
