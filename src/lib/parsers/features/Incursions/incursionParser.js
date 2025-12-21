@@ -114,10 +114,36 @@ export function summarizeIncursionTicks(rows) {
   const startTs = ticks > 0 ? rows[0].ts : undefined;
   const endTs = ticks > 0 ? rows[ticks - 1].ts : undefined;
 
-  const durationMs =
-    startTs && endTs && endTs > startTs ? endTs - startTs : 0;
+  // --- NEW: active time (session-based) ---
+  // If there's a gap bigger than an hour between ticks, we treat it as a new session:
+  // - ISK/LP still counted
+  // - idle time NOT counted
+  const SESSION_GAP_MS = 60 * 60 * 1000;
 
-  const hours = durationMs > 0 ? durationMs / 3600000 : 0;
+  let activeMs = 0;
+
+  // Ensure ordering even if caller passed unsorted rows (store should already be sorted)
+  const ordered = rows.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+
+  for (let i = 1; i < ordered.length; i++) {
+    const prev = ordered[i - 1];
+    const cur = ordered[i];
+
+    const prevTs = Number(prev.ts) || 0;
+    const curTs = Number(cur.ts) || 0;
+
+    if (!prevTs || !curTs) continue;
+
+    const delta = curTs - prevTs;
+
+    // only count "active" gaps inside a session
+    if (delta > 0 && delta <= SESSION_GAP_MS) {
+      activeMs += delta;
+    }
+  }
+
+  // Keep your behaviour: first tick has 0 time -> 0 isk/hour
+  const hours = activeMs > 0 ? activeMs / 3600000 : 0;
 
   return {
     ticks,
@@ -125,7 +151,7 @@ export function summarizeIncursionTicks(rows) {
     totalLP,
     startTs,
     endTs,
-    hours,
+    hours, // now "active hours"
     iskPerHour: hours > 0 ? totalISK / hours : 0,
     lpPerHour: hours > 0 ? totalLP / hours : 0,
     unknownLPCount,

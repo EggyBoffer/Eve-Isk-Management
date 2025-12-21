@@ -6,6 +6,13 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.3.1",
+      date: "2025-12-21",
+      changes: [
+        "Fix for issue affecting Incursion isk/hour that would cause it to use inactive hours to calculate."
+      ]
+    },
+    {
       version: "0.3.0",
       date: "2025-12-19",
       changes: [
