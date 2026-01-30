@@ -1,4 +1,4 @@
-// src/lib/parsers/features/Incursions/incursionAnalytics.js
+
 
 export function groupIncursionsByCharacter(rows) {
   const by = {};
@@ -20,7 +20,7 @@ export function groupIncursionsByMonth(rows) {
   for (const r of rows) {
     if (!r.ts) continue;
     const d = new Date(r.ts);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; // YYYY-MM
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; 
 
     if (!by[key]) by[key] = { month: key, ticks: 0, isk: 0, lp: 0 };
     by[key].ticks += 1;

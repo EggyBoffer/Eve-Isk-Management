@@ -1,9 +1,9 @@
-// src/lib/marketClient.js
-// Jita-only pricing via Fuzzwork (browser friendly, CORS enabled).
-// - Name -> typeID: https://www.fuzzwork.co.uk/api/typeid.php?typename=...
-// - Aggregates:     https://market.fuzzwork.co.uk/aggregates/?region=10000002&types=...
 
-const JITA_REGION_ID = 10000002; // The Forge (Jita)
+
+
+
+
+const JITA_REGION_ID = 10000002; 
 const TYPEID_CACHE_KEY = "ded:typeid-cache:v1";
 
 function loadTypeIdCache() {
@@ -18,9 +18,9 @@ function saveTypeIdCache(map) {
   try {
     localStorage.setItem(TYPEID_CACHE_KEY, JSON.stringify(map));
   } catch (err) {
-    // Some environments (private mode / quota exceeded) can fail writes.
-    // Swallow but leave a debug breadcrumb to satisfy no-empty.
-    // eslint-disable-next-line no-console
+    
+    
+    
     console.debug && console.debug("marketClient: failed to save typeId cache", err);
   }
 }
@@ -34,7 +34,7 @@ async function fetchTypeIdForName(name) {
   return data.typeID;
 }
 
-/** Tiny concurrency limiter (no deps). */
+
 function pLimit(concurrency = 5) {
   let active = 0;
   const queue = [];
@@ -57,7 +57,7 @@ function pLimit(concurrency = 5) {
   };
 }
 
-// Resolve all names to typeIDs with caching
+
 export async function resolveTypeIds(items) {
   const cache = loadTypeIdCache();
   const results = [];
@@ -78,7 +78,7 @@ export async function resolveTypeIds(items) {
           cache[it.name] = id;
           return { ...it, typeId: id };
         } catch {
-          return { ...it, typeId: null }; // unresolved => priced as 0
+          return { ...it, typeId: null }; 
         }
       })
     )
@@ -97,21 +97,17 @@ async function fetchAggregates(typeIds) {
   return data || {};
 }
 
-/**
- * Price items by name using Jita lowest sell price.
- * @param {Array<{name:string, qty:number}>} items
- * @returns {Promise<{items:Array, iskTotal:number}>}
- */
+
 export async function priceItemsJita(items) {
-  // Step 1: name -> typeId
+  
   const withIds = await resolveTypeIds(items);
 
-  // Step 2: Jita aggregates
+  
   const ids = withIds.map((x) => x.typeId).filter((id) => typeof id === "number");
   const uniqueIds = Array.from(new Set(ids));
   const aggregates = await fetchAggregates(uniqueIds);
 
-  // Step 3: compute unit (sell.min) + total
+  
   const priced = withIds.map((it) => {
     const agg = it.typeId ? aggregates[it.typeId] : null;
     const unit = agg ? Number(agg.sell?.min ?? 0) : 0;

@@ -1,155 +1,141 @@
-import { NavLink } from "react-router-dom";
-import { Settings } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Settings, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import iskonomylogo from "../assets/iskonomy.png";
+import "../styles/navbar.css";
 
 export default function Navbar() {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    function onDocClick(e) {
+      if (!moreRef.current) return;
+      if (!moreRef.current.contains(e.target)) setMoreOpen(false);
+    }
+
+    function onKey(e) {
+      if (e.key === "Escape") setMoreOpen(false);
+    }
+
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
   return (
-    <nav style={navStyle}>
-      <div style={containerStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <img
-            src={iskonomylogo}
-            alt="ISKonomy logo"
-            style={{ height: "55px", width: "70px", objectFit: "contain" }}
-          />
-          <div style={logoStyle}>ISKONOMY</div>
+    <nav className="navbar">
+      <div className="navbar__container">
+        <div className="navbar__brand">
+          <img src={iskonomylogo} alt="ISKonomy logo" className="navbar__logo" />
+          <div className="navbar__title">ISKONOMY</div>
         </div>
-        <div style={linksStyle}>
+
+        <div className="navbar__links">
           <NavLink
             to="/"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              color: isActive ? "#fff" : "#ccc",
-              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-            })}
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
           >
             Dashboard
           </NavLink>
+
           <NavLink
             to="/abyssals"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              color: isActive ? "#fff" : "#ccc",
-              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-            })}
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
           >
             Abyssals
           </NavLink>
+
           <NavLink
             to="/ded-tracking"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              color: isActive ? "#fff" : "#ccc",
-              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-            })}
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
           >
             DED!
           </NavLink>
-          <NavLink
-            to="/event-tracking"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              color: isActive ? "#fff" : "#ccc",
-              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-            })}
-          >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              Winter Nexus!
-              <span
-                style={{
-                  fontSize: "0.7rem",
-                  padding: "1px 6px",
-                  borderRadius: "999px",
-                  background: "#ff6b6b",
-                  color: "#fff",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                Limited
-              </span>
-            </span>
-          </NavLink>
+
           <NavLink
             to="/incursions"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              color: isActive ? "#fff" : "#ccc",
-              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-            })}
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
           >
             Incursions
           </NavLink>
+
+          <div ref={moreRef} className="navbar__more">
+            <button
+              type="button"
+              className={"navbar__moreBtn" + (moreOpen ? " navbar__moreBtn--open" : "")}
+              onClick={() => setMoreOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={moreOpen ? "true" : "false"}
+            >
+              More <ChevronDown size={16} />
+            </button>
+
+            {moreOpen && (
+              <div className="navbar__dropdown" role="menu">
+                <button
+                  type="button"
+                  className="navbar__dropdownItem"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    navigate("/overall-analytics");
+                  }}
+                  role="menuitem"
+                >
+                  Overall Stats
+                </button>
+
+                <button
+                  type="button"
+                  className="navbar__dropdownItem"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    navigate("/misc");
+                  }}
+                  role="menuitem"
+                >
+                  Misc
+                </button>
+
+                <button
+                  type="button"
+                  className="navbar__dropdownItem"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    navigate("/market");
+                  }}
+                  role="menuitem"
+                >
+                  Market
+                </button>
+              </div>
+            )}
+          </div>
+
           <NavLink
-            to="/misc"
-            style={({ isActive }) => ({
-              ...linkStyle,
-              color: isActive ? "#fff" : "#ccc",
-              borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-            })}
+            to="/settings"
+            className={({ isActive }) =>
+              "navbar__iconLink" + (isActive ? " navbar__iconLink--active" : "")
+            }
+            aria-label="Settings"
+            title="Settings"
           >
-            Misc
-          </NavLink>
-          <NavLink to="/settings" style={getIconLinkStyle}>
             <Settings size={20} />
           </NavLink>
         </div>
       </div>
     </nav>
   );
-}
-
-// Styles
-const navStyle = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  height: "60px",
-  backgroundColor: "#1e1e2f",
-  color: "white",
-  display: "flex",
-  alignItems: "center",
-  boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-  zIndex: 1000,
-};
-
-const containerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  width: "90%",
-  maxWidth: "1200px",
-  margin: "0 auto",
-};
-
-const logoStyle = {
-  fontWeight: "bold",
-  fontSize: "1.5rem",
-  paddingLeft: "40px",
-};
-
-const linksStyle = {
-  display: "flex",
-  gap: "20px",
-};
-
-const linkStyle = {
-  color: "#ccc",
-  textDecoration: "none",
-  fontWeight: "500",
-  paddingBottom: "2px",
-  transition: "color 0.3s ease, border-bottom 0.3s ease",
-};
-
-function getIconLinkStyle({ isActive }) {
-  return {
-    ...linkStyle,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "0 5px",
-    color: isActive ? "#61dafb" : "#ccc",
-    borderBottom: isActive ? "2px solid #61dafb" : "2px solid transparent",
-  };
 }

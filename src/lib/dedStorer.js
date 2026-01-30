@@ -1,10 +1,10 @@
-// src/lib/dedStore.js
-// Storage layer for DED runs. Designed so we can swap to an API/DB later
-// without touching page components. Includes basic import/export utilities.
+
+
+
 
 const KEY = "ded:runs:v1";
 
-// --- helpers ---
+
 function safeParse(json) {
   try { return JSON.parse(json ?? "[]") || []; }
   catch { return []; }
@@ -16,21 +16,12 @@ function newId() {
   return (crypto?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
 }
 
-// --- public API ---
+
 export function loadRuns() {
   return safeParse(localStorage.getItem(KEY));
 }
 
-/**
- * Add a new run
- * Shape is future-analytics ready:
- * - dedLevel: "1/10".."10/10"
- * - clearTimeMinutes: number
- * - cargoText: raw pasted text from EVE
- * - items: parsed [{ name, qty }] (optional; we’ll fill later)
- * - iskTotal: number (optional; we’ll fill later from market API)
- * - meta: { region, constellation, system, ship, notes } (optional)
- */
+
 export function addRun(run) {
   const runs = loadRuns();
   const entry = {
@@ -38,7 +29,7 @@ export function addRun(run) {
     createdAt: new Date().toISOString(),
     ...run,
   };
-  runs.unshift(entry); // newest first
+  runs.unshift(entry); 
   save(runs);
   return entry;
 }
@@ -61,7 +52,7 @@ export function clearAllRuns() {
   localStorage.removeItem(KEY);
 }
 
-// --- import/export for backups/migration ---
+
 export function exportRunsAsJson() {
   const blob = new Blob([JSON.stringify(loadRuns(), null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -79,7 +70,7 @@ export async function importRunsFromFile(file) {
   const incoming = safeParse(text);
   if (!Array.isArray(incoming)) throw new Error("Invalid file format");
 
-  // naive merge (dedupe by id)
+  
   const current = loadRuns();
   const mergedMap = new Map();
   [...incoming, ...current].forEach(r => mergedMap.set(r.id, r));
@@ -91,7 +82,7 @@ export async function importRunsFromFile(file) {
   return result;
 }
 
-// --- (optional) selectors useful for a future DEDAnalytics page ---
+
 export function getBasicStats() {
   const runs = loadRuns();
   const totalRuns = runs.length;

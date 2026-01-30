@@ -1,0 +1,144 @@
+/* Overlay lives in its own BrowserWindow — keep it clean */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Entire overlay: drag by default */
+.overlay {
+  -webkit-app-region: drag;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible; /* <-- critical: do NOT clip the info popup */
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Center row container */
+.overlayCenter {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-start; /* prevents weird vertical centering gaps */
+  justify-content: center;
+  padding: 12px;
+}
+
+/* The actual input row (NO-DRAG) */
+.overlayRow {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 260px;
+  max-width: calc(100% - 24px);
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(20, 20, 35, 0.70);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+}
+
+/* Input */
+.overlayInput {
+  -webkit-app-region: no-drag;
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  outline: none;
+}
+
+.overlayInput:focus {
+  border-color: rgba(97, 218, 251, 0.55);
+  box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.12);
+}
+
+.overlayInputError {
+  border: 2px solid #ff4c4c !important;
+}
+
+/* Check button */
+.overlayCheck {
+  -webkit-app-region: no-drag;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(97, 218, 251, 0.92);
+  color: #001018;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.overlayCheck:hover {
+  filter: brightness(1.06);
+}
+
+/* ======================
+   First-run info popup
+   ====================== */
+
+/* Full-width banner style so it never "wraps into a tiny box" */
+.overlayInfo {
+  -webkit-app-region: no-drag;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;            /* <-- makes it stretch to available width */
+  width: auto;            /* <-- IMPORTANT */
+  max-width: none;        /* <-- IMPORTANT */
+  background: rgba(20, 20, 35, 0.92);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+}
+
+.overlayInfoTitle {
+  font-weight: 900;
+  font-size: 13px;
+  margin: 0 0 6px 0;
+}
+
+.overlayInfoBody {
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.95;
+}
+
+.overlayInfoDismiss {
+  -webkit-app-region: no-drag;
+  margin-top: 8px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: underline;
+  background: none;
+  border: none;
+}
+
+.overlayInfoDismiss:hover {
+  color: #fff;
+}

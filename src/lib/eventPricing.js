@@ -1,6 +1,6 @@
 
 
-const JITA_REGION_ID = 10000002; // The Forge (Jita)
+const JITA_REGION_ID = 10000002; 
 
 
 const EVENT_OVERRIDES = {
@@ -36,7 +36,7 @@ function loadTypeIdCache() {
 }
 function saveTypeIdCache(map) {
   try { localStorage.setItem(TYPEID_CACHE_KEY, JSON.stringify(map)); }
-  catch { /* ignore */ }
+  catch {  }
 }
 
 
@@ -68,14 +68,7 @@ async function resolveTypeIds(items) {
   return [...results, ...lookedUp];
 }
 
-/**
- * Price items for the event:
- * - If name is in EVENT_OVERRIDES → fixed price
- * - Else → Jita sell.min
- *
- * @param {Array<{name:string, qty:number}>} items
- * @returns {Promise<{items:Array, lootISK:number}>}
- */
+
 export async function priceEventItems(items) {
   const overrideItems = [];
   const jitaItems = [];

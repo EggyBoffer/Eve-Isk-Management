@@ -1,0 +1,251 @@
+.overallPage {
+  min-height: calc(100vh - 60px);
+  padding: 22px;
+  background-image:
+    radial-gradient(900px 500px at 50% 0%, rgba(97, 218, 251, 0.14), rgba(18, 18, 23, 0)),
+    linear-gradient(rgba(10, 10, 18, 0.55), rgba(10, 10, 18, 0.78));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.overallWrap {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 50px;
+}
+
+.overallHeader {
+  text-align: center;
+  margin: 0 0 18px;
+}
+
+.overallHeader h1 {
+  font-size: 2.4rem;
+  margin: 0;
+  color: #61dafb;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+}
+
+.overallHeader p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.overallTopGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 140px;
+  gap: 12px;
+  align-items: stretch;
+  margin-top: 18px;
+}
+
+.overallMetric {
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.overallMetricLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+}
+
+.overallMetricValue {
+  margin-top: 6px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.overallRefreshBtn {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 16px;
+  cursor: pointer;
+  font-weight: 900;
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease;
+}
+
+.overallRefreshBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.overallRefreshBtn:active {
+  transform: translateY(0px);
+}
+
+.overallSection {
+  margin-top: 18px;
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.overallSectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.overallSectionHead h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 900;
+}
+
+.overallMuted {
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.overallModulesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.overallModuleCard {
+  text-align: left;
+  width: 100%;
+  background: rgba(12, 12, 18, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 14px 14px 12px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.92);
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.overallModuleCard:hover {
+  transform: translateY(-1px);
+  background: rgba(12, 12, 18, 0.7);
+  border-color: rgba(97, 218, 251, 0.18);
+}
+
+.overallModuleTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.overallModuleTitle {
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+
+.overallPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(97, 218, 251, 0.14);
+  border: 1px solid rgba(97, 218, 251, 0.24);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: 0.8rem;
+}
+
+.overallModuleRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-weight: 800;
+}
+
+.overallModuleRow:first-of-type {
+  border-top: 0;
+}
+
+.overallTableWrap {
+  max-height: 340px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 14, 0.7);
+}
+
+.overallTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  min-width: 820px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.overallTable th,
+.overallTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.overallTable thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(20, 20, 28, 0.95);
+  z-index: 1;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: 0.9rem;
+}
+
+.overallTable tbody tr:hover td {
+  background: rgba(97, 218, 251, 0.06);
+}
+
+@media (max-width: 1100px) {
+  .overallModulesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .overallWrap {
+    padding: 22px;
+  }
+
+  .overallHeader h1 {
+    font-size: 2rem;
+  }
+
+  .overallTopGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .overallModulesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .overallTable {
+    min-width: 760px;
+  }
+}

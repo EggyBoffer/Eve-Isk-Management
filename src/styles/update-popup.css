@@ -1,0 +1,130 @@
+.updatePopup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 18px;
+}
+
+.updatePopup-card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(18, 18, 23, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  padding: 16px;
+}
+
+.updatePopup-titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.updatePopup-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+}
+
+.updatePopup-x {
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.updatePopup-x:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.updatePopup-body {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.updatePopup-line {
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.updatePopup-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(12, 12, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+}
+
+.updatePopup-pill.good {
+  background: rgba(97, 218, 251, 0.14);
+  border: 1px solid rgba(97, 218, 251, 0.25);
+}
+
+.updatePopup-hint {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(12, 12, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.35;
+}
+
+.updatePopup-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.updatePopup-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor: pointer;
+  background: rgba(88, 101, 242, 0.92);
+  color: #fff;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.updatePopup-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.updatePopup-btn:active {
+  transform: translateY(0px);
+}
+
+.updatePopup-btn.ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.updatePopup-btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.updatePopup-btn.danger {
+  background: rgba(239, 68, 68, 0.88);
+}

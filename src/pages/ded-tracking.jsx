@@ -1,4 +1,3 @@
-// src/pages/ded-tracking.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/ded-tracking.css";
@@ -40,7 +39,6 @@ export default function DEDTracking() {
     try {
       const minutes = clearTime === "" ? null : Number(clearTime);
       const { items: parsedItems, unknownLines } = parseCargo(cargoText);
-
       const { items: pricedItems, iskTotal } = await priceItemsJita(parsedItems);
 
       if (unknownLines.length) {
@@ -53,10 +51,10 @@ export default function DEDTracking() {
         cargoText: cargoText.trim(),
         items: pricedItems,
         iskTotal,
-        meta: { regionId: 10000002, pricingStrategy: "sell.min" }, // Jita
+        meta: { regionId: 10000002, pricingStrategy: "sell.min" },
       });
 
-      setRuns(prev => [entry, ...prev]);
+      setRuns((prev) => [entry, ...prev]);
       setClearTime("");
       setCargoText("");
       setPreview({ items: [], unknownLines: [] });
@@ -92,193 +90,234 @@ export default function DEDTracking() {
     }
   };
 
-  const shownRuns = runs.slice(0, 5);
+  const shownRuns = runs.slice(0, 50);
   const showingCount = shownRuns.length;
   const totalCount = runs.length;
 
   return (
     <div className="ded-tracking-page">
-      {/* hidden file input for import */}
       <input
         ref={fileInputRef}
+        className="ded-hiddenFileInput"
         type="file"
         accept="application/json"
-        style={{ display: "none" }}
         onChange={handleImportChange}
       />
 
-      <div className="ded-header">
-        <h1>DED Tracking</h1>
-        <p>Log, persist, and analyze your DED site runs.</p>
-      </div>
-
-      <div className="ded-card">
-        <div className="ded-card-title-row">
-          <h2 className="ded-card-title">Log a DED Run</h2>
-          {pricing.isLoading && <span className="ded-badge">Pricing items…</span>}
+      <div className="ded-wrap">
+        <div className="ded-header">
+          <h1>DED Tracking</h1>
+          <p>Log, persist, and analyze your DED site runs.</p>
         </div>
 
-        <form className="ded-form" onSubmit={handleSubmit}>
-          <div className="ded-form-row">
-            <label className="ded-label">
-              <span>DED Rating</span>
-              <select
-                className="ded-input"
-                value={dedLevel}
-                onChange={(e) => setDedLevel(e.target.value)}
-              >
-                {["1/10","2/10","3/10","4/10","5/10","6/10","7/10","8/10","9/10","10/10"]
-                  .map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
-              </select>
-            </label>
-
-            <label className="ded-label">
-              <span>Clear Time (minutes)</span>
-              <input
-                className="ded-input"
-                type="number"
-                min="0"
-                step="1"
-                value={clearTime}
-                onChange={(e) => setClearTime(e.target.value)}
-                placeholder="e.g. 12"
-                required
-              />
-            </label>
-          </div>
-
-          <label className="ded-label">
-            <span>Cargo Contents (paste from EVE)</span>
-            <textarea
-              className="ded-input"
-              value={cargoText}
-              onChange={(e) => {
-                const v = e.target.value;
-                setCargoText(v);
-                setPreview(parseCargo(v));
-              }}
-              placeholder="Paste cargo here..."
-              rows={10}
-              required
-            />
-            <small className="ded-help">
-              Tip: Copy from your Cargo window in EVE (Ctrl+A → Ctrl+C) and paste here.
-            </small>
-          </label>
-
-          {/* Preview parsed cargo */}
-          {preview.items.length > 0 && (
-            <div className="ded-preview">
-              <div className="ded-preview-row">
-                <strong>Parsed items:</strong>
-                <span>{preview.items.reduce((s, it) => s + it.qty, 0)} total units</span>
-              </div>
-              <ul className="ded-preview-list">
-                {preview.items.map((it) => (
-                  <li key={it.name}>
-                    {it.name} — <strong>{it.qty}</strong>
-                  </li>
-                ))}
-              </ul>
-              {preview.unknownLines.length > 0 && (
-                <div className="ded-preview-unknown">
-                  Couldn’t parse {preview.unknownLines.length} line(s):
-                  <pre>{preview.unknownLines.join("\n")}</pre>
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="ded-actions">
-            <button type="button" className="btn-secondary" onClick={handleReset} disabled={pricing.isLoading}>
-              Reset
-            </button>
-            <button type="submit" className="btn-primary" disabled={pricing.isLoading}>
-              {pricing.isLoading ? "Saving…" : "Save Run"}
-            </button>
-          </div>
-
-          {pricing.error && <div className="ded-error">Pricing failed: {pricing.error}</div>}
-        </form>
-      </div>
-
-      <div className="ded-run-list">
-        {totalCount === 0 ? (
-          <em>No runs logged yet — save your first run to populate this list.</em>
-        ) : (
-          <>
-            <table className="ded-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>DED</th>
-                  <th>Time (min)</th>
-                  <th>Items</th>
-                  <th>ISK Total</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {shownRuns.map(run => (
-                  <tr key={run.id}>
-                    <td>{new Date(run.createdAt).toLocaleString()}</td>
-                    <td>{run.dedLevel}</td>
-                    <td>{run.clearTimeMinutes}</td>
-                    <td>{run.items?.length ?? 0}</td>
-                    <td>{formatISK(run.iskTotal || 0)}</td>
-                    <td>
-                      <button className="btn-danger" onClick={() => handleDelete(run.id)}>
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div className="ded-run-footer">
-              <span className="ded-muted">
-                Showing {showingCount} of {totalCount} run{totalCount === 1 ? "" : "s"}
-              </span>
+        <div className="ded-card">
+          <div className="ded-card-title-row">
+            <h2 className="ded-card-title">Log a DED Run</h2>
+            <div className="ded-card-right">
+              {pricing.isLoading && <span className="ded-badge">Pricing items…</span>}
               <button
+                type="button"
                 className="btn-analytics-link"
                 onClick={() => navigate("/ded-analytics")}
               >
                 View Analytics →
               </button>
             </div>
-          </>
-        )}
-      </div>
+          </div>
 
-      {/* Floating settings cog */}
-      <div className="ded-fab">
-        <button
-          aria-label="DED settings"
-          className="ded-fab-button"
-          onClick={() => setFabOpen((v) => !v)}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="1.6"/>
-            <path d="M19.4 13.5a7.6 7.6 0 0 0 .05-3l1.68-1.22-1.9-3.29-1.98.58a7.63 7.63 0 0 0-2.6-1.5l-.4-2.03H9.75l-.4 2.03a7.63 7.63 0 0 0-2.6 1.5l-1.98-.58L2.87 9.3 4.55 10.5a7.6 7.6 0 0 0 0 3l-1.68 1.22 1.9 3.29 1.98-.58a7.63 7.63 0 0 0 2.6 1.5l.4 2.03h3.12l.4-2.03a7.63 7.63 0 0 0 2.6-1.5l1.98.58 1.9-3.29L19.4 13.5Z" stroke="currentColor" strokeWidth="1.6"/>
-          </svg>
-        </button>
+          <form className="ded-form" onSubmit={handleSubmit}>
+            <div className="ded-form-row">
+              <label className="ded-label">
+                <span>DED Rating</span>
+                <select
+                  className="ded-input"
+                  value={dedLevel}
+                  onChange={(e) => setDedLevel(e.target.value)}
+                >
+                  {[
+                    "1/10",
+                    "2/10",
+                    "3/10",
+                    "4/10",
+                    "5/10",
+                    "6/10",
+                    "7/10",
+                    "8/10",
+                    "9/10",
+                    "10/10",
+                  ].map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      {lvl}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-        {fabOpen && (
-          <>
-            <div className="ded-fab-menu">
-              <button onClick={exportRunsAsJson}>Export runs (.json)</button>
-              <button onClick={handleImportClick}>Import runs (.json)</button>
+              <label className="ded-label">
+                <span>Clear Time (minutes)</span>
+                <input
+                  className="ded-input"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={clearTime}
+                  onChange={(e) => setClearTime(e.target.value)}
+                  placeholder="e.g. 12"
+                  required
+                />
+              </label>
             </div>
-            <div className="ded-fab-backdrop" onClick={() => setFabOpen(false)} />
-          </>
-        )}
+
+            <label className="ded-label">
+              <span>Cargo Contents (paste from EVE)</span>
+              <textarea
+                className="ded-input"
+                value={cargoText}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setCargoText(v);
+                  setPreview(parseCargo(v));
+                }}
+                placeholder="Paste cargo here..."
+                rows={10}
+                required
+              />
+              <small className="ded-help">
+                Tip: Copy from your Cargo window in EVE (Ctrl+A → Ctrl+C) and paste here.
+              </small>
+            </label>
+
+            {preview.items.length > 0 && (
+              <div className="ded-preview">
+                <div className="ded-preview-row">
+                  <strong>Parsed items:</strong>
+                  <span>{preview.items.reduce((s, it) => s + it.qty, 0)} total units</span>
+                </div>
+                <ul className="ded-preview-list">
+                  {preview.items.map((it) => (
+                    <li key={it.name}>
+                      {it.name} — <strong>{it.qty}</strong>
+                    </li>
+                  ))}
+                </ul>
+                {preview.unknownLines.length > 0 && (
+                  <div className="ded-preview-unknown">
+                    Couldn’t parse {preview.unknownLines.length} line(s):
+                    <pre>{preview.unknownLines.join("\n")}</pre>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="ded-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleReset}
+                disabled={pricing.isLoading}
+              >
+                Reset
+              </button>
+              <button type="submit" className="btn-primary" disabled={pricing.isLoading}>
+                {pricing.isLoading ? "Saving…" : "Save Run"}
+              </button>
+            </div>
+
+            {pricing.error && <div className="ded-error">Pricing failed: {pricing.error}</div>}
+          </form>
+        </div>
+
+        <div className="ded-run-list">
+          <div className="ded-run-titleRow">
+            <div className="ded-run-title">Recent Runs</div>
+            <div className="ded-run-sub">
+              Showing {showingCount} of {totalCount} run{totalCount === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          {totalCount === 0 ? (
+            <div className="ded-empty">No runs logged yet — save your first run to populate this list.</div>
+          ) : (
+            <>
+              <div className="ded-tableWrap">
+                <table className="ded-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>DED</th>
+                      <th>Time (min)</th>
+                      <th>Items</th>
+                      <th>ISK Total</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {shownRuns.map((run) => (
+                      <tr key={run.id}>
+                        <td>{new Date(run.createdAt).toLocaleString()}</td>
+                        <td>{run.dedLevel}</td>
+                        <td>{run.clearTimeMinutes}</td>
+                        <td>{run.items?.length ?? 0}</td>
+                        <td>{formatISK(run.iskTotal || 0)}</td>
+                        <td className="ded-actionsCell">
+                          <button className="btn-danger" onClick={() => handleDelete(run.id)}>
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="ded-run-footer">
+                <button className="btn-analytics-link" onClick={() => navigate("/ded-analytics")}>
+                  View Analytics →
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="ded-fab">
+          <button
+            aria-label="DED settings"
+            className="ded-fab-button"
+            onClick={() => setFabOpen((v) => !v)}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+              <path
+                d="M19.4 13.5a7.6 7.6 0 0 0 .05-3l1.68-1.22-1.9-3.29-1.98.58a7.63 7.63 0 0 0-2.6-1.5l-.4-2.03H9.75l-.4 2.03a7.63 7.63 0 0 0-2.6 1.5l-1.98-.58L2.87 9.3 4.55 10.5a7.6 7.6 0 0 0 0 3l-1.68 1.22 1.9 3.29 1.98-.58a7.63 7.63 0 0 0 2.6 1.5l.4 2.03h3.12l.4-2.03a7.63 7.63 0 0 0 2.6-1.5l1.98.58 1.9-3.29L19.4 13.5Z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+              />
+            </svg>
+          </button>
+
+          {fabOpen && (
+            <>
+              <div className="ded-fab-menu">
+                <button onClick={exportRunsAsJson}>Export runs (.json)</button>
+                <button onClick={handleImportClick}>Import runs (.json)</button>
+              </div>
+              <div className="ded-fab-backdrop" onClick={() => setFabOpen(false)} />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
 function formatISK(v) {
-  try { return `${new Intl.NumberFormat().format(Math.round(v))} ISK`; }
-  catch { return `${Math.round(v)} ISK`; }
+  try {
+    return `${new Intl.NumberFormat().format(Math.round(v))} ISK`;
+  } catch {
+    return `${Math.round(v)} ISK`;
+  }
 }

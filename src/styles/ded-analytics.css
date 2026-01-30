@@ -1,93 +1,232 @@
-.ded-analytics-page {
-  padding: 2rem;
-  color: #fff;
+.dedAnalytics-page {
+  min-height: calc(100vh - 60px);
+  padding: 22px;
+  background-image:
+    radial-gradient(900px 500px at 50% 0%, rgba(97, 218, 251, 0.14), rgba(18, 18, 23, 0)),
+    linear-gradient(rgba(10, 10, 18, 0.55), rgba(10, 10, 18, 0.78));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.dedAnalytics-wrap {
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
+  padding: 50px;
 }
 
-/* Header (spaced below navbar) */
-.ded-analytics-header {
+.dedAnalytics-header {
   text-align: center;
-  margin: 50px 0 1.5rem 0;
+  margin: 0 0 18px;
 }
-.ded-analytics-header h1 {
-  font-size: 2.2rem;
+
+.dedAnalytics-header h1 {
+  font-size: 2.4rem;
   margin: 0;
   color: #61dafb;
-}
-.ded-analytics-header p {
-  color: #aab0c0;
-  margin-top: 0.5rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
 }
 
-/* Cards */
-.ded-cards {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0,1fr));
-  gap: 0.75rem;
+.dedAnalytics-header p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 8px;
 }
-@media (max-width: 1024px) {
-  .ded-cards { grid-template-columns: repeat(3, minmax(0,1fr)); }
+
+.dedAnalytics-filterRow {
+  margin-top: 14px;
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-@media (max-width: 640px) {
-  .ded-cards { grid-template-columns: repeat(2, minmax(0,1fr)); }
+
+.dedAnalytics-filterLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-.ded-card {
-  background: #1e1e2f;
-  border: 1px solid rgba(255,255,255,0.06);
+
+.dedAnalytics-filterLabel {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 900;
+}
+
+.dedAnalytics-select {
+  background: rgba(10, 10, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  padding: 0.9rem;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-}
-.ded-card-title {
-  font-size: 0.9rem;
-  color: #c7cedb;
-}
-.ded-card-value {
-  font-size: 1.25rem;
-  margin-top: 0.25rem;
-  color: #eef4ff;
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  font-weight: 800;
+  min-width: 180px;
 }
 
-/* Sections */
-.ded-section {
-  margin-top: 1.25rem;
+.dedAnalytics-select:focus {
+  border-color: rgba(97, 218, 251, 0.55);
+  box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.14);
 }
-.ded-section-head {
+
+.dedAnalytics-filterRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dedAnalytics-scopePill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(97, 218, 251, 0.14);
+  border: 1px solid rgba(97, 218, 251, 0.24);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+}
+
+.dedAnalytics-scopeText {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 800;
+}
+
+.dedAnalytics-metrics {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.dedAnalytics-metric {
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.dedAnalytics-metricLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+}
+
+.dedAnalytics-metricValue {
+  margin-top: 6px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.dedAnalytics-section {
+  margin-top: 18px;
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.dedAnalytics-sectionHead {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-.ded-section h2 {
-  margin: 0;
-  font-size: 1.2rem;
-}
-.ded-muted {
-  color: #97a0b4;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
-/* Tables */
-.ded-table-wrap {
-  background: #151525;
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px;
-  overflow: hidden;
+.dedAnalytics-sectionHead h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 900;
 }
-.ded-table {
+
+.dedAnalytics-muted {
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.dedAnalytics-tableWrap {
+  max-height: 340px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 14, 0.7);
+}
+
+.dedAnalytics-tableWrap--tall {
+  max-height: 420px;
+}
+
+.dedAnalytics-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  min-width: 820px;
+  color: rgba(255, 255, 255, 0.9);
 }
-.ded-table th, .ded-table td {
-  padding: 0.65rem 0.6rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+.dedAnalytics-table th,
+.dedAnalytics-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   text-align: left;
+  white-space: nowrap;
 }
-.ded-table thead th {
-  color: #dfe6f2;
-  font-weight: 600;
+
+.dedAnalytics-table thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(20, 20, 28, 0.95);
+  z-index: 1;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: 0.9rem;
 }
-.ded-table tbody tr:hover {
-  background: rgba(255,255,255,0.03);
+
+.dedAnalytics-table tbody tr:hover td {
+  background: rgba(97, 218, 251, 0.06);
+}
+
+.dedAnalytics-empty {
+  padding: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .dedAnalytics-wrap {
+    padding: 22px;
+  }
+
+  .dedAnalytics-header h1 {
+    font-size: 2.0rem;
+  }
+
+  .dedAnalytics-table {
+    min-width: 760px;
+  }
 }

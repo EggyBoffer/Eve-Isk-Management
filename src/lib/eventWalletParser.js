@@ -1,8 +1,8 @@
-// src/lib/eventWalletParser.js
-// Parse EVE wallet "Bounty Prizes" lines into structured ticks.
-//
-// Example line:
-// 2025.12.10 06:08    Bounty Prizes    50,671,073 ISK    437,980,326 ISK    [r] Jhalabhar Xho got bounty prizes for killing pirates in Manjonakko
+
+
+
+
+
 
 function parseAmount(raw) {
   if (!raw) return 0;
@@ -12,13 +12,13 @@ function parseAmount(raw) {
 }
 
 function parseTimestamp(dateStr, timeStr) {
-  // dateStr: 2025.12.10, timeStr: 06:08
+  
   try {
     const [y, m, d] = dateStr.split(".").map((v) => Number(v));
     const [hh, mm] = timeStr.split(":").map((v) => Number(v));
     if (!y || !m || !d || hh == null || mm == null) return null;
 
-    // Use UTC-ish ISO – timezone isn't super critical for our grouping
+    
     const iso = new Date(Date.UTC(y, m - 1, d, hh, mm, 0)).toISOString();
     return iso;
   } catch {
@@ -38,8 +38,8 @@ export function parseBountyTicks(rawText) {
     if (!line) continue;
     if (!line.includes("Bounty Prizes")) continue;
 
-    // 1) Date + time at the start
-    //    2025.12.10 06:08 ...
+    
+    
     const dtMatch = line.match(
       /^(\d{4}\.\d{2}\.\d{2})\s+(\d{2}:\d{2})/
     );
@@ -48,8 +48,8 @@ export function parseBountyTicks(rawText) {
     const walletTimestamp = parseTimestamp(dateStr, timeStr);
     if (!walletTimestamp) continue;
 
-    // 2) First ISK amount after "Bounty Prizes" = tick amount
-    //    ... Bounty Prizes    50,671,073 ISK    437,980,326 ISK ...
+    
+    
     const bountyMatch = line.match(
       /Bounty Prizes\s+([\d.,]+)\s+ISK/i
     );
@@ -57,8 +57,8 @@ export function parseBountyTicks(rawText) {
     const tickISK = parseAmount(bountyMatch[1]);
     if (!tickISK) continue;
 
-    // 3) Character name after "[r]" and before "got bounty prizes"
-    //    ... [r] Jhalabhar Xho got bounty prizes ...
+    
+    
     const charMatch = line.match(
       /\[r\]\s+(.+?)\s+got bounty prizes/i
     );

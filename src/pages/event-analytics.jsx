@@ -1,4 +1,4 @@
-// src/pages/event-analytics.jsx
+
 import { useEffect, useMemo, useState } from "react";
 import "../styles/ded-analytics.css";
 import { loadEventRuns } from "../lib/eventRunsStore.js";
@@ -29,7 +29,7 @@ export default function EventAnalytics() {
         <p>Loot per site, plus global bounty income from your wallet ticks.</p>
       </div>
 
-      {/* Overview cards */}
+      {}
       <section className="ded-cards">
         <Card title="Total Runs" value={fmtInt(stats.totalRuns)} />
         <Card title="Total Loot ISK" value={fmtISK(stats.totalLootISK)} />
@@ -39,7 +39,7 @@ export default function EventAnalytics() {
         <Card title="ISK / Hour (Loot + Bounty)" value={fmtISK(stats.iskPerHour)} />
       </section>
 
-      {/* By site */}
+      {}
       <section className="ded-section">
         <div className="ded-section-head">
           <h2>By Site Type (Loot Only)</h2>
@@ -82,7 +82,7 @@ export default function EventAnalytics() {
         </div>
       </section>
 
-      {/* Bounty by character */}
+      {}
       <section className="ded-section">
         <div className="ded-section-head">
           <h2>Bounty by Character</h2>
@@ -121,7 +121,7 @@ export default function EventAnalytics() {
         </div>
       </section>
 
-      {/* ISK by day */}
+      {}
       <section className="ded-section">
         <div className="ded-section-head">
           <h2>ISK by Day (Loot + Bounty)</h2>
@@ -167,7 +167,7 @@ export default function EventAnalytics() {
   );
 }
 
-/* ---------- helpers ---------- */
+
 
 function Card({ title, value }) {
   return (
@@ -186,7 +186,7 @@ function computeStats(runs, bounties) {
   const totalISK = totalLootISK + totalBountyISK;
   const iskPerHour = totalMinutes ? totalISK / (totalMinutes / 60) : 0;
 
-  // By site (loot only)
+  
   const siteMap = new Map();
   for (const r of runs) {
     const key = r.siteType || "Unknown";
@@ -214,7 +214,7 @@ function computeStats(runs, bounties) {
     }))
     .sort((a, b) => (a.siteType || "").localeCompare(b.siteType || ""));
 
-  // Bounty by character
+  
   const charMap = new Map();
   for (const b of bounties) {
     const key = b.character || "Unknown";
@@ -234,7 +234,7 @@ function computeStats(runs, bounties) {
     }))
     .sort((a, b) => b.totalBountyISK - a.totalBountyISK);
 
-  // By day: combine runs (loot) + bounties
+  
   const dayMap = new Map();
 
   for (const r of runs) {
@@ -282,7 +282,7 @@ function computeStats(runs, bounties) {
         iskPerHour: d.totalMinutes ? totalISKDay / (d.totalMinutes / 60) : 0,
       };
     })
-    .sort((a, b) => (a.day < b.day ? 1 : -1)); // newest first
+    .sort((a, b) => (a.day < b.day ? 1 : -1)); 
 
   return {
     totalRuns,

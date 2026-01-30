@@ -1,4 +1,4 @@
-// src/components/BootGate.jsx
+
 import { useEffect, useState } from "react";
 import { runBootTasks } from "../lib/bootTasks";
 
@@ -36,7 +36,7 @@ export default function BootGate({ children, loader }) {
       try {
         window.api?.bootProgress?.(msg);
       } catch {
-        // ignore
+        
       }
     };
 
@@ -44,7 +44,7 @@ export default function BootGate({ children, loader }) {
       try {
         window.api?.bootDone?.();
       } catch {
-        // ignore
+        
       }
     };
 

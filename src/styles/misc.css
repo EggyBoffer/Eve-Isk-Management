@@ -1,0 +1,102 @@
+.misc-page {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.misc-wrap {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.misc-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.misc-title {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #61dafb;
+}
+
+.misc-subtitle {
+  opacity: 0.9;
+  margin-top: 6px;
+}
+
+.misc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.misc-card {
+  text-align: left;
+  background: rgba(30, 30, 47, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 14px;
+  cursor: pointer;
+  color: #eaeaea;
+}
+
+.misc-card:hover {
+  border-color: rgba(97, 218, 251, 0.35);
+}
+
+.misc-cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.misc-cardTitle {
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
+.misc-cardDesc {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  line-height: 1.35;
+}
+
+.misc-pill {
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.misc-pill--link {
+  background: rgba(88, 101, 242, 0.2);
+  color: #dfe3ff;
+}
+
+.misc-pill--stats {
+  background: rgba(46, 204, 113, 0.15);
+  color: #d6ffe6;
+}
+
+.misc-pill--app {
+  background: rgba(97, 218, 251, 0.18);
+  color: #cfefff;
+}
+
+.misc-pill--info {
+  background: rgba(108, 117, 125, 0.35);
+  color: #fff;
+}

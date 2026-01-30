@@ -1,11 +1,8 @@
-// src/lib/bootTasks.js
+
 import { loadRuns as loadDEDRuns, updateRun as updateDEDRun } from "../lib/dedStorer";
 import { priceItemsJita } from "../lib/marketClient";
 
-/**
- * Reprice all DED runs using Jita sell.min
- * @param {{onProgress?: (info:{current:number,total:number,label:string})=>void}} opts
- */
+
 export async function repriceAllDEDRuns(opts = {}) {
   const onProgress = opts.onProgress || (() => {});
   const runs = loadDEDRuns();
@@ -46,10 +43,7 @@ export async function repriceAllDEDRuns(opts = {}) {
   return { updated, failed };
 }
 
-/**
- * Run all boot tasks (expandable later).
- * Reads user setting `autoRepriceDEDOnLaunch` (default true).
- */
+
 export async function runBootTasks({ onProgress } = {}) {
   const settings = JSON.parse(localStorage.getItem("settings") || "{}");
   const autoReprice = settings.autoRepriceDEDOnLaunch ?? true;

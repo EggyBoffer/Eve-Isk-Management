@@ -1,11 +1,11 @@
-// src/lib/cargoParser.js
-// Parses raw cargo text copied from EVE into [{ name, qty }] + unknown lines.
-// Handles:
-//  - "Barrage L    1995"
-//  - "Navy Cap Booster 3200    5"  (numbers inside the name are OK)
-//  - "Heavy Capacitor Booster II" (no qty -> defaults to 1)
-//  - "Scan Resolution Script  1"
-//  - Tabs or multi-space columns
+
+
+
+
+
+
+
+
 
 const HEADER_PATTERNS = [
   /^item\b/i,
@@ -28,7 +28,7 @@ function isJunkLine(line) {
   if (!l) return true;
   if (HEADER_PATTERNS.some((r) => r.test(l))) return true;
   if (FOOTER_PATTERNS.some((r) => r.test(l))) return true;
-  if (/^[-=_.]{3,}$/.test(l)) return true; // separators
+  if (/^[-=_.]{3,}$/.test(l)) return true; 
   return false;
 }
 
@@ -52,18 +52,18 @@ export function parseCargo(cargoText) {
     const line = raw.trim();
     if (!line || isJunkLine(line)) continue;
 
-    // Split by tabs first; if no tabs, fall back to spaces.
+    
     const tabParts = line.split("\t").map(s => s.trim()).filter(Boolean);
 
     let name = null;
     let qty = null;
 
     if (tabParts.length >= 2) {
-      // Assume last part is qty
+      
       name = tabParts.slice(0, -1).join(" ");
       qty = parseQty(tabParts[tabParts.length - 1]);
     } else {
-      // No tabs — use spaces. Take the LAST numeric token as qty, rest as name.
+      
       const tokens = line.split(/\s+/);
       const last = tokens[tokens.length - 1];
       const maybeQty = parseQty(last);
@@ -71,7 +71,7 @@ export function parseCargo(cargoText) {
         qty = maybeQty;
         name = tokens.slice(0, -1).join(" ");
       } else {
-        // No explicit qty — treat the whole line as the item name, qty = 1
+        
         name = line;
         qty = 1;
       }
@@ -84,7 +84,7 @@ export function parseCargo(cargoText) {
     }
   }
 
-  // Merge duplicates
+  
   const merged = [];
   const map = new Map();
   for (const it of items) {

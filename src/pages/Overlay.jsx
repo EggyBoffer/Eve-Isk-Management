@@ -1,13 +1,21 @@
 import { useState, useEffect } from "react";
+import "../styles/overlay.css";
 
 export default function Overlay() {
   const [step, setStep] = useState(0);
-  const [values, setValues] = useState({ room1: "", room2: "", room3: "", timeTaken: "" });
+  const [values, setValues] = useState({
+    room1: "",
+    room2: "",
+    room3: "",
+    timeTaken: "",
+  });
   const [error, setError] = useState(false);
+
   const [shipType, setShipType] = useState("");
   const [tier, setTier] = useState("");
   const [stormType, setStormType] = useState("");
   const [filamentCost, setFilamentCost] = useState(0);
+
   const [showInfo, setShowInfo] = useState(() => {
     return localStorage.getItem("hideOverlayInfo") !== "true";
   });
@@ -20,22 +28,20 @@ export default function Overlay() {
   ];
 
   async function nextStep() {
-  const currentKey = inputs[step].key;
-  const val = values[currentKey].trim();
+    const currentKey = inputs[step].key;
+    const val = String(values[currentKey] ?? "").trim();
 
-  if (val === "" || isNaN(Number(val))) {
-    setError(true);
-    return;
-  }
+    if (val === "" || isNaN(Number(val))) {
+      setError(true);
+      return;
+    }
 
-  setError(false);
+    setError(false);
 
-  if (step < inputs.length - 1) {
-    setStep(step + 1);
-  } else {
-    if (!shipType || !tier || !stormType) {
-  console.error("❌ Missing ship/tier/storm info", { shipType, tier, stormType });
-}
+    if (step < inputs.length - 1) {
+      setStep((s) => s + 1);
+      return;
+    }
 
     await window.api.addEntry("abyssals", {
       date: new Date().toISOString().slice(0, 10),
@@ -52,7 +58,6 @@ export default function Overlay() {
     setValues({ room1: "", room2: "", room3: "", timeTaken: "" });
     setStep(0);
   }
-}
 
   function dismissInfoPopup() {
     localStorage.setItem("hideOverlayInfo", "true");
@@ -64,68 +69,77 @@ export default function Overlay() {
       if (e.key === "Escape") {
         window.api.closeOverlay?.();
       }
+      if (e.key === "Enter") {
+        // stop random "ding" sounds / weird focus behavior
+        e.preventDefault();
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   useEffect(() => {
-    if (window.electron?.ipcRenderer) {
-      window.electron.ipcRenderer.send("overlay-ready");
+    const ipc = window.electron?.ipcRenderer;
+    if (!ipc) return;
 
-      window.electron.ipcRenderer.on("set-filament-settings", (_, settings) => {
-      setFilamentCost(settings.fillament_cost || 0);
-      setShipType(settings.ship_type || "");
-      setTier(settings.tier || "");
-      setStormType(settings.storm_type || "");
-      console.log("Overlay settings received:", settings);
-    });
+    ipc.send("overlay-ready");
 
+    const handler = (_, settings) => {
+      setFilamentCost(settings?.fillament_cost || 0);
+      setShipType(settings?.ship_type || "");
+      setTier(settings?.tier || "");
+      setStormType(settings?.storm_type || "");
+    };
 
-      return () => {
-        window.electron.ipcRenderer.removeAllListeners("set-filament-settings");
-      };
-    }
+    ipc.on("set-filament-settings", handler);
+
+    return () => {
+      // IMPORTANT: some preload wrappers don't expose removeListener(), but they do expose off()
+      if (typeof ipc.off === "function") ipc.off("set-filament-settings", handler);
+      else if (typeof ipc.removeAllListeners === "function") ipc.removeAllListeners("set-filament-settings");
+    };
   }, []);
 
+  const currentKey = inputs[step].key;
+
   return (
-    <div className="overlay-box draggable-area">
+    <div className="overlay">
       {showInfo && (
-        <div className="overlay-info-popup">
-          <p>
-            Welcome to the ISK Overlay! This will guide you through logging your abyssal run step by step.
+        <div className="overlayInfo" role="dialog" aria-modal="false">
+          <div className="overlayInfoTitle">ISK Overlay</div>
+          <div className="overlayInfoBody">
+            This will guide you through logging your abyssal run step by step.
             <br />
-            Press <strong>ESC</strong> anytime to close the overlay. Click and drag the overlay to move it around.
-          </p>
-          <button onClick={dismissInfoPopup} className="overlay-info-dismiss">
-            ✖ Don't show again
+            Press <strong>ESC</strong> anytime to close. Drag the empty area to move it.
+          </div>
+
+          <button type="button" className="overlayInfoDismiss" onClick={dismissInfoPopup}>
+            ✖ Don&apos;t show again
           </button>
         </div>
       )}
 
-      <div className="field-row">
-        <input
-          autoFocus
-          type="number"
-          placeholder={inputs[step].label}
-          value={values[inputs[step].key]}
-          onChange={(e) => {
-            setValues({ ...values, [inputs[step].key]: e.target.value });
-            if (error) setError(false);
-          }}
-          onKeyDown={(e) => e.key === "Enter" && nextStep()}
-          style={{
-            WebkitAppRegion: "no-drag",
-            border: error ? "2px solid red" : "1px solid #555",
-          }}
-        />
-        <button
-          className="check-btn"
-          onClick={nextStep}
-          style={{ WebkitAppRegion: "no-drag" }}
-        >
-          ✔️
-        </button>
+      <div className="overlayCenter">
+        <div className="overlayRow">
+          <input
+            className={`overlayInput ${error ? "overlayInputError" : ""}`}
+            autoFocus
+            type="number"
+            placeholder={inputs[step].label}
+            value={values[currentKey]}
+            onChange={(e) => {
+              setValues((v) => ({ ...v, [currentKey]: e.target.value }));
+              if (error) setError(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") nextStep();
+            }}
+          />
+
+          <button type="button" className="overlayCheck" onClick={nextStep} aria-label="Next">
+            ✔️
+          </button>
+        </div>
       </div>
     </div>
   );

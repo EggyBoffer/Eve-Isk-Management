@@ -1,6 +1,6 @@
-// src/lib/eventBountiesStore.js
-// Separate store for event bounty ticks (wallet log).
-// Each entry is a parsed bounty tick, not tied to a specific site.
+
+
+
 
 const KEY = "event:bounties:v1";
 
@@ -21,17 +21,11 @@ function saveEventBounties(list) {
   try {
     window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
   } catch {
-    // ignore in non-browser environments
+    
   }
 }
 
-/**
- * Add bounty ticks with dedupe.
- * Dedupes by (character, walletTimestamp, tickISK).
- *
- * @param {Array<{ character:string|null, tickISK:number, walletTimestamp:string|null, rawLine:string }>} ticks
- * @returns {{added:number, skipped:number}}
- */
+
 export function addBountyTicks(ticks) {
   if (!Array.isArray(ticks) || ticks.length === 0) {
     return { added: 0, skipped: 0 };

@@ -1,0 +1,173 @@
+.patchNotes-page {
+  min-height: calc(100vh - 60px);
+  padding: 22px;
+  background-image:
+    radial-gradient(900px 500px at 50% 0%, rgba(97, 218, 251, 0.16), rgba(18, 18, 23, 0)),
+    linear-gradient(rgba(10, 10, 18, 0.55), rgba(10, 10, 18, 0.78));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.patchNotes-wrap {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 50px;
+}
+
+.patchNotes-hero {
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.patchNotes-heroTitle {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #61dafb;
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+}
+
+.patchNotes-heroMeta {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+}
+
+.patchNotes-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(12, 12, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+}
+
+.patchNotes-sep {
+  opacity: 0.6;
+}
+
+.patchNotes-heroActions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+}
+
+.patchNotes-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor: pointer;
+  background: rgba(88, 101, 242, 0.92);
+  color: #fff;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.patchNotes-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.patchNotes-btn:active {
+  transform: translateY(0px);
+}
+
+.patchNotes-list {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.patchNotes-card {
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+}
+
+.patchNotes-cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.patchNotes-version {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.patchNotes-versionBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(97, 218, 251, 0.14);
+  border: 1px solid rgba(97, 218, 251, 0.24);
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.patchNotes-date {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 800;
+}
+
+.patchNotes-changes {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.patchNotes-changeItem {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(12, 12, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.patchNotes-bullet {
+  line-height: 1.2;
+}
+
+.patchNotes-changeText :first-child {
+  margin: 0;
+}
+
+.patchNotes-changeText p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+@media (max-width: 900px) {
+  .patchNotes-wrap {
+    padding: 22px;
+  }
+
+  .patchNotes-heroTitle {
+    font-size: 2.0rem;
+  }
+}

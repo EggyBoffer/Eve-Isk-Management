@@ -15,7 +15,7 @@ function saveEventRuns(runs) {
   try {
     window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
   } catch {
-    // ignore
+    
   }
 }
 

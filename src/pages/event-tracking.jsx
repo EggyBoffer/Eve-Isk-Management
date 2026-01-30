@@ -90,7 +90,7 @@ export default function EventTracking() {
       const minutes = clearTime === "" ? 0 : Number(clearTime);
       const { items: parsedItems } = parseCargo(cargoText);
 
-      // Price with event logic (Shard override + Jita)
+      
       await priceEventItems(parsedItems).then(({ items: pricedItems, lootISK }) => {
         addEventRun({
           siteType,
@@ -101,7 +101,7 @@ export default function EventTracking() {
         });
       });
 
-      // IMPORTANT: reload from store instead of manually pushing, to avoid duplicates
+      
       setRuns(loadEventRuns());
 
       setClearTime("");
@@ -143,7 +143,7 @@ export default function EventTracking() {
 
   return (
     <div className="ded-tracking-page event-page">
-      {/* hidden file input for import */}
+      {}
       <input
         ref={fileInputRef}
         type="file"
@@ -159,9 +159,9 @@ export default function EventTracking() {
         </p>
       </div>
 
-      {/* Top row: two input areas side-by-side */}
+      {}
       <div className="event-row">
-        {/* ---- Site loot logging card ---- */}
+        {}
         <div className="event-input-box loot-box">
           <div className="ded-card-title-row">
             {pricing.isLoading && <span className="ded-badge">Pricing items…</span>}
@@ -268,7 +268,7 @@ export default function EventTracking() {
           </form>
         </div>
 
-        {/* ---- Bounty import card ---- */}
+        {}
         <div className="event-input-box bounty-box">
           <div className="ded-card-title-row">
           </div>
@@ -359,7 +359,7 @@ export default function EventTracking() {
     )}
 
 
-      {/* ---- Recent runs list ---- */}
+      {}
       <div className="ded-run-list">
         {totalCount === 0 ? (
           <em>No event runs logged yet — save your first run to populate this list.</em>
@@ -409,7 +409,7 @@ export default function EventTracking() {
         )}
       </div>
 
-      {/* Floating cog (currently just for import trigger, keeping it minimal) */}
+      {}
       <div className="ded-fab">
         <button
           aria-label="Event import"
@@ -434,7 +434,7 @@ export default function EventTracking() {
   );
 }
 
-/* -------- helpers -------- */
+
 
 function formatISK(v) {
   try {

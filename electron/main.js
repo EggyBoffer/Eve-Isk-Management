@@ -1,6 +1,3 @@
-/* eslint-env node */
-/* global process */
-
 import { app, BrowserWindow, ipcMain, globalShortcut, shell } from "electron";
 import path from "node:path";
 import fs from "node:fs";
@@ -10,26 +7,28 @@ import db from "./database.js";
 
 console.log("DB path being used:", db.name);
 
-// Ensure necessary columns exist
 try {
   db.prepare(`ALTER TABLE abyssals ADD COLUMN tier TEXT`).run();
   console.log("✅ Added 'tier' column to abyssals");
 } catch (err) {
-  if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'tier':", err.message);
+  if (!err.message.includes("duplicate column"))
+    console.error("❌ Error adding 'tier':", err.message);
 }
 
 try {
   db.prepare(`ALTER TABLE abyssals ADD COLUMN storm_type TEXT`).run();
   console.log("✅ Added 'storm_type' column to abyssals");
 } catch (err) {
-  if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'storm_type':", err.message);
+  if (!err.message.includes("duplicate column"))
+    console.error("❌ Error adding 'storm_type':", err.message);
 }
 
 try {
   db.prepare(`ALTER TABLE abyssals ADD COLUMN ship_type TEXT`).run();
   console.log("✅ Added 'ship_type' column to abyssals");
 } catch (err) {
-  if (!err.message.includes("duplicate column")) console.error("❌ Error adding 'ship_type':", err.message);
+  if (!err.message.includes("duplicate column"))
+    console.error("❌ Error adding 'ship_type':", err.message);
 }
 
 const settingsPath = path.join(app.getPath("userData"), "settings.json");
@@ -51,40 +50,68 @@ function saveSettings(settings) {
 let mainWindow;
 let splash;
 
+function notifyEntriesUpdated(table, action, extra = {}) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("entries-updated", { table, action, ...extra });
+    }
+  } catch (err) {
+    console.error("❌ Failed to notify renderer:", err);
+  }
+}
+
+function getProdIndexPath() {
+  // In production, app.getAppPath() points to .../resources/app.asar
+  // dist/** will live INSIDE the asar (as it should).
+  return path.join(app.getAppPath(), "dist", "index.html");
+}
+
 function createMainWindow() {
   const preloadPath = path.join(__dirname, "preload.js");
+
+  const windowIcon = app.isPackaged
+    ? path.join(process.resourcesPath, "iskonomy.ico")
+    : path.join(process.cwd(), "public", "iskonomy.ico");
 
   mainWindow = new BrowserWindow({
     width: 1300,
     height: 900,
-    show: false, // IMPORTANT: stay hidden until boot completes
-    icon: path.join(__dirname, "public", "iskonomy.ico"),
+    show: false,
+    icon: windowIcon,
     title: "ISKonomy",
     autoHideMenuBar: true,
     webPreferences: {
       preload: preloadPath,
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: false,
-    },
+      webSecurity: false
+    }
   });
 
   const isDev = !app.isPackaged;
+
   if (isDev) {
     mainWindow.loadURL("http://localhost:5173");
   } else {
-    mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
+    const indexPath = getProdIndexPath();
+
+    if (!fs.existsSync(indexPath)) {
+      console.error("❌ UI file missing in packaged build:", indexPath);
+    }
+
+    mainWindow.loadFile(indexPath);
   }
 
-  // IMPORTANT:
-  // We do NOT show the main window here.
-  // The renderer will run boot tasks (BootGate / bootTasks) and then send "boot:done".
+  mainWindow.webContents.on("did-fail-load", (_e, code, desc) => {
+    try {
+      splash?.webContents?.send("boot:progress", `Failed to load UI (${code}): ${desc}`);
+    } catch {}
+  });
+
   mainWindow.webContents.on("did-finish-load", () => {
-    // Optional: you can show a default status while the renderer finishes boot tasks.
     splash?.webContents?.send("boot:progress", "Starting ISKONOMY!...");
   });
 
-  // If the user closes the main window, also close splash
   mainWindow.on("closed", () => {
     mainWindow = null;
     if (splash && !splash.isDestroyed()) splash.close();
@@ -93,6 +120,10 @@ function createMainWindow() {
 }
 
 function createSplash() {
+  const windowIcon = app.isPackaged
+    ? path.join(process.resourcesPath, "iskonomy.ico")
+    : path.join(process.cwd(), "public", "iskonomy.ico");
+
   splash = new BrowserWindow({
     width: 320,
     height: 320,
@@ -100,13 +131,13 @@ function createSplash() {
     frame: false,
     alwaysOnTop: true,
     resizable: false,
-    icon: path.join(__dirname, "public", "iskonomy.ico"),
+    icon: windowIcon,
     center: true,
     show: false,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false,
-    },
+      contextIsolation: false
+    }
   });
 
   const logoPath = path.join(process.resourcesPath, "splash-assets", "iskonomy.png");
@@ -122,13 +153,6 @@ function createSplash() {
   });
 }
 
-/**
- * Boot message plumbing:
- * - Renderer sends "boot:progress" with a message string
- * - Main forwards it to splash.html so the splash UI displays it
- * - Renderer sends "boot:done" when all boot tasks are finished
- * - Main shows mainWindow and closes splash
- */
 ipcMain.on("boot:progress", (_event, msg) => {
   if (splash && !splash.isDestroyed()) {
     splash.webContents.send("boot:progress", String(msg || ""));
@@ -136,19 +160,15 @@ ipcMain.on("boot:progress", (_event, msg) => {
 });
 
 ipcMain.on("boot:done", () => {
-  // Show the main window now that boot is finished
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.show();
     mainWindow.focus();
   }
 
-  // Close the splash
   if (splash && !splash.isDestroyed()) {
     splash.close();
   }
 });
-
-/* ---------------- Overlay (unchanged) ---------------- */
 
 function createOverlay() {
   const savedSettings = loadSettings();
@@ -167,8 +187,8 @@ function createOverlay() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      webSecurity: false,
-    },
+      webSecurity: false
+    }
   });
 
   overlayWin.setAlwaysOnTop(true, "screen-saver");
@@ -176,10 +196,13 @@ function createOverlay() {
   if (!app.isPackaged) {
     overlayWin.loadURL("http://localhost:5173/#/overlay");
   } else {
-    overlayWin.loadFile(
-      path.join(process.resourcesPath, "app.asar.unpacked", "dist", "index.html"),
-      { hash: "/overlay" }
-    );
+    const indexPath = getProdIndexPath();
+
+    if (!fs.existsSync(indexPath)) {
+      console.error("❌ UI file missing for overlay in packaged build:", indexPath);
+    }
+
+    overlayWin.loadFile(indexPath, { hash: "/overlay" });
   }
 
   ipcMain.once("overlay-ready", () => {
@@ -187,7 +210,7 @@ function createOverlay() {
       fillament_cost: filamentCost,
       ship_type: activeShipType,
       tier: activeTier,
-      storm_type: activeStormType,
+      storm_type: activeStormType
     });
   });
 
@@ -212,8 +235,6 @@ ipcMain.on("open-overlay-with-cost", (event, cost, shipType, tier, stormType) =>
   createOverlay();
 });
 
-/* ---------------- Settings + DB IPC (unchanged) ---------------- */
-
 ipcMain.handle("get-app-settings", () => loadSettings());
 
 ipcMain.handle("save-app-settings", (event, newSettings) => {
@@ -234,14 +255,26 @@ ipcMain.handle("add-entry", (event, category, entry) => {
         fillament_cost = 0,
         tier = "",
         storm_type = "",
-        ship_type = "",
+        ship_type = ""
       } = entry;
 
       const stmt = db.prepare(`
         INSERT INTO abyssals (date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
-      stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type);
+      const info = stmt.run(
+        date,
+        room1_isk,
+        room2_isk,
+        room3_isk,
+        time_taken,
+        fillament_cost,
+        tier,
+        storm_type,
+        ship_type
+      );
+
+      notifyEntriesUpdated("abyssals", "add", { id: info.lastInsertRowid });
     } else if (category === "glorified") {
       const { isk_earned = 0, tier = "", storm_type = "" } = entry;
 
@@ -249,7 +282,9 @@ ipcMain.handle("add-entry", (event, category, entry) => {
         INSERT INTO glorified (date, isk_earned, tier, storm_type)
         VALUES (?, ?, ?, ?)
       `);
-      stmt.run(date, isk_earned, tier, storm_type);
+      const info = stmt.run(date, isk_earned, tier, storm_type);
+
+      notifyEntriesUpdated("glorified", "add", { id: info.lastInsertRowid });
     } else {
       const { isk_earned = 0 } = entry;
 
@@ -257,105 +292,146 @@ ipcMain.handle("add-entry", (event, category, entry) => {
         INSERT INTO ${category} (date, isk_earned)
         VALUES (?, ?)
       `);
-      stmt.run(date, isk_earned);
+      const info = stmt.run(date, isk_earned);
+
+      notifyEntriesUpdated(category, "add", { id: info.lastInsertRowid });
     }
 
     return { success: true };
   } catch (err) {
-    console.error("Error occurred in handler for 'add-entry':", err);
+    console.error("❌ add-entry failed:", err);
     return { success: false, error: err.message };
   }
 });
 
-ipcMain.handle("get-entries", (event, category) => {
-  const stmt = db.prepare(`SELECT * FROM ${category}`);
-  return stmt.all();
-});
-
-ipcMain.handle("delete-entry", (event, category, id) => {
-  const stmt = db.prepare(`DELETE FROM ${category} WHERE id = ?`);
-  stmt.run(id);
-  return { success: true };
-});
-
-ipcMain.handle("update-entry", (event, category, entry) => {
-  const {
-    id,
-    date,
-    room1_isk = 0,
-    room2_isk = 0,
-    room3_isk = 0,
-    time_taken = 0,
-    fillament_cost = 0,
-    tier = "",
-    storm_type = "",
-    ship_type = "",
-  } = entry;
-
-  const stmt = db.prepare(`
-    UPDATE ${category}
-    SET date = ?, room1_isk = ?, room2_isk = ?, room3_isk = ?, time_taken = ?, fillament_cost = ?, tier = ?, storm_type = ?, ship_type = ?
-    WHERE id = ?
-  `);
-
-  stmt.run(date, room1_isk, room2_isk, room3_isk, time_taken, fillament_cost, tier, storm_type, ship_type, id);
-  return { success: true };
-});
-
-ipcMain.handle("add-glorified", (event, entry) => {
-  const { date, isk_earned, tier, storm_type, name } = entry;
-  const stmt = db.prepare(`
-    INSERT INTO glorified (date, isk_earned, tier, storm_type, name)
-    VALUES (?, ?, ?, ?, ?)
-  `);
-  stmt.run(date, parseInt(isk_earned) || 0, tier, storm_type, name || "");
-  return { success: true };
-});
-
-ipcMain.handle("get-glorified", () => {
-  const stmt = db.prepare(`SELECT * FROM glorified`);
-  return stmt.all();
-});
-
-ipcMain.handle("get-db-size", () => {
+ipcMain.handle("update-entry", (event, category, id, entry) => {
   try {
-    const stats = fs.statSync(db.name);
-    return { size: stats.size };
+    if (category === "abyssals") {
+      const {
+        room1_isk = 0,
+        room2_isk = 0,
+        room3_isk = 0,
+        time_taken = 0,
+        fillament_cost = 0,
+        tier = "",
+        storm_type = "",
+        ship_type = ""
+      } = entry;
+
+      db.prepare(`
+        UPDATE abyssals
+        SET room1_isk = ?, room2_isk = ?, room3_isk = ?, time_taken = ?, fillament_cost = ?, tier = ?, storm_type = ?, ship_type = ?
+        WHERE id = ?
+      `).run(
+        room1_isk,
+        room2_isk,
+        room3_isk,
+        time_taken,
+        fillament_cost,
+        tier,
+        storm_type,
+        ship_type,
+        id
+      );
+
+      notifyEntriesUpdated("abyssals", "update", { id });
+    }
+
+    return { success: true };
   } catch (err) {
-    return { error: err.message };
+    console.error("❌ update-entry failed:", err);
+    return { success: false, error: err.message };
   }
 });
 
-ipcMain.handle("open-external", (event, url) => {
+ipcMain.handle("delete-entry", (event, category, id) => {
   try {
-    shell.openExternal(url);
+    db.prepare(`DELETE FROM ${category} WHERE id = ?`).run(id);
+    notifyEntriesUpdated(category, "delete", { id });
     return { success: true };
   } catch (err) {
-    console.error("❌ Failed to open external URL:", err);
+    console.error("❌ delete-entry failed:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("getEntries", (event, category) => {
+  try {
+    const stmt = db.prepare(`SELECT * FROM ${category} ORDER BY date DESC`);
+    return stmt.all();
+  } catch (err) {
+    console.error("❌ getEntries failed:", err);
+    return [];
+  }
+});
+
+ipcMain.handle("add-glorified", (event, drop) => {
+  try {
+    const {
+      date = new Date().toISOString().slice(0, 10),
+      isk_earned = 0,
+      tier = "",
+      storm_type = ""
+    } = drop;
+
+    const stmt = db.prepare(`
+      INSERT INTO glorified (date, isk_earned, tier, storm_type)
+      VALUES (?, ?, ?, ?)
+    `);
+    const info = stmt.run(date, isk_earned, tier, storm_type);
+
+    notifyEntriesUpdated("glorified", "add", { id: info.lastInsertRowid });
+    return { success: true };
+  } catch (err) {
+    console.error("❌ add-glorified failed:", err);
     return { success: false, error: err.message };
   }
 });
 
 ipcMain.handle("delete-glorified", (event, id) => {
-  const stmt = db.prepare(`DELETE FROM glorified WHERE id = ?`);
-  stmt.run(id);
-  return { success: true };
+  try {
+    db.prepare(`DELETE FROM glorified WHERE id = ?`).run(id);
+    notifyEntriesUpdated("glorified", "delete", { id });
+    return { success: true };
+  } catch (err) {
+    console.error("❌ delete-glorified failed:", err);
+    return { success: false, error: err.message };
+  }
 });
 
-ipcMain.on("close-overlay", () => {
-  const overlay = BrowserWindow.getAllWindows().find((w) => w.getTitle() === "Overlay");
-  if (overlay) overlay.close();
+ipcMain.handle("get-glorified", () => {
+  try {
+    return db.prepare(`SELECT * FROM glorified ORDER BY date DESC`).all();
+  } catch (err) {
+    console.error("❌ get-glorified failed:", err);
+    return [];
+  }
 });
+
+ipcMain.handle("openExternal", (event, url) => {
+  if (!url) return;
+  shell.openExternal(url);
+});
+
+function getLocalIp() {
+  const ifaces = os.networkInterfaces();
+  for (const name of Object.keys(ifaces)) {
+    for (const iface of ifaces[name]) {
+      if (iface.family === "IPv4" && !iface.internal) return iface.address;
+    }
+  }
+  return "127.0.0.1";
+}
 
 app.whenReady().then(() => {
   createSplash();
   createMainWindow();
 
-  app.on("activate", () => {
+  app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
   });
 });
 
-app.on("window-all-closed", () => {
-  if (os.platform() !== "darwin") app.quit();
+app.on("window-all-closed", function () {
+  if (process.platform !== "darwin") app.quit();
 });

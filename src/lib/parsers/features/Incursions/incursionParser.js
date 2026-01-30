@@ -1,9 +1,9 @@
-// src/lib/parsers/features/Incursions/incursionParser.js
+
 
 import { deriveLPFromISK } from "./incursionLP";
 
 function parseISK(value) {
-  // "15,000,000 ISK" -> 15000000
+  
   const cleaned = String(value || "")
     .replace(/ISK/i, "")
     .replace(/,/g, "")
@@ -13,7 +13,7 @@ function parseISK(value) {
 }
 
 function parseWalletTimestampToMs(ts) {
-  // "2025.11.02 23:32" -> local time ms
+  
   const s = String(ts || "").trim();
   if (!s) return 0;
   const isoLike = s.replace(/\./g, "-").replace(" ", "T") + ":00";
@@ -40,7 +40,7 @@ export function parseIncursionWalletPaste(text) {
   const parsed = [];
 
   for (const raw of lines) {
-    // EVE wallet paste is tab-separated
+    
     const parts = raw.split("\t");
     if (parts.length < 3) continue;
 
@@ -73,7 +73,7 @@ export function parseIncursionWalletPaste(text) {
     });
   }
 
-  // Deduplicate within the pasted text itself
+  
   const seen = new Set();
   const deduped = [];
 
@@ -84,7 +84,7 @@ export function parseIncursionWalletPaste(text) {
     deduped.push(r);
   }
 
-  // Oldest -> newest
+  
   deduped.sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
   return deduped;
@@ -114,15 +114,15 @@ export function summarizeIncursionTicks(rows) {
   const startTs = ticks > 0 ? rows[0].ts : undefined;
   const endTs = ticks > 0 ? rows[ticks - 1].ts : undefined;
 
-  // --- NEW: active time (session-based) ---
-  // If there's a gap bigger than an hour between ticks, we treat it as a new session:
-  // - ISK/LP still counted
-  // - idle time NOT counted
+  
+  
+  
+  
   const SESSION_GAP_MS = 60 * 60 * 1000;
 
   let activeMs = 0;
 
-  // Ensure ordering even if caller passed unsorted rows (store should already be sorted)
+  
   const ordered = rows.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
   for (let i = 1; i < ordered.length; i++) {
@@ -136,13 +136,13 @@ export function summarizeIncursionTicks(rows) {
 
     const delta = curTs - prevTs;
 
-    // only count "active" gaps inside a session
+    
     if (delta > 0 && delta <= SESSION_GAP_MS) {
       activeMs += delta;
     }
   }
 
-  // Keep your behaviour: first tick has 0 time -> 0 isk/hour
+  
   const hours = activeMs > 0 ? activeMs / 3600000 : 0;
 
   return {
@@ -151,7 +151,7 @@ export function summarizeIncursionTicks(rows) {
     totalLP,
     startTs,
     endTs,
-    hours, // now "active hours"
+    hours, 
     iskPerHour: hours > 0 ? totalISK / hours : 0,
     lpPerHour: hours > 0 ? totalLP / hours : 0,
     unknownLPCount,

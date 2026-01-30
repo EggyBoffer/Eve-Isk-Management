@@ -1,17 +1,17 @@
-// src/lib/parsers/features/Incursions/incursionLP.js
+
 
 export const INCURSION_PAYOUTS = [
-  // High-sec max payouts
+  
   { isk: 10395000, lp: 1400, label: "HS Vanguard (max)" },
   { isk: 18200000, lp: 3500, label: "HS Assault (max)" },
   { isk: 31500000, lp: 7000, label: "HS HQ (max)" },
 
-  // Low/null max payouts
+  
   { isk: 15000000, lp: 2000, label: "LS/NS Vanguard (max)" },
   { isk: 26000000, lp: 5000, label: "LS/NS Assault (max)" },
   { isk: 45000000, lp: 10000, label: "LS/NS HQ (max)" },
 
-  // Some common HS scaling examples (optional but useful)
+  
   { isk: 9615375, lp: 1295, label: "HS Vanguard (scaled)" },
   { isk: 8783775, lp: 1183, label: "HS Vanguard (scaled)" },
   { isk: 7900200, lp: 1064, label: "HS Vanguard (scaled)" },
