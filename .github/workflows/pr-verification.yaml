@@ -11,7 +11,7 @@ jobs:
     container: node:22
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: NPM install
         run: npm ci
       - name: Lint

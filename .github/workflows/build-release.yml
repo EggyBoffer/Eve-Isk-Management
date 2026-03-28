@@ -3,10 +3,10 @@ name: Build and Release ISK App
 on:
   push:
     tags:
-      - 'v*'            # push a tag like v0.1.1 to trigger
+      - 'v*'
 
 permissions:
-  contents: write       # <— REQUIRED so GH_TOKEN can create releases/assets
+  contents: write
 
 jobs:
   build:
@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 18
 
@@ -33,4 +33,4 @@ jobs:
       - name: Build & publish (electron-builder)
         run: npm run dist
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}    # <— IMPORTANT
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
