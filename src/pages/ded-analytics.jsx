@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/ded-analytics.css";
 import { loadRuns } from "../lib/dedStorer";
 
 export default function DEDAnalytics() {
   const [runs, setRuns] = useState([]);
   const [dedFilter, setDedFilter] = useState("All");
+  const navigate = useNavigate();
 
   useEffect(() => {
     setRuns(loadRuns());
@@ -17,7 +19,9 @@ export default function DEDAnalytics() {
 
   const levels = useMemo(() => {
     const set = new Set();
-    for (const r of runs) if (r.dedLevel) set.add(r.dedLevel);
+    for (const r of runs) {
+      if (r.dedLevel) set.add(r.dedLevel);
+    }
     return Array.from(set).sort((a, b) => (a || "").localeCompare(b || ""));
   }, [runs]);
 
@@ -27,7 +31,6 @@ export default function DEDAnalytics() {
   }, [runs, dedFilter]);
 
   const stats = useMemo(() => computeStats(filteredRuns), [filteredRuns]);
-
   const scopeLabel = dedFilter === "All" ? "All levels" : dedFilter;
 
   return (
@@ -61,6 +64,23 @@ export default function DEDAnalytics() {
               </span>
             </div>
           </div>
+
+          <div className="dedAnalytics-navRow">
+            <button
+              type="button"
+              className="dedAnalytics-navBtn dedAnalytics-navBtn--secondary"
+              onClick={() => navigate("/ded-tracking")}
+            >
+              ← Back to Tracker
+            </button>
+            <button
+              type="button"
+              className="dedAnalytics-navBtn"
+              onClick={() => navigate("/ded-graphs")}
+            >
+              View Graphs →
+            </button>
+          </div>
         </div>
 
         <section className="dedAnalytics-metrics">
@@ -87,6 +107,7 @@ export default function DEDAnalytics() {
                 <tr>
                   <th>DED</th>
                   <th>Runs</th>
+                  <th>Total ISK</th>
                   <th>Avg ISK / Run</th>
                   <th>Avg Time (min)</th>
                   <th>ISK / Hour</th>
@@ -97,6 +118,7 @@ export default function DEDAnalytics() {
                   <tr key={row.level}>
                     <td>{row.level}</td>
                     <td>{fmtInt(row.runs)}</td>
+                    <td>{fmtISK(row.totalISK)}</td>
                     <td>{fmtISK(row.avgISKPerRun)}</td>
                     <td>{fmtNum(row.avgMinutesPerRun)}</td>
                     <td>{fmtISK(row.iskPerHour)}</td>
@@ -104,7 +126,7 @@ export default function DEDAnalytics() {
                 ))}
                 {stats.byLevel.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="dedAnalytics-empty">
+                    <td colSpan={6} className="dedAnalytics-empty">
                       No data yet.
                     </td>
                   </tr>
@@ -159,7 +181,7 @@ export default function DEDAnalytics() {
           <div className="dedAnalytics-sectionHead">
             <h2>ISK by Day</h2>
             <div className="dedAnalytics-muted">
-              Totals grouped by run date (local time) in current scope.
+              Totals grouped by run date in current scope.
             </div>
           </div>
 
@@ -234,6 +256,7 @@ function computeStats(runs) {
     .map((l) => ({
       level: l.level,
       runs: l.runs,
+      totalISK: l.totalISK,
       avgISKPerRun: l.runs ? l.totalISK / l.runs : 0,
       avgMinutesPerRun: l.runs ? l.totalMin / l.runs : 0,
       iskPerHour: l.totalMin ? l.totalISK / (l.totalMin / 60) : 0,
@@ -259,13 +282,15 @@ function computeStats(runs) {
       }
       a.totalQty += num(it.qty) || 0;
       a.totalISK += num(it.total) || 0;
-      if (isFinite(it.unitPrice) && it.unitPrice > 0) {
+      if (Number.isFinite(Number(it.unitPrice)) && Number(it.unitPrice) > 0) {
         a.unitSamples += 1;
-        a.unitSum += it.unitPrice;
+        a.unitSum += Number(it.unitPrice);
       }
       present.add(key);
     }
-    for (const k of present) itemAgg.get(k).runHits += 1;
+    for (const k of present) {
+      itemAgg.get(k).runHits += 1;
+    }
   }
 
   const itemsTopValue = Array.from(itemAgg.values())
@@ -293,7 +318,10 @@ function computeStats(runs) {
   }
 
   const byDay = Array.from(dayMap.values())
-    .map((d) => ({ ...d, iskPerHour: d.totalMinutes ? d.totalISK / (d.totalMinutes / 60) : 0 }))
+    .map((d) => ({
+      ...d,
+      iskPerHour: d.totalMinutes ? d.totalISK / (d.totalMinutes / 60) : 0,
+    }))
     .sort((a, b) => (a.day < b.day ? 1 : -1));
 
   return {

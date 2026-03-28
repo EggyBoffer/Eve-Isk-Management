@@ -4,6 +4,12 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import os from "os";
 import db from "./database.js";
+import {
+  saveCrabRun,
+  getRecentCrabRuns,
+  getCrabRunById,
+  getAllCrabRuns,
+} from "./crabDatabase.js";
 
 console.log("DB path being used:", db.name);
 
@@ -61,8 +67,6 @@ function notifyEntriesUpdated(table, action, extra = {}) {
 }
 
 function getProdIndexPath() {
-  // In production, app.getAppPath() points to .../resources/app.asar
-  // dist/** will live INSIDE the asar (as it should).
   return path.join(app.getAppPath(), "dist", "index.html");
 }
 
@@ -227,7 +231,7 @@ let activeShipType = "";
 let activeTier = "";
 let activeStormType = "";
 
-ipcMain.on("open-overlay-with-cost", (event, cost, shipType, tier, stormType) => {
+ipcMain.on("open-overlay-with-cost", (_event, cost, shipType, tier, stormType) => {
   filamentCost = cost;
   activeShipType = shipType;
   activeTier = tier;
@@ -237,12 +241,12 @@ ipcMain.on("open-overlay-with-cost", (event, cost, shipType, tier, stormType) =>
 
 ipcMain.handle("get-app-settings", () => loadSettings());
 
-ipcMain.handle("save-app-settings", (event, newSettings) => {
+ipcMain.handle("save-app-settings", (_event, newSettings) => {
   saveSettings(newSettings);
   return { success: true };
 });
 
-ipcMain.handle("add-entry", (event, category, entry) => {
+ipcMain.handle("add-entry", (_event, category, entry) => {
   const { date = new Date().toISOString().slice(0, 10) } = entry;
 
   try {
@@ -304,7 +308,7 @@ ipcMain.handle("add-entry", (event, category, entry) => {
   }
 });
 
-ipcMain.handle("update-entry", (event, category, id, entry) => {
+ipcMain.handle("update-entry", (_event, category, id, entry) => {
   try {
     if (category === "abyssals") {
       const {
@@ -344,7 +348,7 @@ ipcMain.handle("update-entry", (event, category, id, entry) => {
   }
 });
 
-ipcMain.handle("delete-entry", (event, category, id) => {
+ipcMain.handle("delete-entry", (_event, category, id) => {
   try {
     db.prepare(`DELETE FROM ${category} WHERE id = ?`).run(id);
     notifyEntriesUpdated(category, "delete", { id });
@@ -355,7 +359,7 @@ ipcMain.handle("delete-entry", (event, category, id) => {
   }
 });
 
-ipcMain.handle("getEntries", (event, category) => {
+ipcMain.handle("getEntries", (_event, category) => {
   try {
     const stmt = db.prepare(`SELECT * FROM ${category} ORDER BY date DESC`);
     return stmt.all();
@@ -365,7 +369,7 @@ ipcMain.handle("getEntries", (event, category) => {
   }
 });
 
-ipcMain.handle("add-glorified", (event, drop) => {
+ipcMain.handle("add-glorified", (_event, drop) => {
   try {
     const {
       date = new Date().toISOString().slice(0, 10),
@@ -388,7 +392,7 @@ ipcMain.handle("add-glorified", (event, drop) => {
   }
 });
 
-ipcMain.handle("delete-glorified", (event, id) => {
+ipcMain.handle("delete-glorified", (_event, id) => {
   try {
     db.prepare(`DELETE FROM glorified WHERE id = ?`).run(id);
     notifyEntriesUpdated("glorified", "delete", { id });
@@ -408,7 +412,44 @@ ipcMain.handle("get-glorified", () => {
   }
 });
 
-ipcMain.handle("openExternal", (event, url) => {
+ipcMain.handle("crab:saveRun", (_event, payload) => {
+  try {
+    const runId = saveCrabRun(payload);
+    return { success: true, runId, run: getCrabRunById(runId) };
+  } catch (err) {
+    console.error("❌ crab:saveRun failed:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle("crab:getRecentRuns", (_event, limit = 25) => {
+  try {
+    return getRecentCrabRuns(limit);
+  } catch (err) {
+    console.error("❌ crab:getRecentRuns failed:", err);
+    return [];
+  }
+});
+
+ipcMain.handle("crab:getAllRuns", () => {
+  try {
+    return getAllCrabRuns();
+  } catch (err) {
+    console.error("❌ crab:getAllRuns failed:", err);
+    return [];
+  }
+});
+
+ipcMain.handle("crab:getRun", (_event, runId) => {
+  try {
+    return getCrabRunById(runId);
+  } catch (err) {
+    console.error("❌ crab:getRun failed:", err);
+    return null;
+  }
+});
+
+ipcMain.handle("openExternal", (_event, url) => {
   if (!url) return;
   shell.openExternal(url);
 });

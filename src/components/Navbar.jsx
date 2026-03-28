@@ -72,6 +72,15 @@ export default function Navbar() {
             Incursions
           </NavLink>
 
+          <NavLink
+            to="/crabs"
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
+          >
+            CRABs
+          </NavLink>
+
           <div ref={moreRef} className="navbar__more">
             <button
               type="button"

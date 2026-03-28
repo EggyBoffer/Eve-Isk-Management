@@ -1,0 +1,377 @@
+.dedGraphs-page {
+  min-height: calc(100vh - 60px);
+  padding: 22px;
+  background-image:
+    radial-gradient(900px 500px at 50% 0%, rgba(97, 218, 251, 0.14), rgba(18, 18, 23, 0)),
+    linear-gradient(rgba(10, 10, 18, 0.55), rgba(10, 10, 18, 0.78));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.dedGraphs-wrap {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 28px 32px;
+}
+
+.dedGraphs-header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.dedGraphs-header h1 {
+  font-size: 2.4rem;
+  margin: 0;
+  color: #61dafb;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+}
+
+.dedGraphs-header p {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.72);
+  margin-top: 8px;
+}
+
+.dedGraphs-topRow {
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dedGraphs-filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dedGraphs-filterLabel {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 900;
+}
+
+.dedGraphs-select {
+  background: rgba(10, 10, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  font-weight: 800;
+  min-width: 180px;
+}
+
+.dedGraphs-select:focus {
+  border-color: rgba(97, 218, 251, 0.55);
+  box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.14);
+}
+
+.dedGraphs-navGroup {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dedGraphs-navBtn {
+  padding: 10px 14px;
+  font-weight: 900;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease, border 0.12s ease;
+  background: rgba(88, 101, 242, 0.92);
+  color: #fff;
+}
+
+.dedGraphs-navBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.dedGraphs-navBtn--secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dedGraphs-navBtn--secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.dedGraphs-metrics {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.dedGraphs-metric {
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.dedGraphs-metricLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+}
+
+.dedGraphs-metricValue {
+  margin-top: 6px;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.dedGraphs-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.dedGraphs-card,
+.dedGraphs-section,
+.dedGraphs-pieCard {
+  background: rgba(18, 18, 23, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+}
+
+.dedGraphs-cardHead,
+.dedGraphs-sectionHead,
+.dedGraphs-pieHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.dedGraphs-cardHead h2,
+.dedGraphs-sectionHead h2,
+.dedGraphs-pieHead h3 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 900;
+}
+
+.dedGraphs-cardHead h2,
+.dedGraphs-sectionHead h2 {
+  font-size: 1.2rem;
+}
+
+.dedGraphs-pieHead h3 {
+  font-size: 1.1rem;
+}
+
+.dedGraphs-muted,
+.dedGraphs-pieMeta {
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.dedGraphs-svgShell {
+  width: 100%;
+  min-height: 360px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(500px 220px at 50% 0%, rgba(97, 218, 251, 0.08), rgba(10, 10, 14, 0)),
+    rgba(10, 10, 14, 0.7);
+  overflow: hidden;
+}
+
+.dedGraphs-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.dedGraphs-axis {
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1.5;
+}
+
+.dedGraphs-gridLine {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.dedGraphs-tickText,
+.dedGraphs-labelText,
+.dedGraphs-valueText {
+  fill: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dedGraphs-valueText {
+  fill: rgba(255, 255, 255, 0.96);
+  font-weight: 800;
+}
+
+.dedGraphs-section {
+  margin-top: 18px;
+}
+
+.dedGraphs-pieGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dedGraphs-pieShell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 340px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(500px 220px at 50% 0%, rgba(97, 218, 251, 0.08), rgba(10, 10, 14, 0)),
+    rgba(10, 10, 14, 0.7);
+  overflow: hidden;
+}
+
+.dedGraphs-pieSvg {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+}
+
+.dedGraphs-pieSlice {
+  stroke: rgba(10, 10, 14, 0.9);
+  stroke-width: 2;
+  transition: opacity 0.12s ease;
+}
+
+.dedGraphs-pieSlice:hover {
+  opacity: 0.9;
+}
+
+.dedGraphs-pieInner {
+  fill: rgba(10, 10, 14, 0.96);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1.5;
+}
+
+.dedGraphs-pieCenterTop {
+  fill: rgba(255, 255, 255, 0.96);
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.dedGraphs-pieCenterBottom {
+  fill: rgba(255, 255, 255, 0.68);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.dedGraphs-dropSummary {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.dedGraphs-dropSummaryRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(10, 10, 14, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.dedGraphs-dropSummaryLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dedGraphs-dropSummaryDot {
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.dedGraphs-dropSummaryName {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dedGraphs-dropSummaryValue {
+  color: rgba(97, 218, 251, 0.95);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.dedGraphs-tableEmpty,
+.dedGraphs-empty {
+  padding: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 800;
+}
+
+.dedGraphs-empty {
+  border-radius: 12px;
+  background: rgba(10, 10, 14, 0.55);
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 1100px) {
+  .dedGraphs-pieGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .dedGraphs-wrap {
+    padding: 22px;
+  }
+
+  .dedGraphs-header h1 {
+    font-size: 2rem;
+  }
+
+  .dedGraphs-dropSummaryRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dedGraphs-dropSummaryValue {
+    justify-self: start;
+    padding-left: 22px;
+  }
+}

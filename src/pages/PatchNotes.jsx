@@ -9,6 +9,20 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.5.0",
+      date: "2026-03-28",
+      changes: [
+        "Graphs, Crab and more!",
+        "Added graph visuals to all statistics, Now you can keep an eye on your efficiency in graph form!",
+        "Added DED graphs page to monitor returns from DED's. This and crabs are the only pages with their own graph page.",
+        "Added Crab beacon tracking module.  Track isk/hour, drop chance and other stats.", 
+        "Some loading improvements to help with pricing.",
+        "Some future proofing improvements to get ready for V1.0.0 release soon.", 
+        "Finally completely fixed the 'repricing' bug that happens wehn launching the overlay for the first time in your session.", 
+        "Fixed some text labels to help with understanding the pages a bit better."
+      ],
+    },
+    {
       version: "0.4.0",
       date: "2026-01-29",
       changes: [

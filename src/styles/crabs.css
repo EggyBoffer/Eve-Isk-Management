@@ -1,0 +1,528 @@
+.crabPage,
+.crabPage * {
+  box-sizing: border-box;
+}
+
+.crabPage {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100vh - 60px);
+  padding: 18px 18px 24px;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.crabBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    radial-gradient(900px 520px at 50% 0%, rgba(255, 145, 77, 0.16), rgba(18, 18, 23, 0)),
+    linear-gradient(rgba(5, 8, 20, 0.58), rgba(5, 8, 20, 0.9)),
+    linear-gradient(180deg, rgba(14, 20, 42, 0.95), rgba(2, 6, 23, 0.98));
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  filter: saturate(1.06) contrast(1.04);
+}
+
+.crabWrap {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 56px 8px 28px;
+}
+
+.crabHeader {
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+.crabHeader h1 {
+  margin: 0 0 8px;
+  line-height: 1.1;
+  font-size: 2.25rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  color: #ffb46b;
+  text-shadow: 0 10px 26px rgba(0, 0, 0, 0.6);
+}
+
+.crabHeader p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+}
+
+.crabTwoCol {
+  display: grid;
+  grid-template-columns: 1.2fr 0.92fr;
+  gap: 14px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+@media (max-width: 1120px) {
+  .crabTwoCol {
+    grid-template-columns: 1fr;
+  }
+}
+
+.crabPanel {
+  padding: 16px;
+  background: rgba(18, 18, 23, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.crabPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.crabPanelHeadActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.crabPanel h2 {
+  margin: 0;
+  line-height: 1.15;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.crabPanelSpacer {
+  margin-top: 16px;
+}
+
+.crabPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 180, 107, 0.12);
+  border: 1px solid rgba(255, 180, 107, 0.25);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.crabLinkBtn {
+  background: transparent;
+  color: rgba(255, 180, 107, 0.95);
+  border: none;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 6px 8px;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.crabLinkBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  text-decoration: underline;
+}
+
+.crabSubtle {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.crabFieldsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.crabField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.crabField label {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.56);
+  font-weight: 900;
+}
+
+.crabField input,
+.crabField select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 10, 14, 0.85);
+  color: rgba(255, 255, 255, 0.92);
+  outline: none;
+  font-weight: 800;
+}
+
+.crabField input:focus,
+.crabField select:focus {
+  border-color: rgba(255, 180, 107, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 180, 107, 0.14);
+}
+
+.crabTextBlock {
+  margin-top: 14px;
+}
+
+.crabTextBlockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.crabTextBlockHead h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.crabTextarea {
+  width: 100%;
+  min-height: 190px;
+  resize: vertical;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 10, 14, 0.85);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  outline: none;
+  font-weight: 700;
+}
+
+.crabTextarea--loot {
+  min-height: 140px;
+}
+
+.crabTextarea:focus {
+  border-color: rgba(255, 180, 107, 0.55);
+  box-shadow: 0 0 0 3px rgba(255, 180, 107, 0.14);
+}
+
+.crabInputRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.crabBtn {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 180, 107, 0.25);
+  background: rgba(255, 180, 107, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  font-weight: 900;
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease;
+}
+
+.crabBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.crabBtn:active {
+  transform: translateY(0px);
+}
+
+.crabBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.crabBtn.ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.crabBtn.ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.crabImportStatus {
+  margin-top: 10px;
+  opacity: 0.95;
+}
+
+.crabImportStatus--error {
+  opacity: 1;
+}
+
+.crabOk {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.crabError {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.crabWarn {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.crabWarnList {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.crabWarnList li + li {
+  margin-top: 6px;
+}
+
+.crabMetricsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.crabMetric {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(12, 12, 18, 0.6);
+  min-width: 0;
+}
+
+.crabMetricLabel {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 900;
+}
+
+.crabMetricValue {
+  margin-top: 6px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+  word-break: break-word;
+}
+
+.crabMetricValue--profit {
+  color: #ffd7a7;
+}
+
+.crabSummaryList {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.crabSummaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 700;
+}
+
+.crabSummaryRow span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.crabSummaryRow strong {
+  color: rgba(255, 255, 255, 0.94);
+  text-align: right;
+}
+
+.crabEmpty {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(10, 10, 14, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.crabTableWrap {
+  max-width: 100%;
+  max-height: 340px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 14, 0.7);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 180, 107, 0.55) rgba(255, 255, 255, 0.06);
+}
+
+.crabTableWrap::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.crabTableWrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+}
+
+.crabTableWrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 180, 107, 0.45);
+  border-radius: 999px;
+  border: 2px solid rgba(10, 10, 14, 0.75);
+}
+
+.crabTableWrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 180, 107, 0.65);
+}
+
+.crabTable {
+  width: 100%;
+  border-collapse: collapse;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.crabTable th,
+.crabTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.crabTable thead th {
+  position: sticky;
+  top: 0;
+  background: rgba(20, 20, 28, 0.95);
+  z-index: 1;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: 0.9rem;
+}
+
+.crabTable tbody tr:hover td {
+  background: rgba(255, 180, 107, 0.06);
+}
+
+.crabTable--loot {
+  min-width: 0;
+}
+
+.crabTable--loot th:first-child,
+.crabTable--loot td:first-child {
+  width: 100%;
+  white-space: normal;
+}
+
+.crabTableWrap--recent {
+  max-height: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.crabTable--recent {
+  width: 100%;
+  min-width: 1040px;
+}
+
+.crabTable--recent th,
+.crabTable--recent td {
+  white-space: nowrap;
+}
+
+.crabTable--recent th:nth-child(1),
+.crabTable--recent td:nth-child(1) {
+  width: 15%;
+}
+
+.crabTable--recent th:nth-child(2),
+.crabTable--recent td:nth-child(2) {
+  width: 13%;
+}
+
+.crabTable--recent th:nth-child(3),
+.crabTable--recent td:nth-child(3) {
+  width: 8%;
+}
+
+.crabTable--recent th:nth-child(4),
+.crabTable--recent td:nth-child(4) {
+  width: 14%;
+}
+
+.crabTable--recent th:nth-child(5),
+.crabTable--recent td:nth-child(5) {
+  width: 8%;
+}
+
+.crabTable--recent th:nth-child(6),
+.crabTable--recent td:nth-child(6),
+.crabTable--recent th:nth-child(7),
+.crabTable--recent td:nth-child(7),
+.crabTable--recent th:nth-child(8),
+.crabTable--recent td:nth-child(8),
+.crabTable--recent th:nth-child(9),
+.crabTable--recent td:nth-child(9) {
+  width: 10.5%;
+}
+
+@media (max-width: 900px) {
+  .crabPage {
+    padding: 18px 14px 20px;
+  }
+
+  .crabWrap {
+    padding: 30px 0 20px;
+  }
+
+  .crabHeader h1 {
+    font-size: 2rem;
+  }
+
+  .crabFieldsGrid,
+  .crabMetricsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .crabPanelHeadActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .crabTable--recent,
+  .crabTable {
+    min-width: 760px;
+  }
+}

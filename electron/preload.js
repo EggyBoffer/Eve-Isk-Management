@@ -41,6 +41,11 @@ contextBridge.exposeInMainWorld("api", {
   bootProgress: (msg) => ipcRenderer.send("boot:progress", msg),
   bootDone: () => ipcRenderer.send("boot:done"),
 
+  saveCrabRun: (payload) => ipcRenderer.invoke("crab:saveRun", payload),
+  getRecentCrabRuns: (limit) => ipcRenderer.invoke("crab:getRecentRuns", limit),
+  getAllCrabRuns: () => ipcRenderer.invoke("crab:getAllRuns"),
+  getCrabRun: (runId) => ipcRenderer.invoke("crab:getRun", runId),
+
   on,
   once,
   off,

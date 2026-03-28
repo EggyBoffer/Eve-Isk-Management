@@ -27,9 +27,9 @@
 
 .incursionWrap {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 50px;
+  padding: 40px 28px 32px;
 }
 
 .incursionHeader {
@@ -257,6 +257,101 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.incursionGraphsGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.incursionGraphCard {
+  padding: 16px;
+  background: rgba(18, 18, 23, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.incursionGraphHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.incursionGraphHead h3 {
+  margin: 0;
+  line-height: 1.15;
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.incursionGraphSubtle {
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.incursionChartShell {
+  width: 100%;
+  min-height: 360px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(500px 220px at 50% 0%, rgba(255, 224, 138, 0.08), rgba(10, 10, 14, 0)),
+    rgba(10, 10, 14, 0.7);
+  overflow: hidden;
+}
+
+.incursionChartSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.incursionChartEmpty {
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(500px 220px at 50% 0%, rgba(255, 224, 138, 0.08), rgba(10, 10, 14, 0)),
+    rgba(10, 10, 14, 0.7);
+  color: rgba(255, 255, 255, 0.74);
+  font-weight: 800;
+}
+
+.incursionChartAxis {
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1.5;
+}
+
+.incursionChartGridLine {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.incursionChartTickText,
+.incursionChartLabelText,
+.incursionChartValueText {
+  fill: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.incursionChartValueText {
+  fill: rgba(255, 255, 255, 0.96);
+  font-weight: 800;
+}
+
 .incursionTableWrap {
   max-height: 320px;
   overflow: auto;
@@ -304,13 +399,19 @@
   font-weight: 800;
 }
 
+@media (max-width: 1100px) {
+  .incursionTwoCol {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 900px) {
   .incursionWrap {
     padding: 22px;
   }
 
   .incursionHeader h1 {
-    font-size: 2.0rem;
+    font-size: 2rem;
   }
 
   .incursionMetricsGrid {

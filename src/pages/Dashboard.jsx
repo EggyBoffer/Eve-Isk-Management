@@ -27,6 +27,12 @@ export default function Dashboard() {
       pill: "Active",
     },
     {
+      title: "CRABs",
+      desc: "Track beacons, bounty entries, loot, and net profit.",
+      to: "/crabs",
+      pill: "Active",
+    },
+    {
       title: "Overall Stats",
       desc: "All analytics combined into one big overview page.",
       to: "/overall-analytics",

@@ -6,6 +6,7 @@ import { loadRuns as loadDEDRuns } from "../lib/dedStorer";
 import { loadEventRuns } from "../lib/eventRunsStore";
 import { loadEventBounties } from "../lib/eventBountiesStore";
 import { loadIncursionTicks } from "../lib/parsers/features/Incursions/incursionStore";
+import { getAllCrabRuns } from "../lib/crabStore";
 
 export default function OverallAnalytics() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function OverallAnalytics() {
   const [eventRuns, setEventRuns] = useState([]);
   const [eventBounties, setEventBounties] = useState([]);
   const [incursionTicks, setIncursionTicks] = useState([]);
+  const [crabRuns, setCrabRuns] = useState([]);
 
   useEffect(() => {
     refreshAll();
@@ -53,8 +55,18 @@ export default function OverallAnalytics() {
     }
   }
 
+  async function refreshCrabs() {
+    try {
+      const runs = await getAllCrabRuns();
+      setCrabRuns(Array.isArray(runs) ? runs : []);
+    } catch {
+      setCrabRuns([]);
+    }
+  }
+
   function refreshAll() {
     refreshAbyssals();
+    refreshCrabs();
     setDedRuns(loadDEDRuns());
     setEventRuns(loadEventRuns());
     setEventBounties(loadEventBounties());
@@ -66,13 +78,26 @@ export default function OverallAnalytics() {
     const ded = computeDEDTotals(dedRuns);
     const ev = computeEventTotals(eventRuns, eventBounties);
     const inc = computeIncursionTotals(incursionTicks);
+    const crab = computeCrabTotals(crabRuns);
 
-    const totalISK = abyss.totalISK + ded.totalISK + ev.totalISK + inc.totalISK;
-    const totalHours = abyss.totalHours + ded.totalHours + ev.totalHours + inc.totalHours;
+    const totalISK =
+      abyss.totalISK +
+      ded.totalISK +
+      ev.totalISK +
+      inc.totalISK +
+      crab.totalISK;
+
+    const totalHours =
+      abyss.totalHours +
+      ded.totalHours +
+      ev.totalHours +
+      inc.totalHours +
+      crab.totalHours;
+
     const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
 
-    return { abyss, ded, ev, inc, totalISK, totalHours, iskPerHour };
-  }, [abyssals, glorified, dedRuns, eventRuns, eventBounties, incursionTicks]);
+    return { abyss, ded, ev, inc, crab, totalISK, totalHours, iskPerHour };
+  }, [abyssals, glorified, dedRuns, eventRuns, eventBounties, incursionTicks, crabRuns]);
 
   return (
     <div className="overallPage">
@@ -80,6 +105,16 @@ export default function OverallAnalytics() {
         <div className="overallHeader">
           <h1>Overall Statistics</h1>
           <p>All income tracking combined into one unified overview.</p>
+
+          <div className="overallHeaderNavRow">
+            <button
+              type="button"
+              className="overallHeaderNavBtn"
+              onClick={() => navigate("/overall-graphs")}
+            >
+              View Graphs →
+            </button>
+          </div>
         </div>
 
         <section className="overallTopGrid">
@@ -182,6 +217,28 @@ export default function OverallAnalytics() {
                 <strong>{fmtISK(totals.inc.iskPerHour)}</strong>
               </div>
             </button>
+
+            <button
+              type="button"
+              className="overallModuleCard"
+              onClick={() => navigate("/crabs/analytics")}
+            >
+              <div className="overallModuleTop">
+                <div className="overallModuleTitle">CRABs</div>
+              </div>
+              <div className="overallModuleRow">
+                <span>Total ISK</span>
+                <strong>{fmtISK(totals.crab.totalISK)}</strong>
+              </div>
+              <div className="overallModuleRow">
+                <span>Runs</span>
+                <strong>{fmtInt(totals.crab.runs)}</strong>
+              </div>
+              <div className="overallModuleRow">
+                <span>ISK / Hour</span>
+                <strong>{fmtISK(totals.crab.iskPerHour)}</strong>
+              </div>
+            </button>
           </div>
         </section>
 
@@ -230,6 +287,13 @@ export default function OverallAnalytics() {
                   <td>{fmtHours(totals.inc.totalHours)}</td>
                   <td>{fmtISK(totals.inc.totalISK)}</td>
                   <td>{fmtISK(totals.inc.iskPerHour)}</td>
+                </tr>
+                <tr>
+                  <td>CRABs</td>
+                  <td>{fmtInt(totals.crab.runs)} runs</td>
+                  <td>{fmtHours(totals.crab.totalHours)}</td>
+                  <td>{fmtISK(totals.crab.totalISK)}</td>
+                  <td>{fmtISK(totals.crab.iskPerHour)}</td>
                 </tr>
               </tbody>
             </table>
@@ -304,6 +368,15 @@ function computeIncursionTotals(ticks) {
   const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
 
   return { ticks: count, totalISK, totalHours, iskPerHour };
+}
+
+function computeCrabTotals(runs) {
+  const count = Array.isArray(runs) ? runs.length : 0;
+  const totalISK = (runs || []).reduce((s, r) => s + num(r.net_profit), 0);
+  const totalMinutes = (runs || []).reduce((s, r) => s + num(r.duration_minutes), 0);
+  const totalHours = totalMinutes / 60;
+  const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
+  return { runs: count, totalISK, totalHours, iskPerHour };
 }
 
 function parseWalletTs(ts) {

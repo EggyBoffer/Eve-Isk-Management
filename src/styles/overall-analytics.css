@@ -37,6 +37,28 @@
   font-weight: 700;
 }
 
+.overallHeaderNavRow {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.overallHeaderNavBtn {
+  padding: 10px 14px;
+  font-weight: 900;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, filter 0.12s ease, background 0.12s ease, border 0.12s ease;
+  background: rgba(88, 101, 242, 0.92);
+  color: #fff;
+}
+
+.overallHeaderNavBtn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
 .overallTopGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr)) 140px;

@@ -11,6 +11,7 @@ import Overlay from "./pages/Overlay";
 import PatchNotes from "./pages/PatchNotes";
 import Settings from "./pages/settings";
 import DEDAnalytics from "./pages/ded-analytics";
+import DEDGraphs from "./pages/ded-graphs";
 import BootGate from "./components/BootGate";
 import EventTracking from "./pages/event-tracking";
 import EventAnalytics from "./pages/event-analytics";
@@ -18,6 +19,10 @@ import IncursionTracker from "./pages/IncursionTracker";
 import IncursionAnalytics from "./pages/IncursionAnalytics";
 import UpdatePopup from "./components/UpdatePopup";
 import OverallAnalytics from "./pages/OverallAnalytics";
+import OverallGraphs from "./pages/overall-graphs";
+import CrabTracker from "./pages/CrabTracker";
+import CrabAnalytics from "./pages/CrabAnalytics";
+import CrabGraphs from "./pages/crab-graphs";
 import pkg from "../package.json";
 import "./styles/global.css";
 
@@ -73,7 +78,34 @@ async function fetchJsonWithTimeout(url, ms) {
   }
 }
 
-function AppContent() {
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/abyssals" element={<Abyssals />} />
+      <Route path="/ded-tracking" element={<DED />} />
+      <Route path="/market" element={<Market />} />
+      <Route path="/misc" element={<Misc />} />
+      <Route path="/analytics" element={<Analytics />} />
+      <Route path="/patch-notes" element={<PatchNotes />} />
+      <Route path="/overlay" element={<Overlay />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/ded-analytics" element={<DEDAnalytics />} />
+      <Route path="/ded-graphs" element={<DEDGraphs />} />
+      <Route path="/event-tracking" element={<EventTracking />} />
+      <Route path="/event-analytics" element={<EventAnalytics />} />
+      <Route path="/incursions" element={<IncursionTracker />} />
+      <Route path="/incursions/analytics" element={<IncursionAnalytics />} />
+      <Route path="/overall-analytics" element={<OverallAnalytics />} />
+      <Route path="/overall-graphs" element={<OverallGraphs />} />
+      <Route path="/crabs" element={<CrabTracker />} />
+      <Route path="/crabs/analytics" element={<CrabAnalytics />} />
+      <Route path="/crabs/graphs" element={<CrabGraphs />} />
+    </Routes>
+  );
+}
+
+function MainAppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const showNavbar = location.pathname !== "/overlay";
@@ -186,32 +218,24 @@ function AppContent() {
       />
 
       <main>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/abyssals" element={<Abyssals />} />
-          <Route path="/ded-tracking" element={<DED />} />
-          <Route path="/market" element={<Market />} />
-          <Route path="/misc" element={<Misc />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/patch-notes" element={<PatchNotes />} />
-          <Route path="/overlay" element={<Overlay />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/ded-analytics" element={<DEDAnalytics />} />
-          <Route path="/event-tracking" element={<EventTracking />} />
-          <Route path="/event-analytics" element={<EventAnalytics />} />
-          <Route path="/incursions" element={<IncursionTracker />} />
-          <Route path="/incursions/analytics" element={<IncursionAnalytics />} />
-          <Route path="/overall-analytics" element={<OverallAnalytics />} />
-        </Routes>
+        <BootGate>
+          <AppRoutes />
+        </BootGate>
       </main>
     </>
   );
 }
 
 export default function App() {
-  return (
-    <BootGate>
-      <AppContent />
-    </BootGate>
-  );
+  const location = useLocation();
+
+  if (location.pathname === "/overlay") {
+    return (
+      <main>
+        <AppRoutes />
+      </main>
+    );
+  }
+
+  return <MainAppContent />;
 }
