@@ -3,6 +3,7 @@ import { priceItemsJita } from "../../../marketClient";
 
 const ESI_UNIVERSE_IDS_URL = "https://esi.evetech.net/latest/universe/ids/?datasource=tranquility";
 const CRAB_LOOT_TYPEID_CACHE_KEY = "crabs:loot-typeids:v1";
+
 const FIXED_PRICE_OVERRIDES = {
   "rogue drone infestation data": 100000,
 };
@@ -26,32 +27,34 @@ function loadCache() {
 function saveCache(map) {
   try {
     localStorage.setItem(CRAB_LOOT_TYPEID_CACHE_KEY, JSON.stringify(map));
-  } catch {}
+  } catch (error) {
+    console.warn("CRAB loot type ID cache save failed:", error);
+  }
 }
 
 async function resolveNamesViaEsi(names) {
   if (!names.length) return {};
 
-  const res = await fetch(ESI_UNIVERSE_IDS_URL, {
+  const res = await window.api.requestApi({
+    url: ESI_UNIVERSE_IDS_URL,
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(names),
+    body: names,
   });
 
   if (!res.ok) {
-    throw new Error(`ESI universe ids lookup failed (${res.status})`);
+    throw new Error(
+      `ESI universe ids lookup failed (${res.status}): ${res.error || "Request failed"}`
+    );
   }
 
-  const data = await res.json();
+  const data = res.data;
   const inventoryTypes = Array.isArray(data?.inventory_types) ? data.inventory_types : [];
   const resolved = {};
 
   for (const entry of inventoryTypes) {
     const name = normalizeName(entry?.name);
     const id = Number(entry?.id);
+
     if (name && Number.isFinite(id) && id > 0) {
       resolved[cacheKey(name)] = id;
     }
@@ -84,6 +87,7 @@ async function resolveCrabLootTypeIds(items) {
   for (const item of items) {
     const key = cacheKey(item.name);
     const cachedId = Number(cache[key]);
+
     if (!(Number.isFinite(cachedId) && cachedId > 0)) {
       unresolvedNames.push(normalizeName(item.name));
     }
@@ -93,15 +97,18 @@ async function resolveCrabLootTypeIds(items) {
 
   if (uniqueUnresolved.length) {
     const resolved = await resolveNamesViaEsi(uniqueUnresolved);
+
     for (const [key, id] of Object.entries(resolved)) {
       cache[key] = id;
     }
+
     saveCache(cache);
   }
 
   return items.map((item) => {
     const key = cacheKey(item.name);
     const typeId = Number(cache[key]);
+
     return {
       ...item,
       type_id: Number.isFinite(typeId) && typeId > 0 ? typeId : null,
@@ -122,11 +129,6 @@ export async function priceCrabLoot(text) {
   }
 
   const withTypeIds = await resolveCrabLootTypeIds(parsed.items);
-
-  const fixedPriceItems = withTypeIds.filter((item) => {
-    const key = cacheKey(item.name);
-    return Number.isFinite(FIXED_PRICE_OVERRIDES[key]);
-  });
 
   const marketPriceItems = withTypeIds.filter((item) => {
     const key = cacheKey(item.name);
@@ -150,7 +152,9 @@ export async function priceCrabLoot(text) {
       )
     : { items: [], iskTotal: 0 };
 
-  const pricedByTypeId = new Map(priced.items.map((item) => [Number(item.typeId), item]));
+  const pricedByTypeId = new Map(
+    priced.items.map((item) => [Number(item.typeId), item])
+  );
 
   const items = withTypeIds.map((item) => {
     const key = cacheKey(item.name);
@@ -158,6 +162,7 @@ export async function priceCrabLoot(text) {
 
     if (Number.isFinite(fixedUnitPrice)) {
       const quantity = Number(item.qty ?? item.quantity ?? 0);
+
       return {
         item_name: item.item_name,
         name: item.name,
@@ -169,7 +174,9 @@ export async function priceCrabLoot(text) {
       };
     }
 
-    const pricedItem = item.type_id ? pricedByTypeId.get(Number(item.type_id)) : null;
+    const pricedItem = item.type_id
+      ? pricedByTypeId.get(Number(item.type_id))
+      : null;
 
     return {
       item_name: item.item_name,
@@ -186,10 +193,16 @@ export async function priceCrabLoot(text) {
     items,
     unknownLines: parsed.unknownLines,
     unresolvedItems,
-    lootTotal: items.reduce((sum, item) => sum + Number(item.total_price || 0), 0),
+    lootTotal: items.reduce(
+      (sum, item) => sum + Number(item.total_price || 0),
+      0
+    ),
   };
 }
 
 export function sumCrabLoot(items) {
-  return items.reduce((sum, item) => sum + Number(item.total_price || 0), 0);
+  return items.reduce(
+    (sum, item) => sum + Number(item.total_price || 0),
+    0
+  );
 }

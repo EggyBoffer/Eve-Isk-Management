@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import "../styles/settings.css";
 
@@ -20,6 +21,9 @@ export default function Settings() {
   });
   const [autoRepriceDEDOnLaunch, setAutoRepriceDEDOnLaunch] = useState(true);
 
+  const [overlayHotkey, setOverlayHotkey] = useState("Control+Shift+F12");
+  const [hotkeyError, setHotkeyError] = useState("");
+
   const [dbSize, setDbSize] = useState(null);
 
   const [repricing, setRepricing] = useState(false);
@@ -38,6 +42,14 @@ export default function Settings() {
   }, []);
 
   useEffect(() => {
+    window.api.getAppSettings().then((stored) => {
+      if (typeof stored?.overlayCloseHotkey === "string") {
+        setOverlayHotkey(stored.overlayCloseHotkey);
+      }
+    }).catch(() => setHotkeyError("Unable to load overlay hotkey."));
+  }, []);
+
+  useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("settings")) || {};
     if (stored.filamentTier) setFilamentTier(stored.filamentTier);
     if (stored.stormType) setStormType(stored.stormType);
@@ -48,7 +60,25 @@ export default function Settings() {
     }
   }, []);
 
-  function saveSettings() {
+  async function saveSettings() {
+    setHotkeyError("");
+    const modifiers = overlayHotkey.split("+").slice(0, -1);
+    if (!modifiers.length) {
+      setHotkeyError("Select at least one modifier.");
+      return;
+    }
+
+    try {
+      const result = await window.api.saveAppSettings({ overlayCloseHotkey: overlayHotkey });
+      if (!result?.success) {
+        setHotkeyError(result?.error || "Unable to save overlay hotkey.");
+        return;
+      }
+    } catch (err) {
+      setHotkeyError(err?.message || "Unable to save overlay hotkey.");
+      return;
+    }
+
     const settings = {
       filamentTier,
       stormType,
@@ -219,6 +249,58 @@ export default function Settings() {
                     <option value="1M">1M</option>
                   </select>
                 </label>
+              </div>
+
+              <div className="settingsField">
+                <span className="settingsLabel">Close Overlay Hotkey (Global)</span>
+                <div className="settingsRow">
+                  {[
+                    ["Control", "Ctrl"],
+                    ["Shift", "Shift"],
+                    ["Alt", "Alt"],
+                  ].map(([modifier, label]) => (
+                    <label className="settingsToggle" key={modifier}>
+                      <input
+                        type="checkbox"
+                        checked={overlayHotkey.split("+").includes(modifier)}
+                        onChange={(e) => {
+                          const parts = overlayHotkey.split("+");
+                          const key = parts.at(-1);
+                          const selected = new Set(parts.slice(0, -1));
+                          if (e.target.checked) selected.add(modifier);
+                          else selected.delete(modifier);
+                          const ordered = ["Control", "Shift", "Alt"].filter((item) => selected.has(item));
+                          setOverlayHotkey([...ordered, key].join("+"));
+                        }}
+                      />
+                      <span className="settingsToggleText">{label}</span>
+                    </label>
+                  ))}
+                  <label className="settingsField">
+                    <span className="settingsLabel">Key</span>
+                    <select
+                      className="settingsInput"
+                      value={overlayHotkey.split("+").at(-1)}
+                      onChange={(e) => {
+                        const modifiers = overlayHotkey.split("+").slice(0, -1);
+                        setOverlayHotkey([...modifiers, e.target.value].join("+"));
+                      }}
+                    >
+                      {Array.from({ length: 12 }, (_, i) => `F${i + 1}`).map((key) => (
+                        <option key={key} value={key}>{key}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="settingsMeta">Current selection: {overlayHotkey}</div>
+                {hotkeyError && <div className="settingsNotice error">{hotkeyError}</div>}
+                <button
+                  type="button"
+                  className="settingsBtn ghost"
+                  onClick={() => setOverlayHotkey("Control+Shift+F12")}
+                >
+                  Reset Hotkey to Default
+                </button>
               </div>
 
               <label className="settingsToggle">

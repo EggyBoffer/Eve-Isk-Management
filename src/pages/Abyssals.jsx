@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/abyssals.css";
@@ -53,13 +54,19 @@ export default function Abyssals() {
 
   async function fetchFilamentPrice(typeId) {
     const regionId = 10000002;
+
     try {
-      const res = await fetch(
-        `https://esi.evetech.net/latest/markets/${regionId}/orders/?type_id=${typeId}`
-      );
-      const data = await res.json();
-      const sellOrders = data.filter((order) => !order.is_buy_order);
+      const res = await window.api.requestApi({
+        url: `https://esi.evetech.net/latest/markets/${regionId}/orders/?type_id=${typeId}`,
+      });
+
+      if (!res.ok || !Array.isArray(res.data)) {
+        return 0;
+      }
+
+      const sellOrders = res.data.filter((order) => !order.is_buy_order);
       const lowestSell = sellOrders.sort((a, b) => a.price - b.price)[0];
+
       return Math.round(lowestSell?.price || 0);
     } catch {
       return 0;
@@ -81,13 +88,7 @@ export default function Abyssals() {
 
   useEffect(() => {
     fetchEntries();
-    updateFilamentPrice();
-    setEditingId(null);
-    setRoom1Isk("");
-    setRoom2Isk("");
-    setRoom3Isk("");
-    setTimeTaken("");
-  }, [fetchEntries, updateFilamentPrice]);
+  }, [fetchEntries]);
 
   useEffect(() => {
     sessionStorage.setItem("tier", tier);
@@ -161,8 +162,8 @@ export default function Abyssals() {
       ship_type: shipType,
     };
 
-    if (editingId) {
-      await window.api.updateEntry("abyssals", { id: editingId, ...entryData });
+    if (editingId !== null) {
+      await window.api.updateEntry("abyssals", editingId, entryData);
       setEditingId(null);
     } else {
       await window.api.addEntry("abyssals", entryData);

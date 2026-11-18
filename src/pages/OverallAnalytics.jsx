@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/overall-analytics.css";
 
@@ -39,9 +39,9 @@ export default function OverallAnalytics() {
       window.removeEventListener("storage", onStorage);
       if (typeof off === "function") off();
     };
-  }, []);
+  }, [refreshAll, refreshAbyssals]);
 
-  async function refreshAbyssals() {
+  const refreshAbyssals = useCallback(async () => {
     try {
       const [a, g] = await Promise.all([
         window.api.getEntries("abyssals"),
@@ -53,25 +53,25 @@ export default function OverallAnalytics() {
       setAbyssals([]);
       setGlorified([]);
     }
-  }
+  }, []);
 
-  async function refreshCrabs() {
+  const refreshCrabs = useCallback(async () => {
     try {
       const runs = await getAllCrabRuns();
       setCrabRuns(Array.isArray(runs) ? runs : []);
     } catch {
       setCrabRuns([]);
     }
-  }
+  }, []);
 
-  function refreshAll() {
+  const refreshAll = useCallback(() => {
     refreshAbyssals();
     refreshCrabs();
     setDedRuns(loadDEDRuns());
     setEventRuns(loadEventRuns());
     setEventBounties(loadEventBounties());
     setIncursionTicks(loadIncursionTicks());
-  }
+  }, [refreshAbyssals, refreshCrabs]);
 
   const totals = useMemo(() => {
     const abyss = computeAbyssalsTotals(abyssals, glorified);

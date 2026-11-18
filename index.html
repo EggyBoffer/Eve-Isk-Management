@@ -1,7 +1,23 @@
+
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob: https://cdn.jsdelivr.net https://images.ctfassets.net;
+        font-src 'self' data:;
+        connect-src 'self';
+        object-src 'none';
+        frame-src 'none';
+        base-uri 'self';
+        form-action 'none';
+      "
+    />
     <link rel="icon" type="image/png" href="./public/Iskonomy.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ISKONOMY.</title>

@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import pkg from "../../package.json";
@@ -111,9 +110,7 @@ export default function PatchNotes() {
     },
   ];
 
-  const sorted = useMemo(() => {
-    return [...patches].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, []);
+  const sorted = [...patches].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
     <div className="patchNotes-page">

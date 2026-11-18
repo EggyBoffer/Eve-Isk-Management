@@ -1,3 +1,4 @@
+
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "./components/Navbar";
@@ -60,21 +61,24 @@ function isNewerVersion(current, latest) {
 }
 
 async function fetchJsonWithTimeout(url, ms) {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), ms);
+  let timeoutId;
 
   try {
-    const res = await fetch(url, {
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-      signal: controller.signal,
+    const request = window.api.requestApi({ url });
+
+    const timeout = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error("Request timed out")), ms);
     });
-    if (!res.ok) return null;
-    return await res.json();
+
+    const res = await Promise.race([request, timeout]);
+
+    if (!res?.ok) return null;
+
+    return res.data ?? null;
   } catch {
     return null;
   } finally {
-    clearTimeout(t);
+    clearTimeout(timeoutId);
   }
 }
 

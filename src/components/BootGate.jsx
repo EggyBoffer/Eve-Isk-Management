@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { runBootTasks } from "../lib/bootTasks";
 
@@ -35,16 +34,16 @@ export default function BootGate({ children, loader }) {
     const sendProgress = (msg) => {
       try {
         window.api?.bootProgress?.(msg);
-      } catch {
-        
+      } catch (error) {
+        console.warn("Boot progress notification failed:", error);
       }
     };
 
     const sendDone = () => {
       try {
         window.api?.bootDone?.();
-      } catch {
-        
+      } catch (error) {
+        console.warn("Boot completion notification failed:", error);
       }
     };
 

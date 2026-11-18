@@ -1,7 +1,3 @@
-
-
-
-
 const KEY = "event:bounties:v1";
 
 function uid() {
@@ -20,8 +16,8 @@ function saveEventBounties(list) {
   localStorage.setItem(KEY, JSON.stringify(list));
   try {
     window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
-  } catch {
-    
+  } catch (error) {
+    console.warn("Event bounty notification failed:", error);
   }
 }
 

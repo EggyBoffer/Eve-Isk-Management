@@ -228,7 +228,8 @@ export default function CrabTracker() {
         if (unitPrice > 0) {
           setBeaconCost(String(Math.round(unitPrice)));
         }
-      } catch {
+      } catch (error) {
+        console.warn("CRAB beacon price lookup failed:", error);
       } finally {
         if (!cancelled) setPricingBeacon(false);
       }

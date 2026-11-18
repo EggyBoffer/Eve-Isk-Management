@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import "../styles/overlay.css";
 
@@ -66,14 +67,11 @@ export default function Overlay() {
 
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === "Escape") {
-        window.api.closeOverlay?.();
-      }
       if (e.key === "Enter") {
-        // stop random "ding" sounds / weird focus behavior
         e.preventDefault();
       }
     }
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
@@ -94,9 +92,11 @@ export default function Overlay() {
     ipc.on("set-filament-settings", handler);
 
     return () => {
-      // IMPORTANT: some preload wrappers don't expose removeListener(), but they do expose off()
-      if (typeof ipc.off === "function") ipc.off("set-filament-settings", handler);
-      else if (typeof ipc.removeAllListeners === "function") ipc.removeAllListeners("set-filament-settings");
+      if (typeof ipc.off === "function") {
+        ipc.off("set-filament-settings", handler);
+      } else if (typeof ipc.removeAllListeners === "function") {
+        ipc.removeAllListeners("set-filament-settings");
+      }
     };
   }, []);
 
@@ -110,7 +110,8 @@ export default function Overlay() {
           <div className="overlayInfoBody">
             This will guide you through logging your abyssal run step by step.
             <br />
-            Press <strong>ESC</strong> anytime to close. Drag the empty area to move it.
+            Press <strong>Ctrl + Shift + F12</strong> to close (or your configured hotkey).
+            Drag the empty area to move it.
           </div>
 
           <button type="button" className="overlayInfoDismiss" onClick={dismissInfoPopup}>

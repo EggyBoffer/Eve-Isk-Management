@@ -1,5 +1,6 @@
 const JITA_REGION_ID = 10000002;
 const TYPEID_CACHE_KEY = "ded:typeid-cache:v1";
+const MAX_TYPES_LENGTH = 3000;
 
 function normalizeName(name) {
   return String(name || "").trim();
@@ -11,7 +12,10 @@ function cacheKeyForName(name) {
 
 function loadTypeIdCache() {
   try {
-    return JSON.parse(localStorage.getItem(TYPEID_CACHE_KEY) || "{}");
+    const value = JSON.parse(localStorage.getItem(TYPEID_CACHE_KEY) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
   } catch {
     return {};
   }
@@ -20,7 +24,9 @@ function loadTypeIdCache() {
 function saveTypeIdCache(map) {
   try {
     localStorage.setItem(TYPEID_CACHE_KEY, JSON.stringify(map));
-  } catch {}
+  } catch (error) {
+    console.warn("Market type ID cache save failed:", error);
+  }
 }
 
 function toFiniteNumber(value) {
@@ -28,16 +34,50 @@ function toFiniteNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function validTypeId(value) {
+  const id = toFiniteNumber(value);
+  return id !== null && Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+function batchTypeIds(typeIds) {
+  const batches = [];
+  let current = [];
+  let length = 0;
+
+  for (const id of typeIds) {
+    const text = String(id);
+    const additionalLength = text.length + (current.length ? 1 : 0);
+
+    if (current.length && length + additionalLength > MAX_TYPES_LENGTH) {
+      batches.push(current);
+      current = [];
+      length = 0;
+    }
+
+    current.push(id);
+    length += text.length + (current.length > 1 ? 1 : 0);
+  }
+
+  if (current.length) batches.push(current);
+  return batches;
+}
+
 async function fetchTypeIdForName(name) {
   const cleanName = normalizeName(name);
   const url = `https://www.fuzzwork.co.uk/api/typeid.php?typename=${encodeURIComponent(cleanName)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`typeid fetch failed for "${cleanName}" (${res.status})`);
 
-  const data = await res.json();
-  const parsedId = toFiniteNumber(data?.typeID ?? data?.typeId ?? data?.typeid);
+  const res = await window.api.requestApi({ url });
 
-  if (!parsedId) {
+  if (!res.ok) {
+    throw new Error(
+      `typeid fetch failed for "${cleanName}" (${res.status}): ${res.error || "Request failed"}`
+    );
+  }
+
+  const data = res.data;
+  const parsedId = validTypeId(data?.typeID ?? data?.typeId ?? data?.typeid);
+
+  if (parsedId === null) {
     throw new Error(`No typeID for "${cleanName}"`);
   }
 
@@ -81,9 +121,9 @@ export async function resolveTypeIds(items) {
   const toLookup = [];
 
   for (const item of items) {
-    const directTypeId = toFiniteNumber(item?.typeId);
+    const directTypeId = validTypeId(item?.typeId);
 
-    if (directTypeId) {
+    if (directTypeId !== null) {
       results.push({ ...item, typeId: directTypeId });
       continue;
     }
@@ -95,9 +135,9 @@ export async function resolveTypeIds(items) {
     }
 
     const key = cacheKeyForName(cleanName);
-    const cachedId = toFiniteNumber(cache[key]);
+    const cachedId = validTypeId(cache[key]);
 
-    if (cachedId) {
+    if (cachedId !== null) {
       results.push({ ...item, name: cleanName, typeId: cachedId });
     } else {
       toLookup.push({ ...item, name: cleanName });
@@ -125,14 +165,29 @@ export async function resolveTypeIds(items) {
 }
 
 async function fetchAggregates(typeIds) {
-  if (!typeIds.length) return {};
+  const uniqueIds = Array.from(
+    new Set(typeIds.map(validTypeId).filter((id) => id !== null))
+  );
 
-  const url = `https://market.fuzzwork.co.uk/aggregates/?region=${JITA_REGION_ID}&types=${typeIds.join(",")}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`aggregates fetch failed (${res.status})`);
+  if (!uniqueIds.length) return {};
 
-  const data = await res.json();
-  return data || {};
+  const aggregates = {};
+
+  for (const batch of batchTypeIds(uniqueIds)) {
+    const url = `https://market.fuzzwork.co.uk/aggregates/?region=${JITA_REGION_ID}&types=${batch.join(",")}`;
+
+    const res = await window.api.requestApi({ url });
+
+    if (!res.ok) {
+      throw new Error(
+        `aggregates fetch failed (${res.status}): ${res.error || "Request failed"}`
+      );
+    }
+
+    Object.assign(aggregates, res.data || {});
+  }
+
+  return aggregates;
 }
 
 function getAggregateForTypeId(aggregates, typeId) {
@@ -162,14 +217,14 @@ export async function priceItemsJita(items) {
   const withIds = await resolveTypeIds(items);
 
   const ids = withIds
-    .map((item) => toFiniteNumber(item.typeId))
-    .filter((id) => Number.isFinite(id));
+    .map((item) => validTypeId(item.typeId))
+    .filter((id) => id !== null);
 
   const uniqueIds = Array.from(new Set(ids));
   const aggregates = await fetchAggregates(uniqueIds);
 
   const priced = withIds.map((item) => {
-    const typeId = toFiniteNumber(item.typeId);
+    const typeId = validTypeId(item.typeId);
     const aggregate = typeId ? getAggregateForTypeId(aggregates, typeId) : null;
     const unitPrice = pickUnitPrice(aggregate);
     const qty = Number(item.qty ?? item.quantity ?? 0);
@@ -184,7 +239,10 @@ export async function priceItemsJita(items) {
     };
   });
 
-  const iskTotal = priced.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
+  const iskTotal = priced.reduce(
+    (sum, item) => sum + (Number(item.total) || 0),
+    0
+  );
 
   return {
     items: priced,

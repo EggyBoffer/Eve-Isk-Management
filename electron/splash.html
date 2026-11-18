@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +38,6 @@
       user-select: none;
     }
 
-    /* Base "Loading..." line */
     .splash-text {
       position: absolute;
       bottom: 52px;
@@ -50,7 +50,6 @@
       user-select: none;
     }
 
-    /* Dynamic boot progress line */
     #statusText {
       position: absolute;
       bottom: 34px;
@@ -89,8 +88,6 @@
       height: 100%;
       width: 0%;
       background-color: #61dafb;
-
-      /* Loop instead of "complete and stop" */
       animation: fillBar 1.8s ease-in-out infinite;
     }
 
@@ -110,39 +107,33 @@
 </head>
 <body>
   <div class="splash-container">
-    <div class="version">
-      <script>
-        const version = require('../package.json').version;
-        document.currentScript.parentElement.textContent = `v${version}`;
-      </script>
-    </div>
+    <div class="version" id="versionText"></div>
 
     <img id="logo" alt="ISKonomy Logo">
-
-    <script>
-      const { ipcRenderer } = require("electron");
-
-      ipcRenderer.on("logo-path", (_event, logoUrl) => {
-        document.getElementById("logo").src = logoUrl;
-      });
-
-      // NEW: receive boot progress text from main process
-      ipcRenderer.on("boot:progress", (_event, msg) => {
-        const el = document.getElementById("statusText");
-        if (el) el.textContent = String(msg || "");
-      });
-    </script>
 
     <div class="splash-text">
       Loading<span class="dots"></span>
     </div>
 
-    <!-- NEW: dynamic status line -->
     <div id="statusText">Starting…</div>
 
     <div class="loading-bar">
       <div class="loading-fill"></div>
     </div>
   </div>
+
+  <script>
+    window.splashApi.onLogoPath((logoUrl) => {
+      document.getElementById("logo").src = logoUrl;
+    });
+
+    window.splashApi.onProgress((message) => {
+      document.getElementById("statusText").textContent = message;
+    });
+
+    window.splashApi.onVersion((version) => {
+      document.getElementById("versionText").textContent = `v${version}`;
+    });
+  </script>
 </body>
 </html>

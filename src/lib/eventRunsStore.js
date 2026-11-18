@@ -1,4 +1,3 @@
-
 const KEY = "event:runs:v1";
 
 function uid() {
@@ -14,8 +13,8 @@ function saveEventRuns(runs) {
   localStorage.setItem(KEY, JSON.stringify(runs));
   try {
     window.dispatchEvent(new StorageEvent("storage", { key: KEY }));
-  } catch {
-    
+  } catch (error) {
+    console.warn("Event run notification failed:", error);
   }
 }
 

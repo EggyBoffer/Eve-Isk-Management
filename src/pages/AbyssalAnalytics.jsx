@@ -2,6 +2,29 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/abyssal-analytics.css";
 
+function getShipMultiplier(shipType) {
+  switch (shipType?.toLowerCase()) {
+    case "frigate":
+      return 3;
+    case "destroyer":
+      return 2;
+    case "cruiser":
+      return 1;
+    default:
+      return 1;
+  }
+}
+
+function getEntryProfit(entry) {
+  const mult = getShipMultiplier(entry.ship_type);
+  return (
+    Number(entry.room1_isk || 0) +
+    Number(entry.room2_isk || 0) +
+    Number(entry.room3_isk || 0) -
+    Number(entry.fillament_cost || 0) * mult
+  );
+}
+
 export default function Analytics() {
   const [entries, setEntries] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -34,29 +57,6 @@ export default function Analytics() {
   async function fetchGlorified() {
     const data = await window.api.getGlorified();
     setGlorified(Array.isArray(data) ? data : []);
-  }
-
-  function getShipMultiplier(shipType) {
-    switch (shipType?.toLowerCase()) {
-      case "frigate":
-        return 3;
-      case "destroyer":
-        return 2;
-      case "cruiser":
-        return 1;
-      default:
-        return 1;
-    }
-  }
-
-  function getEntryProfit(entry) {
-    const mult = getShipMultiplier(entry.ship_type);
-    return (
-      Number(entry.room1_isk || 0) +
-      Number(entry.room2_isk || 0) +
-      Number(entry.room3_isk || 0) -
-      Number(entry.fillament_cost || 0) * mult
-    );
   }
 
   function handleSort(field) {
