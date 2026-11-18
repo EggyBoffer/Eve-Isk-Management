@@ -185,6 +185,18 @@ contextBridge.exposeInMainWorld("api", {
   getCrabRun: (runId) =>
     ipcRenderer.invoke("crab:getRun", runId),
 
+  esiListCharacters: () =>
+    ipcRenderer.invoke("esi:listCharacters"),
+
+  esiLinkCharacter: () =>
+    ipcRenderer.invoke("esi:linkCharacter"),
+
+  esiRefreshCharacter: (characterId) =>
+    ipcRenderer.invoke("esi:refreshCharacter", characterId),
+
+  esiUnlinkCharacter: (characterId) =>
+    ipcRenderer.invoke("esi:unlinkCharacter", characterId),
+
   on,
   once,
   off,

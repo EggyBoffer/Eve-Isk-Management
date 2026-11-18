@@ -10,6 +10,7 @@ import {
   getCrabRunById,
   getAllCrabRuns,
 } from "./crabDatabase.js";
+import { registerEsiIpc } from "./esi/esiIpc.js";
 
 console.log("DB path being used:", db.name);
 
@@ -527,6 +528,13 @@ function assertMainSender(event) {
     throw new Error("IPC operation is not permitted from this window");
   }
 }
+
+registerEsiIpc({
+  ipcMain,
+  db,
+  shell,
+  assertMainSender,
+});
 
 function isOverlaySender(event) {
   for (const window of overlayWindows) {

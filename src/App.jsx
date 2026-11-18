@@ -24,6 +24,7 @@ import OverallGraphs from "./pages/overall-graphs";
 import CrabTracker from "./pages/CrabTracker";
 import CrabAnalytics from "./pages/CrabAnalytics";
 import CrabGraphs from "./pages/crab-graphs";
+import ESIConnections from "./pages/esi/ESIConnections";
 import pkg from "../package.json";
 import "./styles/global.css";
 
@@ -105,6 +106,7 @@ function AppRoutes() {
       <Route path="/crabs" element={<CrabTracker />} />
       <Route path="/crabs/analytics" element={<CrabAnalytics />} />
       <Route path="/crabs/graphs" element={<CrabGraphs />} />
+      <Route path="/esi-connections" element={<ESIConnections />} />
     </Routes>
   );
 }

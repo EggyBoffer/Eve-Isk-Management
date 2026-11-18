@@ -1,3 +1,4 @@
+
 import { NavLink, useNavigate } from "react-router-dom";
 import { Settings, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -128,6 +129,18 @@ export default function Navbar() {
                   role="menuitem"
                 >
                   Market
+                </button>
+
+                <button
+                  type="button"
+                  className="navbar__dropdownItem"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    navigate("/esi-connections");
+                  }}
+                  role="menuitem"
+                >
+                  ESI Connections
                 </button>
               </div>
             )}
