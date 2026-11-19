@@ -1,9 +1,11 @@
+
 name: Notify Discord
 
 on:
   push:
     branches:
       - main
+      - development
 
 jobs:
   notify:
@@ -12,10 +14,34 @@ jobs:
       - name: Send push update to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
         run: |
-          curl -H "Content-Type: application/json" \
-          -X POST \
-          -d '{
-            "username": "ISKonomy Bot",
-            "content": "🚀 New push to `main` by ${{ github.actor }}\nRepo: ${{ github.repository }}\n[View Commit](https://github.com/${{ github.repository }}/commits/main)"
-          }' $DISCORD_WEBHOOK
+          python3 - <<'PY' > payload.json
+          import json
+          import os
+
+          branch = os.environ["BRANCH"]
+          actor = os.environ["ACTOR"]
+          repository = os.environ["REPOSITORY"]
+          commit_url = os.environ["COMMIT_URL"]
+
+          payload = {
+              "username": "ISKonomy Bot",
+              "content": (
+                  f"🚀 New push to `{branch}` by {actor}\n"
+                  f"Repo: {repository}\n"
+                  f"[View Commit]({commit_url})"
+              ),
+          }
+
+          print(json.dumps(payload))
+          PY
+
+          curl --fail-with-body --silent --show-error \
+            -H "Content-Type: application/json" \
+            -X POST \
+            --data-binary @payload.json \
+            "$DISCORD_WEBHOOK"
