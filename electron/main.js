@@ -529,7 +529,7 @@ function assertMainSender(event) {
   }
 }
 
-registerEsiIpc({
+const { autoSync } = registerEsiIpc({
   ipcMain,
   db,
   shell,
@@ -1251,6 +1251,9 @@ app.whenReady().then(() => {
   createSplash();
   createMainWindow();
 
+  autoSync.start({ runImmediately: true });
+  console.log("[ESI AUTO SYNC] Automatic synchronisation enabled");
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
@@ -1265,5 +1268,6 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
+  autoSync.stop();
   unregisterOverlayHotkey();
 });

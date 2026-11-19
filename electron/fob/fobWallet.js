@@ -1,8 +1,67 @@
-
 const ESI_BASE = "https://esi.evetech.net/latest";
 const REQUEST_TIMEOUT_MS = 15000;
 const MAX_PAGES = 20;
 const FOB_PAYOUT = 100_000_000;
+const DEFAULT_RATE_LIMIT_MS = 60_000;
+const MAX_RATE_LIMIT_MS = 60 * 60 * 1000;
+let walletCooldownUntil = 0;
+
+function retryDelayMs(response) {
+  const retryAfter = response.headers.get("retry-after");
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+      return Math.min(Math.ceil(seconds * 1000), MAX_RATE_LIMIT_MS);
+    }
+    const date = Date.parse(retryAfter);
+    if (Number.isFinite(date)) {
+      return Math.min(Math.max(0, date - Date.now()), MAX_RATE_LIMIT_MS);
+    }
+  }
+
+  const reset = response.headers.get("x-esi-error-limit-reset");
+  if (reset !== null) {
+    const seconds = Number(reset);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+      return Math.min(Math.ceil(seconds * 1000), MAX_RATE_LIMIT_MS);
+    }
+  }
+
+  return DEFAULT_RATE_LIMIT_MS;
+}
+
+function checkWalletCooldown() {
+  if (Date.now() < walletCooldownUntil) {
+    const seconds = Math.ceil((walletCooldownUntil - Date.now()) / 1000);
+    const error = new Error(`ESI wallet rate limited; retry in ${seconds} seconds`);
+    error.status = 429;
+    error.retryAfterMs = walletCooldownUntil - Date.now();
+    throw error;
+  }
+}
+
+function checkWalletResponse(response, label) {
+  if (response.status === 420 || response.status === 429) {
+    const delay = retryDelayMs(response);
+    walletCooldownUntil = Math.max(walletCooldownUntil, Date.now() + delay);
+    const error = new Error(`${label} rate limited (${response.status}); retry after ${Math.ceil(delay / 1000)} seconds`);
+    error.status = response.status;
+    error.retryAfterMs = delay;
+    throw error;
+  }
+
+  const remaining = Number(response.headers.get("x-esi-error-limit-remain"));
+  if (response.headers.has("x-esi-error-limit-remain") && Number.isFinite(remaining) && remaining <= 0) {
+    walletCooldownUntil = Math.max(walletCooldownUntil, Date.now() + retryDelayMs(response));
+  }
+
+  if (!response.ok) {
+    const error = new Error(`${label} request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
+  }
+}
+
 
 const candidateTypes = new Set([
   "corporate_reward_payout",
@@ -176,6 +235,8 @@ export function createFobWalletService({
 
     url.searchParams.set("page", String(page));
 
+    checkWalletCooldown();
+
     return fetch(url, {
       method: "GET",
       redirect: "error",
@@ -195,6 +256,10 @@ export function createFobWalletService({
 
     let response = await requestPage(id, pageNumber, token);
 
+    if (response.status === 420 || response.status === 429) {
+      checkWalletResponse(response, "Wallet journal");
+    }
+
     if (response.status === 401) {
       token = await getAccessToken(id, {
         forceRefresh: true,
@@ -203,11 +268,7 @@ export function createFobWalletService({
       response = await requestPage(id, pageNumber, token);
     }
 
-    if (!response.ok) {
-      throw new Error(
-        `Wallet journal request failed (${response.status})`
-      );
-    }
+    checkWalletResponse(response, "Wallet journal");
 
     const data = await response.json();
 
@@ -298,6 +359,8 @@ export function createFobWalletService({
 
     url.searchParams.set("page", String(page));
 
+    checkWalletCooldown();
+
     return fetch(url, {
       method: "GET",
       redirect: "error",
@@ -341,6 +404,10 @@ export function createFobWalletService({
       token
     );
 
+    if (response.status === 420 || response.status === 429) {
+      checkWalletResponse(response, `Corporation wallet journal for division ${walletDivision}`);
+    }
+
     if (response.status === 401) {
       token = await getCorporationAccessToken(
         authorisingCharacterId,
@@ -355,11 +422,7 @@ export function createFobWalletService({
       );
     }
 
-    if (!response.ok) {
-      throw new Error(
-        `Corporation wallet journal request failed for division ${walletDivision} (${response.status})`
-      );
-    }
+    checkWalletResponse(response, `Corporation wallet journal for division ${walletDivision}`);
 
     const data = await response.json();
 

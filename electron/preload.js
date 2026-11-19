@@ -1,4 +1,3 @@
-
 const { contextBridge, ipcRenderer } = require("electron");
 
 const allowedReceiveChannels = new Set([
@@ -247,7 +246,7 @@ contextBridge.exposeInMainWorld("api", {
       characterId,
       division,
       pageLimit
-   ),
+    ),
 
   esiGetCorporationWalletSyncState: (corporationId, division = 1) =>
     ipcRenderer.invoke(
@@ -255,6 +254,12 @@ contextBridge.exposeInMainWorld("api", {
       corporationId,
       division
     ),
+
+  esiGetAutoSyncStatus: () =>
+    ipcRenderer.invoke("esi:getAutoSyncStatus"),
+
+  esiRunAutoSync: () =>
+    ipcRenderer.invoke("esi:runAutoSync"),
 
   on,
   once,

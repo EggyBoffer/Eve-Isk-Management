@@ -2,6 +2,7 @@ import { getCharacterCorporation } from "./esiCorporations.js";
 import { createEsiAuthService } from "./esiAuth.js";
 import { createFobWalletService } from "../fob/fobWallet.js";
 import { createEsiWalletSyncService } from "./esiWalletSync.js";
+import { createEsiAutoSyncService } from "./esiAutoSync.js";
 import {
   importEsiWalletJournal,
   listEsiWalletJournal,
@@ -26,6 +27,11 @@ export function registerEsiIpc({
     db,
     fobWallet,
     listCorporations: esi.listCorporations,
+  });
+
+  const autoSync = createEsiAutoSyncService({
+    listCorporations: esi.listCorporations,
+    syncCorporation: walletSync.syncCorporation,
   });
 
   ipcMain.handle(
@@ -155,4 +161,16 @@ export function registerEsiIpc({
       return walletSync.getCorporationSyncState(corporationId, division);
     }
   );
+
+  ipcMain.handle("esi:getAutoSyncStatus", (event) => {
+    assertMainSender(event);
+    return autoSync.getStatus();
+  });
+
+  ipcMain.handle("esi:runAutoSync", async (event) => {
+    assertMainSender(event);
+    return autoSync.runOnce();
+  });
+
+  return { autoSync };
 }
