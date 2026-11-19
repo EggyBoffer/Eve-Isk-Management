@@ -9,25 +9,44 @@ import {
   saveEsiCharacter,
   markEsiCharacterStatus,
   deleteEsiCharacter,
+  listEsiCorporationAuthorisations,
+  getEsiCorporationAuthorisation,
+  saveEsiCorporationAuthorisation,
+  markEsiCorporationAuthorisationStatus,
+  deleteEsiCorporationAuthorisation,
 } from "./esiDatabase.js";
 
 const CLIENT_ID = "0be85dc3df334b098d1b123d73936275";
 const REDIRECT_URI = "http://localhost:41721/callback";
 const CALLBACK_PORT = 41721;
-const SCOPE = "esi-wallet.read_character_wallet.v1";
+
+const CHARACTER_SCOPE = "esi-wallet.read_character_wallet.v1";
+const CORPORATION_SCOPE = "esi-wallet.read_corporation_wallets.v1";
 
 const AUTHORISE_URL = "https://login.eveonline.com/v2/oauth/authorize";
 const TOKEN_URL = "https://login.eveonline.com/v2/oauth/token";
 const VERIFY_URL = "https://login.eveonline.com/oauth/verify";
+const ESI_BASE_URL = "https://esi.evetech.net/latest";
 
 const LOGIN_TIMEOUT_MS = 180000;
 const REQUEST_TIMEOUT_MS = 15000;
+const TOKEN_EXPIRY_MARGIN_MS = 60000;
 
 function validateCharacterId(value) {
   const id = Number(value);
 
   if (!Number.isSafeInteger(id) || id <= 0) {
     throw new Error("Invalid EVE character ID");
+  }
+
+  return id;
+}
+
+function validateCorporationId(value) {
+  const id = Number(value);
+
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new Error("Invalid EVE corporation ID");
   }
 
   return id;
@@ -162,6 +181,82 @@ function validateTokenResponse(tokens) {
   return tokens;
 }
 
+async function getCharacterCorporation(characterId) {
+  const id = validateCharacterId(characterId);
+
+  const character = await requestJson(
+    `${ESI_BASE_URL}/characters/${id}/`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const corporationId = validateCorporationId(
+    character.corporation_id
+  );
+
+  const corporation = await requestJson(
+    `${ESI_BASE_URL}/corporations/${corporationId}/`,
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  if (
+    typeof corporation.name !== "string" ||
+    !corporation.name.trim()
+  ) {
+    throw new Error("EVE returned an invalid corporation name");
+  }
+
+  return {
+    corporationId,
+    corporationName: corporation.name,
+  };
+}
+
+async function verifyCorporationWalletAccess(
+  accessToken,
+  corporationId
+) {
+  const id = validateCorporationId(corporationId);
+
+  try {
+    const divisions = await requestJson(
+      `${ESI_BASE_URL}/corporations/${id}/wallets/`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    if (!Array.isArray(divisions)) {
+      throw new Error(
+        "EVE returned an invalid corporation wallet response"
+      );
+    }
+
+    return divisions;
+  } catch (error) {
+    if (
+      error instanceof EsiRequestError &&
+      [401, 403].includes(error.status)
+    ) {
+      throw new Error(
+        "Corporation wallet access was denied. Check that the authorising character has the required corporation wallet roles."
+      );
+    }
+
+    throw error;
+  }
+}
+
 async function createCallbackListener(expectedState) {
   let server;
   let timer;
@@ -236,7 +331,9 @@ async function createCallbackListener(expectedState) {
       response.writeHead(400);
       response.end("EVE authentication was cancelled or denied.");
 
-      finish(new Error("EVE authentication was cancelled or denied"));
+      finish(
+        new Error("EVE authentication was cancelled or denied")
+      );
       return;
     }
 
@@ -246,7 +343,9 @@ async function createCallbackListener(expectedState) {
       response.writeHead(400);
       response.end("Missing authorisation code.");
 
-      finish(new Error("EVE did not return an authorisation code"));
+      finish(
+        new Error("EVE did not return an authorisation code")
+      );
       return;
     }
 
@@ -254,7 +353,8 @@ async function createCallbackListener(expectedState) {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "Referrer-Policy": "no-referrer",
-      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
+      "Content-Security-Policy":
+        "default-src 'none'; style-src 'unsafe-inline'",
     });
 
     response.end(`
@@ -313,11 +413,34 @@ export function createEsiAuthService({ db, shell }) {
   initialiseEsiDatabase(db);
 
   let linking = false;
-  const refreshLocks = new Map();
 
-  async function linkCharacter() {
+  const refreshLocks = new Map();
+  const accessTokenCache = new Map();
+
+  const corporationRefreshLocks = new Map();
+  const corporationAccessTokenCache = new Map();
+
+  function cacheAccessToken(characterId, tokens) {
+    const expiresAt = Date.parse(getTokenExpiry(tokens));
+
+    accessTokenCache.set(characterId, {
+      token: tokens.access_token,
+      expiresAt,
+    });
+  }
+
+  function cacheCorporationAccessToken(characterId, tokens) {
+    const expiresAt = Date.parse(getTokenExpiry(tokens));
+
+    corporationAccessTokenCache.set(characterId, {
+      token: tokens.access_token,
+      expiresAt,
+    });
+  }
+
+  async function performLogin(scope) {
     if (linking) {
-      throw new Error("Character linking is already in progress");
+      throw new Error("EVE linking is already in progress");
     }
 
     ensureEncryptionAvailable();
@@ -336,7 +459,7 @@ export function createEsiAuthService({ db, shell }) {
       url.searchParams.set("response_type", "code");
       url.searchParams.set("redirect_uri", REDIRECT_URI);
       url.searchParams.set("client_id", CLIENT_ID);
-      url.searchParams.set("scope", SCOPE);
+      url.searchParams.set("scope", scope);
       url.searchParams.set("state", state);
       url.searchParams.set("code_challenge", challenge);
       url.searchParams.set("code_challenge_method", "S256");
@@ -358,19 +481,66 @@ export function createEsiAuthService({ db, shell }) {
         tokens.access_token
       );
 
-      saveEsiCharacter(db, {
-        ...identity,
-        encryptedRefreshToken: encryptRefreshToken(
-          tokens.refresh_token
-        ),
-        tokenExpiresAt: getTokenExpiry(tokens),
-      });
-
-      return identity;
+      return { tokens, identity };
     } finally {
       callback?.close();
       linking = false;
     }
+  }
+
+  async function linkCharacter() {
+    const { tokens, identity } = await performLogin(
+      CHARACTER_SCOPE
+    );
+
+    saveEsiCharacter(db, {
+      ...identity,
+      encryptedRefreshToken: encryptRefreshToken(
+        tokens.refresh_token
+      ),
+      tokenExpiresAt: getTokenExpiry(tokens),
+    });
+
+    cacheAccessToken(identity.characterId, tokens);
+
+    return identity;
+  }
+
+  async function linkCorporation() {
+    const { tokens, identity } = await performLogin(
+      CORPORATION_SCOPE
+    );
+
+    const corporation = await getCharacterCorporation(
+      identity.characterId
+    );
+
+    await verifyCorporationWalletAccess(
+      tokens.access_token,
+      corporation.corporationId
+    );
+
+    saveEsiCorporationAuthorisation(db, {
+      characterId: identity.characterId,
+      characterName: identity.name,
+      corporationId: corporation.corporationId,
+      corporationName: corporation.corporationName,
+      encryptedRefreshToken: encryptRefreshToken(
+        tokens.refresh_token
+      ),
+      tokenExpiresAt: getTokenExpiry(tokens),
+    });
+
+    cacheCorporationAccessToken(
+      identity.characterId,
+      tokens
+    );
+
+    return {
+      characterId: identity.characterId,
+      characterName: identity.name,
+      ...corporation,
+    };
   }
 
   async function performRefresh(characterId) {
@@ -399,6 +569,8 @@ export function createEsiAuthService({ db, shell }) {
         error instanceof EsiRequestError &&
         [400, 401, 403].includes(error.status)
       ) {
+        accessTokenCache.delete(characterId);
+
         markEsiCharacterStatus(
           db,
           characterId,
@@ -414,6 +586,7 @@ export function createEsiAuthService({ db, shell }) {
     );
 
     if (identity.characterId !== characterId) {
+      accessTokenCache.delete(characterId);
       markEsiCharacterStatus(db, characterId, "attention");
 
       throw new Error(
@@ -428,6 +601,8 @@ export function createEsiAuthService({ db, shell }) {
       ),
       tokenExpiresAt: getTokenExpiry(tokens),
     });
+
+    cacheAccessToken(characterId, tokens);
 
     return identity;
   }
@@ -449,8 +624,216 @@ export function createEsiAuthService({ db, shell }) {
     }
   }
 
+  async function getAccessToken(characterId, options = {}) {
+    const id = validateCharacterId(characterId);
+    const forceRefresh = options.forceRefresh === true;
+
+    if (!getEsiCharacter(db, id)) {
+      accessTokenCache.delete(id);
+      throw new Error("Character is not linked");
+    }
+
+    if (refreshLocks.has(id)) {
+      await refreshLocks.get(id);
+    }
+
+    const cached = accessTokenCache.get(id);
+
+    if (
+      !forceRefresh &&
+      cached &&
+      cached.expiresAt - Date.now() > TOKEN_EXPIRY_MARGIN_MS
+    ) {
+      return cached.token;
+    }
+
+    await refreshCharacter(id);
+
+    const updated = accessTokenCache.get(id);
+
+    if (!updated?.token) {
+      throw new Error("Unable to obtain ESI access token");
+    }
+
+    return updated.token;
+  }
+
+  async function performCorporationRefresh(characterId) {
+    const authorisation = getEsiCorporationAuthorisation(
+      db,
+      characterId
+    );
+
+    if (!authorisation) {
+      throw new Error("Corporation authorisation is not linked");
+    }
+
+    const refreshToken = decryptRefreshToken(
+      authorisation.encrypted_refresh_token
+    );
+
+    let tokens;
+
+    try {
+      tokens = validateTokenResponse(
+        await exchangeToken({
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+          client_id: CLIENT_ID,
+        })
+      );
+    } catch (error) {
+      if (
+        error instanceof EsiRequestError &&
+        [400, 401, 403].includes(error.status)
+      ) {
+        corporationAccessTokenCache.delete(characterId);
+
+        markEsiCorporationAuthorisationStatus(
+          db,
+          characterId,
+          "attention"
+        );
+      }
+
+      throw error;
+    }
+
+    try {
+      const identity = await verifyCharacter(
+        tokens.access_token
+      );
+
+      if (identity.characterId !== characterId) {
+        throw new Error(
+          "Refreshed corporation token belongs to a different character"
+        );
+      }
+
+      const corporation = await getCharacterCorporation(
+        characterId
+      );
+
+      if (
+        corporation.corporationId !==
+        authorisation.corporation_id
+      ) {
+        throw new Error(
+          "Authorising character has changed corporations. Relink corporation wallet access."
+        );
+      }
+
+      await verifyCorporationWalletAccess(
+        tokens.access_token,
+        corporation.corporationId
+      );
+
+      saveEsiCorporationAuthorisation(db, {
+        characterId,
+        characterName: identity.name,
+        corporationId: corporation.corporationId,
+        corporationName: corporation.corporationName,
+        encryptedRefreshToken: encryptRefreshToken(
+          tokens.refresh_token
+        ),
+        tokenExpiresAt: getTokenExpiry(tokens),
+      });
+
+      cacheCorporationAccessToken(characterId, tokens);
+
+      return {
+        characterId,
+        characterName: identity.name,
+        ...corporation,
+      };
+    } catch (error) {
+      corporationAccessTokenCache.delete(characterId);
+
+      markEsiCorporationAuthorisationStatus(
+        db,
+        characterId,
+        "attention"
+      );
+
+      throw error;
+    }
+  }
+
+  async function refreshCorporation(characterId) {
+    const id = validateCharacterId(characterId);
+
+    if (corporationRefreshLocks.has(id)) {
+      return corporationRefreshLocks.get(id);
+    }
+
+    const operation = performCorporationRefresh(id);
+
+    corporationRefreshLocks.set(id, operation);
+
+    try {
+      return await operation;
+    } finally {
+      corporationRefreshLocks.delete(id);
+    }
+  }
+
+  async function getCorporationAccessToken(
+    characterId,
+    options = {}
+  ) {
+    const id = validateCharacterId(characterId);
+    const forceRefresh = options.forceRefresh === true;
+
+    const authorisation = getEsiCorporationAuthorisation(
+      db,
+      id
+    );
+
+    if (!authorisation) {
+      corporationAccessTokenCache.delete(id);
+      throw new Error("Corporation authorisation is not linked");
+    }
+
+    if (authorisation.status !== "valid") {
+      corporationAccessTokenCache.delete(id);
+      throw new Error(
+        "Corporation wallet authorisation requires attention"
+      );
+    }
+
+    if (corporationRefreshLocks.has(id)) {
+      await corporationRefreshLocks.get(id);
+    }
+
+    const cached = corporationAccessTokenCache.get(id);
+
+    if (
+      !forceRefresh &&
+      cached &&
+      cached.expiresAt - Date.now() > TOKEN_EXPIRY_MARGIN_MS
+    ) {
+      return cached.token;
+    }
+
+    await refreshCorporation(id);
+
+    const updated = corporationAccessTokenCache.get(id);
+
+    if (!updated?.token) {
+      throw new Error(
+        "Unable to obtain corporation ESI access token"
+      );
+    }
+
+    return updated.token;
+  }
+
   function listCharacters() {
     return listEsiCharacters(db);
+  }
+
+  function listCorporations() {
+    return listEsiCorporationAuthorisations(db);
   }
 
   function unlinkCharacter(characterId) {
@@ -462,13 +845,41 @@ export function createEsiAuthService({ db, shell }) {
       );
     }
 
-    return deleteEsiCharacter(db, id);
+    const deleted = deleteEsiCharacter(db, id);
+    accessTokenCache.delete(id);
+
+    return deleted;
+  }
+
+  function unlinkCorporation(characterId) {
+    const id = validateCharacterId(characterId);
+
+    if (corporationRefreshLocks.has(id)) {
+      throw new Error(
+        "Cannot unlink a corporation while token refresh is in progress"
+      );
+    }
+
+    const deleted = deleteEsiCorporationAuthorisation(
+      db,
+      id
+    );
+
+    corporationAccessTokenCache.delete(id);
+
+    return deleted;
   }
 
   return {
     linkCharacter,
     refreshCharacter,
+    getAccessToken,
     listCharacters,
     unlinkCharacter,
+    linkCorporation,
+    refreshCorporation,
+    getCorporationAccessToken,
+    listCorporations,
+    unlinkCorporation,
   };
 }

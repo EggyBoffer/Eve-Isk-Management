@@ -185,6 +185,9 @@ contextBridge.exposeInMainWorld("api", {
   getCrabRun: (runId) =>
     ipcRenderer.invoke("crab:getRun", runId),
 
+  esiGetCharacterCorporation: (characterId) =>
+    ipcRenderer.invoke("esi:getCharacterCorporation", characterId),
+
   esiListCharacters: () =>
     ipcRenderer.invoke("esi:listCharacters"),
 
@@ -196,6 +199,33 @@ contextBridge.exposeInMainWorld("api", {
 
   esiUnlinkCharacter: (characterId) =>
     ipcRenderer.invoke("esi:unlinkCharacter", characterId),
+
+  esiListCorporations: () =>
+    ipcRenderer.invoke("esi:listCorporations"),
+
+  esiLinkCorporation: () =>
+    ipcRenderer.invoke("esi:linkCorporation"),
+
+  esiRefreshCorporation: (characterId) =>
+    ipcRenderer.invoke("esi:refreshCorporation", characterId),
+
+  esiUnlinkCorporation: (characterId) =>
+    ipcRenderer.invoke("esi:unlinkCorporation", characterId),
+
+  fobPreviewWallet: (characterId, pageLimit = 1) =>
+    ipcRenderer.invoke(
+      "fob:previewWallet",
+      characterId,
+      pageLimit
+    ),
+
+  esiPreviewCorporationJournal: (characterId, division = 1, pageLimit = 1) =>
+    ipcRenderer.invoke(
+      "esi:previewCorporationJournal",
+      characterId,
+      division,
+      pageLimit
+  ),
 
   on,
   once,
