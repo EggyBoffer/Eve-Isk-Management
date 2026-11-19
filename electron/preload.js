@@ -225,7 +225,36 @@ contextBridge.exposeInMainWorld("api", {
       characterId,
       division,
       pageLimit
-  ),
+    ),
+
+  esiImportCorporationJournal: (characterId, division = 1, pageLimit = 1) =>
+    ipcRenderer.invoke(
+      "esi:importCorporationJournal",
+      characterId,
+      division,
+      pageLimit
+    ),
+
+  esiGetWalletJournalSummary: () =>
+    ipcRenderer.invoke("esi:getWalletJournalSummary"),
+
+  esiListWalletJournal: (options = {}) =>
+    ipcRenderer.invoke("esi:listWalletJournal", options),
+
+  esiSyncCorporationJournal: (characterId, division = 1, pageLimit = 20) =>
+    ipcRenderer.invoke(
+      "esi:syncCorporationJournal",
+      characterId,
+      division,
+      pageLimit
+   ),
+
+  esiGetCorporationWalletSyncState: (corporationId, division = 1) =>
+    ipcRenderer.invoke(
+      "esi:getCorporationWalletSyncState",
+      corporationId,
+      division
+    ),
 
   on,
   once,

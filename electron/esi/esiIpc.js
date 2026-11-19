@@ -1,7 +1,12 @@
-
 import { getCharacterCorporation } from "./esiCorporations.js";
 import { createEsiAuthService } from "./esiAuth.js";
 import { createFobWalletService } from "../fob/fobWallet.js";
+import { createEsiWalletSyncService } from "./esiWalletSync.js";
+import {
+  importEsiWalletJournal,
+  listEsiWalletJournal,
+  getEsiWalletJournalSummary,
+} from "./esiDatabase.js";
 
 export function registerEsiIpc({
   ipcMain,
@@ -14,6 +19,12 @@ export function registerEsiIpc({
   const fobWallet = createFobWalletService({
     getAccessToken: esi.getAccessToken,
     getCorporationAccessToken: esi.getCorporationAccessToken,
+    listCorporations: esi.listCorporations,
+  });
+
+  const walletSync = createEsiWalletSyncService({
+    db,
+    fobWallet,
     listCorporations: esi.listCorporations,
   });
 
@@ -81,11 +92,7 @@ export function registerEsiIpc({
     "fob:previewWallet",
     async (event, characterId, pageLimit = 1) => {
       assertMainSender(event);
-
-      return fobWallet.previewCharacter(
-        characterId,
-        pageLimit
-      );
+      return fobWallet.previewCharacter(characterId, pageLimit);
     }
   );
 
@@ -93,12 +100,59 @@ export function registerEsiIpc({
     "esi:previewCorporationJournal",
     async (event, characterId, division = 1, pageLimit = 1) => {
       assertMainSender(event);
+      return fobWallet.previewCorporation(characterId, division, pageLimit);
+    }
+  );
 
-      return fobWallet.previewCorporation(
-        characterId,
-        division,
-        pageLimit
+  ipcMain.handle(
+    "esi:importCorporationJournal",
+    async (event, characterId, division = 1, pageLimit = 1) => {
+      assertMainSender(event);
+      const preview = await fobWallet.previewCorporation(
+        characterId, division, pageLimit
       );
+      const importResult = importEsiWalletJournal(
+        db, "corporation", preview.corporationId,
+        preview.division, preview.entries
+      );
+      return {
+        corporationId: preview.corporationId,
+        corporationName: preview.corporationName,
+        authorisingCharacterId: preview.authorisingCharacterId,
+        division: preview.division,
+        fetchedAt: preview.fetchedAt,
+        pagesFetched: preview.pagesFetched,
+        fetchedEntries: preview.totalEntries,
+        candidateCount: preview.candidateCount,
+        candidateIncome: preview.candidateIncome,
+        ...importResult,
+      };
+    }
+  );
+
+  ipcMain.handle("esi:getWalletJournalSummary", (event) => {
+    assertMainSender(event);
+    return getEsiWalletJournalSummary(db);
+  });
+
+  ipcMain.handle("esi:listWalletJournal", (event, options = {}) => {
+    assertMainSender(event);
+    return listEsiWalletJournal(db, options);
+  });
+
+  ipcMain.handle(
+    "esi:syncCorporationJournal",
+    async (event, characterId, division = 1, pageLimit = 20) => {
+      assertMainSender(event);
+      return walletSync.syncCorporation(characterId, division, pageLimit);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:getCorporationWalletSyncState",
+    (event, corporationId, division = 1) => {
+      assertMainSender(event);
+      return walletSync.getCorporationSyncState(corporationId, division);
     }
   );
 }
