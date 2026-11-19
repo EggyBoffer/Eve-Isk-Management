@@ -1,3 +1,4 @@
+
 const { contextBridge, ipcRenderer } = require("electron");
 
 const allowedReceiveChannels = new Set([
@@ -260,6 +261,27 @@ contextBridge.exposeInMainWorld("api", {
 
   esiRunAutoSync: () =>
     ipcRenderer.invoke("esi:runAutoSync"),
+
+  fobImportKillmail: (url) =>
+    ipcRenderer.invoke("fob:importKillmail", url),
+
+  fobListKillmails: (options = {}) =>
+    ipcRenderer.invoke("fob:listKillmails", options),
+
+  fobGetKillmailSummary: () =>
+    ipcRenderer.invoke("fob:getKillmailSummary"),
+
+  fobGetAnalyticsSummary: (options = {}) =>
+    ipcRenderer.invoke("fob:getAnalyticsSummary", options),
+
+  fobGetAnalyticsHistory: (options = {}) =>
+    ipcRenderer.invoke("fob:getAnalyticsHistory", options),
+
+  fobGetAnalyticsCompletions: (options = {}) =>
+    ipcRenderer.invoke("fob:getAnalyticsCompletions", options),
+
+  fobGetAnalyticsDashboard: (options = {}) =>
+    ipcRenderer.invoke("fob:getAnalyticsDashboard", options),
 
   on,
   once,

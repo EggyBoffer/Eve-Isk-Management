@@ -1,8 +1,11 @@
+
 import { getCharacterCorporation } from "./esiCorporations.js";
 import { createEsiAuthService } from "./esiAuth.js";
 import { createFobWalletService } from "../fob/fobWallet.js";
 import { createEsiWalletSyncService } from "./esiWalletSync.js";
 import { createEsiAutoSyncService } from "./esiAutoSync.js";
+import { createFobKillmailService } from "../fob/fobKillmails.js";
+import { createFobAnalyticsService } from "../fob/fobAnalytics.js";
 import {
   importEsiWalletJournal,
   listEsiWalletJournal,
@@ -170,6 +173,45 @@ export function registerEsiIpc({
   ipcMain.handle("esi:runAutoSync", async (event) => {
     assertMainSender(event);
     return autoSync.runOnce();
+  });
+
+  const fobKillmails = createFobKillmailService({ db });
+
+  ipcMain.handle("fob:importKillmail", async (event, url) => {
+    assertMainSender(event);
+    return fobKillmails.importKillmail(url);
+  });
+
+  ipcMain.handle("fob:listKillmails", (event, limit = 100) => {
+    assertMainSender(event);
+    return fobKillmails.listKillmails(limit);
+  });
+
+  ipcMain.handle("fob:getKillmailSummary", (event) => {
+    assertMainSender(event);
+    return fobKillmails.getSummary();
+  });
+
+  const fobAnalytics = createFobAnalyticsService({ db });
+
+  ipcMain.handle("fob:getAnalyticsSummary", (event, options = {}) => {
+    assertMainSender(event);
+    return fobAnalytics.getSummary(options);
+  });
+
+  ipcMain.handle("fob:getAnalyticsHistory", (event, options = {}) => {
+    assertMainSender(event);
+    return fobAnalytics.getHistory(options);
+  });
+
+  ipcMain.handle("fob:getAnalyticsCompletions", (event, options = {}) => {
+    assertMainSender(event);
+    return fobAnalytics.getCompletions(options);
+  });
+
+  ipcMain.handle("fob:getAnalyticsDashboard", (event, options = {}) => {
+    assertMainSender(event);
+    return fobAnalytics.getDashboard(options);
   });
 
   return { autoSync };
