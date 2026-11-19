@@ -29,10 +29,13 @@ export function registerEsiIpc({
   const walletSync = createEsiWalletSyncService({
     db,
     fobWallet,
+    listCharacters: esi.listCharacters,
     listCorporations: esi.listCorporations,
   });
 
   const autoSync = createEsiAutoSyncService({
+    listCharacters: esi.listCharacters,
+    syncCharacter: walletSync.syncCharacter,
     listCorporations: esi.listCorporations,
     syncCorporation: walletSync.syncCorporation,
   });
@@ -109,7 +112,11 @@ export function registerEsiIpc({
     "esi:previewCorporationJournal",
     async (event, characterId, division = 1, pageLimit = 1) => {
       assertMainSender(event);
-      return fobWallet.previewCorporation(characterId, division, pageLimit);
+      return fobWallet.previewCorporation(
+        characterId,
+        division,
+        pageLimit
+      );
     }
   );
 
@@ -117,13 +124,21 @@ export function registerEsiIpc({
     "esi:importCorporationJournal",
     async (event, characterId, division = 1, pageLimit = 1) => {
       assertMainSender(event);
+
       const preview = await fobWallet.previewCorporation(
-        characterId, division, pageLimit
+        characterId,
+        division,
+        pageLimit
       );
+
       const importResult = importEsiWalletJournal(
-        db, "corporation", preview.corporationId,
-        preview.division, preview.entries
+        db,
+        "corporation",
+        preview.corporationId,
+        preview.division,
+        preview.entries
       );
+
       return {
         corporationId: preview.corporationId,
         corporationName: preview.corporationName,
@@ -144,16 +159,39 @@ export function registerEsiIpc({
     return getEsiWalletJournalSummary(db);
   });
 
-  ipcMain.handle("esi:listWalletJournal", (event, options = {}) => {
-    assertMainSender(event);
-    return listEsiWalletJournal(db, options);
-  });
+  ipcMain.handle(
+    "esi:listWalletJournal",
+    (event, options = {}) => {
+      assertMainSender(event);
+      return listEsiWalletJournal(db, options);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:syncCharacterJournal",
+    async (event, characterId, pageLimit = 20) => {
+      assertMainSender(event);
+      return walletSync.syncCharacter(characterId, pageLimit);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:getCharacterWalletSyncState",
+    (event, characterId) => {
+      assertMainSender(event);
+      return walletSync.getCharacterSyncState(characterId);
+    }
+  );
 
   ipcMain.handle(
     "esi:syncCorporationJournal",
     async (event, characterId, division = 1, pageLimit = 20) => {
       assertMainSender(event);
-      return walletSync.syncCorporation(characterId, division, pageLimit);
+      return walletSync.syncCorporation(
+        characterId,
+        division,
+        pageLimit
+      );
     }
   );
 
@@ -161,7 +199,10 @@ export function registerEsiIpc({
     "esi:getCorporationWalletSyncState",
     (event, corporationId, division = 1) => {
       assertMainSender(event);
-      return walletSync.getCorporationSyncState(corporationId, division);
+      return walletSync.getCorporationSyncState(
+        corporationId,
+        division
+      );
     }
   );
 
@@ -177,15 +218,21 @@ export function registerEsiIpc({
 
   const fobKillmails = createFobKillmailService({ db });
 
-  ipcMain.handle("fob:importKillmail", async (event, url) => {
-    assertMainSender(event);
-    return fobKillmails.importKillmail(url);
-  });
+  ipcMain.handle(
+    "fob:importKillmail",
+    async (event, url) => {
+      assertMainSender(event);
+      return fobKillmails.importKillmail(url);
+    }
+  );
 
-  ipcMain.handle("fob:listKillmails", (event, limit = 100) => {
-    assertMainSender(event);
-    return fobKillmails.listKillmails(limit);
-  });
+  ipcMain.handle(
+    "fob:listKillmails",
+    (event, limit = 100) => {
+      assertMainSender(event);
+      return fobKillmails.listKillmails(limit);
+    }
+  );
 
   ipcMain.handle("fob:getKillmailSummary", (event) => {
     assertMainSender(event);
@@ -194,25 +241,37 @@ export function registerEsiIpc({
 
   const fobAnalytics = createFobAnalyticsService({ db });
 
-  ipcMain.handle("fob:getAnalyticsSummary", (event, options = {}) => {
-    assertMainSender(event);
-    return fobAnalytics.getSummary(options);
-  });
+  ipcMain.handle(
+    "fob:getAnalyticsSummary",
+    (event, options = {}) => {
+      assertMainSender(event);
+      return fobAnalytics.getSummary(options);
+    }
+  );
 
-  ipcMain.handle("fob:getAnalyticsHistory", (event, options = {}) => {
-    assertMainSender(event);
-    return fobAnalytics.getHistory(options);
-  });
+  ipcMain.handle(
+    "fob:getAnalyticsHistory",
+    (event, options = {}) => {
+      assertMainSender(event);
+      return fobAnalytics.getHistory(options);
+    }
+  );
 
-  ipcMain.handle("fob:getAnalyticsCompletions", (event, options = {}) => {
-    assertMainSender(event);
-    return fobAnalytics.getCompletions(options);
-  });
+  ipcMain.handle(
+    "fob:getAnalyticsCompletions",
+    (event, options = {}) => {
+      assertMainSender(event);
+      return fobAnalytics.getCompletions(options);
+    }
+  );
 
-  ipcMain.handle("fob:getAnalyticsDashboard", (event, options = {}) => {
-    assertMainSender(event);
-    return fobAnalytics.getDashboard(options);
-  });
+  ipcMain.handle(
+    "fob:getAnalyticsDashboard",
+    (event, options = {}) => {
+      assertMainSender(event);
+      return fobAnalytics.getDashboard(options);
+    }
+  );
 
   return { autoSync };
 }

@@ -82,6 +82,15 @@ export default function Navbar() {
             CRABs
           </NavLink>
 
+          <NavLink
+            to="/fobs"
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
+          >
+            FOBs
+          </NavLink>
+
           <div ref={moreRef} className="navbar__more">
             <button
               type="button"

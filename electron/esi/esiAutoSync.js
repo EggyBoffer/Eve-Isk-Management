@@ -1,8 +1,11 @@
+
 const DEFAULT_INTERVAL_MS = 15 * 60 * 1000;
 const DEFAULT_PAGE_LIMIT = 20;
 const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 60_000;
 
 export function createEsiAutoSyncService({
+  listCharacters,
+  syncCharacter,
   listCorporations,
   syncCorporation,
   intervalMs = DEFAULT_INTERVAL_MS,
@@ -10,6 +13,14 @@ export function createEsiAutoSyncService({
   divisions = [1],
   logger = console,
 }) {
+  if (typeof listCharacters !== "function") {
+    throw new Error("Character authorisation provider is required");
+  }
+
+  if (typeof syncCharacter !== "function") {
+    throw new Error("Character wallet sync provider is required");
+  }
+
   if (typeof listCorporations !== "function") {
     throw new Error("Corporation authorisation provider is required");
   }
@@ -65,98 +76,208 @@ export function createEsiAutoSyncService({
   function isRateLimitError(error) {
     const status = Number(error?.status ?? error?.statusCode);
     const message = error instanceof Error ? error.message : String(error);
+
     return status === 420 || status === 429 ||
       /\b(420|429)\b|error limit|rate limit|cooldown/i.test(message);
   }
 
   function getCooldownDeadline(error) {
     const values = [error?.retryAt, error?.cooldownUntil];
+
     for (const value of values) {
-      const timestamp = typeof value === "number" ? value : Date.parse(value);
+      const timestamp = typeof value === "number"
+        ? value
+        : Date.parse(value);
+
       if (Number.isFinite(timestamp) && timestamp > Date.now()) {
         return timestamp;
       }
     }
+
     const retryAfterMs = Number(error?.retryAfterMs);
+
     if (Number.isFinite(retryAfterMs) && retryAfterMs > 0) {
       return Date.now() + retryAfterMs;
     }
+
     return Date.now() + DEFAULT_RATE_LIMIT_COOLDOWN_MS;
   }
 
   async function runOnce() {
     if (running) {
-      return { skipped: true, reason: "already_running", ...getStatus() };
+      return {
+        skipped: true,
+        reason: "already_running",
+        ...getStatus(),
+      };
     }
 
     if (cooldownUntil > Date.now()) {
-      return { skipped: true, reason: "rate_limited", rateLimited: true, ...getStatus() };
+      return {
+        skipped: true,
+        reason: "rate_limited",
+        rateLimited: true,
+        ...getStatus(),
+      };
     }
 
     running = true;
     lastStartedAt = new Date().toISOString();
+
     const results = [];
     let rateLimited = false;
     const runGeneration = generation;
 
     try {
-      const authorisations = listCorporations();
+      const characters = listCharacters();
 
-      if (!Array.isArray(authorisations)) {
-        throw new Error("Invalid corporation authorisation list");
+      if (!Array.isArray(characters)) {
+        throw new Error("Invalid character authorisation list");
       }
 
-      const seen = new Set();
+      const seenCharacters = new Set();
 
-      for (const authorisation of authorisations) {
+      for (const character of characters) {
         if (runGeneration !== generation) break;
-        if (authorisation?.status !== "valid") continue;
+        if (character?.status !== "valid") continue;
 
-        const characterId = Number(authorisation.characterId);
-        const corporationId = Number(authorisation.corporationId);
+        const characterId = Number(character.characterId);
 
-        if (
-          !Number.isSafeInteger(characterId) || characterId <= 0 ||
-          !Number.isSafeInteger(corporationId) || corporationId <= 0
-        ) {
+        if (!Number.isSafeInteger(characterId) || characterId <= 0) {
           continue;
         }
 
-        for (const division of divisions) {
-          if (runGeneration !== generation) break;
-          const key = `${corporationId}:${division}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
+        if (seenCharacters.has(characterId)) continue;
+        seenCharacters.add(characterId);
 
-          try {
-            const result = await syncCorporation(characterId, division, pageLimit);
-            results.push({
-              corporationId,
-              division,
-              success: true,
-              pagesFetched: result.pagesFetched,
-              inserted: result.inserted,
-              updated: result.updated,
-              mode: result.mode,
-            });
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            results.push({ corporationId, division, success: false, error: message });
-            logger.error(`[ESI AUTO SYNC] Corporation ${corporationId}, division ${division}: ${message}`);
+        try {
+          const result = await syncCharacter(characterId, pageLimit);
 
-            if (isRateLimitError(error)) {
-              rateLimited = true;
-              cooldownUntil = Math.max(cooldownUntil, getCooldownDeadline(error));
-              break;
-            }
+          results.push({
+            sourceType: "character",
+            ownerId: characterId,
+            characterId,
+            success: true,
+            pagesFetched: result.pagesFetched,
+            inserted: result.inserted,
+            updated: result.updated,
+            mode: result.mode,
+          });
+        } catch (error) {
+          const message = error instanceof Error
+            ? error.message
+            : String(error);
+
+          results.push({
+            sourceType: "character",
+            ownerId: characterId,
+            characterId,
+            success: false,
+            error: message,
+          });
+
+          logger.error(
+            `[ESI AUTO SYNC] Character ${characterId}: ${message}`
+          );
+
+          if (isRateLimitError(error)) {
+            rateLimited = true;
+            cooldownUntil = Math.max(
+              cooldownUntil,
+              getCooldownDeadline(error)
+            );
+            break;
           }
         }
+      }
 
-        if (rateLimited) break;
+      if (!rateLimited && runGeneration === generation) {
+        const authorisations = listCorporations();
+
+        if (!Array.isArray(authorisations)) {
+          throw new Error("Invalid corporation authorisation list");
+        }
+
+        const seenCorporations = new Set();
+
+        for (const authorisation of authorisations) {
+          if (runGeneration !== generation) break;
+          if (authorisation?.status !== "valid") continue;
+
+          const characterId = Number(authorisation.characterId);
+          const corporationId = Number(authorisation.corporationId);
+
+          if (
+            !Number.isSafeInteger(characterId) ||
+            characterId <= 0 ||
+            !Number.isSafeInteger(corporationId) ||
+            corporationId <= 0
+          ) {
+            continue;
+          }
+
+          for (const division of divisions) {
+            if (runGeneration !== generation) break;
+
+            const key = `${corporationId}:${division}`;
+
+            if (seenCorporations.has(key)) continue;
+            seenCorporations.add(key);
+
+            try {
+              const result = await syncCorporation(
+                characterId,
+                division,
+                pageLimit
+              );
+
+              results.push({
+                sourceType: "corporation",
+                ownerId: corporationId,
+                corporationId,
+                division,
+                success: true,
+                pagesFetched: result.pagesFetched,
+                inserted: result.inserted,
+                updated: result.updated,
+                mode: result.mode,
+              });
+            } catch (error) {
+              const message = error instanceof Error
+                ? error.message
+                : String(error);
+
+              results.push({
+                sourceType: "corporation",
+                ownerId: corporationId,
+                corporationId,
+                division,
+                success: false,
+                error: message,
+              });
+
+              logger.error(
+                `[ESI AUTO SYNC] Corporation ${corporationId}, division ${division}: ${message}`
+              );
+
+              if (isRateLimitError(error)) {
+                rateLimited = true;
+                cooldownUntil = Math.max(
+                  cooldownUntil,
+                  getCooldownDeadline(error)
+                );
+                break;
+              }
+            }
+          }
+
+          if (rateLimited) break;
+        }
       }
 
       lastResults = results;
     } catch (error) {
+      lastResults = results;
       logger.error("[ESI AUTO SYNC] Run failed:", error);
       throw error;
     } finally {
@@ -164,7 +285,12 @@ export function createEsiAutoSyncService({
       lastCompletedAt = new Date().toISOString();
     }
 
-    return { skipped: false, rateLimited, results, ...getStatus() };
+    return {
+      skipped: false,
+      rateLimited,
+      results,
+      ...getStatus(),
+    };
   }
 
   function start({ runImmediately = true } = {}) {
@@ -172,6 +298,7 @@ export function createEsiAutoSyncService({
 
     enabled = true;
     generation += 1;
+
     timer = setInterval(() => {
       runOnce().catch((error) => {
         logger.error("[ESI AUTO SYNC] Scheduled run failed:", error);
@@ -201,5 +328,10 @@ export function createEsiAutoSyncService({
     return getStatus();
   }
 
-  return { start, stop, runOnce, getStatus };
+  return {
+    start,
+    stop,
+    runOnce,
+    getStatus,
+  };
 }

@@ -1,6 +1,8 @@
-
 const DEFAULT_HISTORY_DAYS = 30;
 const MAX_HISTORY_DAYS = 366;
+const MATCH_WINDOW_MS = 2000;
+const GROSS_REWARD = 100_000_000;
+const NET_REWARD = 99_000_000;
 
 function parseDate(value, fieldName) {
   if (value === undefined || value === null || value === "") {
@@ -85,27 +87,225 @@ function getDateRange(options = {}) {
   };
 }
 
+function recipientId(entry) {
+  return Number(entry.secondPartyId) || null;
+}
+
+function journalKey(entry) {
+  return [
+    entry.sourceType,
+    entry.ownerId,
+    entry.division,
+    entry.journalId,
+  ].join(":");
+}
+
+function findMatches(corporationEntries, characterEntries) {
+  const matches = new Map();
+  const matchedCharacters = new Set();
+
+  for (const corporation of corporationEntries) {
+    const candidates = characterEntries.filter((character) =>
+      !matchedCharacters.has(journalKey(character)) &&
+      recipientId(character) === recipientId(corporation) &&
+      character.journalId === corporation.journalId
+    );
+
+    if (candidates.length === 1) {
+      const character = candidates[0];
+      matches.set(journalKey(corporation), character);
+      matchedCharacters.add(journalKey(character));
+    }
+  }
+
+  const unmatchedCorporations = corporationEntries.filter(
+    (entry) => !matches.has(journalKey(entry))
+  );
+
+  const unmatchedCharacters = characterEntries.filter(
+    (entry) => !matchedCharacters.has(journalKey(entry))
+  );
+
+  const corporationCandidates = new Map();
+  const characterCandidates = new Map();
+
+  for (const corporation of unmatchedCorporations) {
+    const candidates = unmatchedCharacters.filter((character) =>
+      recipientId(character) === recipientId(corporation) &&
+      Math.abs(
+        Date.parse(character.date) -
+        Date.parse(corporation.date)
+      ) <= MATCH_WINDOW_MS
+    );
+
+    corporationCandidates.set(journalKey(corporation), candidates);
+
+    for (const character of candidates) {
+      const key = journalKey(character);
+      characterCandidates.set(
+        key,
+        (characterCandidates.get(key) ?? 0) + 1
+      );
+    }
+  }
+
+  for (const corporation of unmatchedCorporations) {
+    const candidates =
+      corporationCandidates.get(journalKey(corporation)) ?? [];
+
+    if (
+      candidates.length === 1 &&
+      characterCandidates.get(journalKey(candidates[0])) === 1
+    ) {
+      const character = candidates[0];
+      matches.set(journalKey(corporation), character);
+      matchedCharacters.add(journalKey(character));
+    }
+  }
+
+  return { matches, matchedCharacters };
+}
+
+function calculateWalletIncome(entries, corporationId) {
+  const corporations = entries.filter(
+    (entry) =>
+      entry.sourceType === "corporation" &&
+      entry.amount === GROSS_REWARD
+  );
+
+  const characters = entries.filter(
+    (entry) =>
+      entry.sourceType === "character" &&
+      entry.amount === NET_REWARD
+  );
+
+  const { matches, matchedCharacters } = findMatches(
+    corporations,
+    characters
+  );
+
+  const events = [];
+  const recipients = new Set();
+  const earningCharacters = new Set();
+
+  let netPersonalIncome = 0;
+  let estimatedTax = 0;
+  let estimatedGrossIncome = 0;
+  let matchedPayouts = 0;
+  let unmatchedPersonalPayouts = 0;
+  let corporationOnlyPayouts = 0;
+
+  for (const corporation of corporations) {
+    if (
+      corporationId !== null &&
+      corporation.ownerId !== corporationId
+    ) {
+      continue;
+    }
+
+    const character = matches.get(journalKey(corporation));
+    const recipient = recipientId(corporation);
+
+    if (recipient !== null) {
+      recipients.add(recipient);
+    }
+
+    if (character) {
+      matchedPayouts++;
+      earningCharacters.add(character.ownerId);
+      netPersonalIncome += character.amount;
+      estimatedTax += GROSS_REWARD - character.amount;
+    } else {
+      corporationOnlyPayouts++;
+    }
+
+    events.push({
+      date: corporation.date,
+      gross: corporation.amount,
+      net: character?.amount ?? null,
+      estimatedTax: character
+        ? corporation.amount - character.amount
+        : null,
+      recipientId: recipient,
+      corporationId: corporation.ownerId,
+      source: character ? "matched" : "corporation",
+      grossEstimated: false,
+    });
+  }
+
+  if (corporationId === null) {
+    for (const character of characters) {
+      if (matchedCharacters.has(journalKey(character))) {
+        continue;
+      }
+
+      unmatchedPersonalPayouts++;
+      earningCharacters.add(character.ownerId);
+      recipients.add(character.ownerId);
+
+      netPersonalIncome += character.amount;
+      estimatedTax += GROSS_REWARD - character.amount;
+      estimatedGrossIncome += GROSS_REWARD;
+
+      events.push({
+        date: character.date,
+        gross: GROSS_REWARD,
+        net: character.amount,
+        estimatedTax: GROSS_REWARD - character.amount,
+        recipientId: character.ownerId,
+        corporationId: null,
+        source: "character",
+        grossEstimated: true,
+      });
+    }
+  }
+
+  events.sort((a, b) => a.date.localeCompare(b.date));
+
+  const totalGrossIncome = events.reduce(
+    (sum, event) => sum + event.gross,
+    0
+  );
+
+  return {
+    events,
+    totalGrossIncome,
+    netPersonalIncome,
+    estimatedTax,
+    estimatedGrossIncome,
+    payoutCount: events.length,
+    uniqueRecipients: recipients.size,
+    earningCharacters: earningCharacters.size,
+    matchedPayouts,
+    unmatchedPersonalPayouts,
+    corporationOnlyPayouts,
+    firstPayout: events[0]?.date ?? null,
+    lastPayout: events.at(-1)?.date ?? null,
+  };
+}
+
 export function createFobAnalyticsService({ db }) {
   if (!db || typeof db.prepare !== "function") {
     throw new Error("A valid database connection is required");
   }
 
-  const walletSummary = db.prepare(`
+  const walletEntries = db.prepare(`
     SELECT
-      COUNT(*) AS payoutCount,
-      COALESCE(SUM(amount), 0) AS totalIncome,
-      COUNT(DISTINCT second_party_id) AS uniqueRecipients,
-      MIN(date) AS firstPayout,
-      MAX(date) AS lastPayout
+      source_type AS sourceType,
+      owner_id AS ownerId,
+      division,
+      journal_id AS journalId,
+      date,
+      ref_type AS refType,
+      amount,
+      description,
+      first_party_id AS firstPartyId,
+      second_party_id AS secondPartyId
     FROM esi_wallet_journal
-    WHERE source_type = 'corporation'
-      AND candidate_fob = 1
+    WHERE candidate_fob = 1
       AND date >= @startDate
       AND date < @endDate
-      AND (
-        @corporationId IS NULL
-        OR owner_id = @corporationId
-      )
+    ORDER BY date ASC, journal_id ASC
   `);
 
   const killmailSummary = db.prepare(`
@@ -117,24 +317,6 @@ export function createFobAnalyticsService({ db }) {
     WHERE classification = 'confirmed'
       AND killmail_time >= @startDate
       AND killmail_time < @endDate
-  `);
-
-  const incomeHistory = db.prepare(`
-    SELECT
-      SUBSTR(date, 1, 10) AS day,
-      COUNT(*) AS payoutCount,
-      COALESCE(SUM(amount), 0) AS income
-    FROM esi_wallet_journal
-    WHERE source_type = 'corporation'
-      AND candidate_fob = 1
-      AND date >= @startDate
-      AND date < @endDate
-      AND (
-        @corporationId IS NULL
-        OR owner_id = @corporationId
-      )
-    GROUP BY SUBSTR(date, 1, 10)
-    ORDER BY day ASC
   `);
 
   const completionHistory = db.prepare(`
@@ -171,6 +353,12 @@ export function createFobAnalyticsService({ db }) {
       killmail_hash AS killmailHash,
       killmail_time AS completedAt,
       solar_system_id AS solarSystemId,
+      solar_system_name AS solarSystemName,
+      final_blow_character_id AS finalBlowCharacterId,
+      final_blow_corporation_id AS finalBlowCorporationId,
+      final_blow_ship_type_id AS finalBlowShipTypeId,
+      final_blow_npc_type_id AS finalBlowNpcTypeId,
+      final_blow_name AS finalBlowName,
       victim_type_id AS victimTypeId,
       CASE victim_type_id
         WHEN 46363 THEN 'Guristas'
@@ -185,15 +373,22 @@ export function createFobAnalyticsService({ db }) {
     LIMIT 100
   `);
 
+  function getWalletData(range) {
+    const entries = walletEntries.all(range);
+
+    return calculateWalletIncome(
+      entries,
+      range.corporationId
+    );
+  }
+
   function getSummary(options = {}) {
     const range = getDateRange(options);
-
-    const wallet = walletSummary.get(range);
+    const wallet = getWalletData(range);
     const killmails = killmailSummary.get(range);
 
-    const totalIncome = Number(wallet.totalIncome) || 0;
+    const totalIncome = wallet.totalGrossIncome;
     const completedFobs = Number(killmails.completedFobs) || 0;
-    const payoutCount = Number(wallet.payoutCount) || 0;
 
     return {
       period: {
@@ -203,12 +398,24 @@ export function createFobAnalyticsService({ db }) {
       corporationId: range.corporationId,
       income: {
         total: totalIncome,
-        payoutCount,
-        uniqueRecipients: Number(wallet.uniqueRecipients) || 0,
+        gross: totalIncome,
+        netPersonal: wallet.netPersonalIncome,
+        estimatedTax: wallet.estimatedTax,
+        estimatedGross: wallet.estimatedGrossIncome,
+        payoutCount: wallet.payoutCount,
+        uniqueRecipients: wallet.uniqueRecipients,
+        earningCharacters: wallet.earningCharacters,
+        matchedPayouts: wallet.matchedPayouts,
+        unmatchedPersonalPayouts:
+          wallet.unmatchedPersonalPayouts,
+        corporationOnlyPayouts:
+          wallet.corporationOnlyPayouts,
         firstPayout: wallet.firstPayout,
         lastPayout: wallet.lastPayout,
         source: "esi_wallet_journal",
         classification: "candidate",
+        taxClassification: "estimated",
+        netCoverage: "linked_character_wallets_only",
       },
       completions: {
         total: completedFobs,
@@ -231,8 +438,7 @@ export function createFobAnalyticsService({ db }) {
 
   function getHistory(options = {}) {
     const range = getDateRange(options);
-
-    const incomeRows = incomeHistory.all(range);
+    const wallet = getWalletData(range);
     const completionRows = completionHistory.all(range);
 
     const days = new Map();
@@ -242,6 +448,9 @@ export function createFobAnalyticsService({ db }) {
         days.set(day, {
           date: day,
           income: 0,
+          grossIncome: 0,
+          netPersonalIncome: 0,
+          estimatedTax: 0,
           payoutCount: 0,
           completions: 0,
         });
@@ -250,10 +459,14 @@ export function createFobAnalyticsService({ db }) {
       return days.get(day);
     }
 
-    for (const row of incomeRows) {
-      const day = ensureDay(row.day);
-      day.income = Number(row.income) || 0;
-      day.payoutCount = Number(row.payoutCount) || 0;
+    for (const event of wallet.events) {
+      const day = ensureDay(event.date.slice(0, 10));
+
+      day.income += event.gross;
+      day.grossIncome += event.gross;
+      day.netPersonalIncome += event.net ?? 0;
+      day.estimatedTax += event.estimatedTax ?? 0;
+      day.payoutCount++;
     }
 
     for (const row of completionRows) {

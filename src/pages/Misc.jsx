@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import "../styles/misc.css";
 
@@ -5,6 +6,12 @@ export default function Misc() {
   const navigate = useNavigate();
 
   const items = [
+    {
+      title: "ESI Connections",
+      desc: "Manage linked EVE characters, corporations, and ESI authorisations.",
+      onClick: () => navigate("/esi-connections"),
+      pill: "App",
+    },
     { title: "Patch Notes", desc: "See what changed between releases.", onClick: () => navigate("/patch-notes"), pill: "Info" },
     { title: "Settings", desc: "Configure options and manage app behaviour.", onClick: () => navigate("/settings"), pill: "App" },
     { title: "Abyssal Analytics", desc: "Break down your Abyssal performance over time.", onClick: () => navigate("/analytics"), pill: "Stats" },

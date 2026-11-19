@@ -1,4 +1,3 @@
-
 import http from "node:http";
 import crypto from "node:crypto";
 import { safeStorage } from "electron";
@@ -15,6 +14,15 @@ import {
   markEsiCorporationAuthorisationStatus,
   deleteEsiCorporationAuthorisation,
 } from "./esiDatabase.js";
+import {
+  initialiseEsiKillmailDatabase,
+  listEsiKillmailAuthorisations,
+  getEsiKillmailAuthorisation,
+  saveEsiKillmailAuthorisation,
+  markEsiKillmailAuthorisationStatus,
+  setEsiKillmailSyncEnabled,
+  deleteEsiKillmailAuthorisation,
+} from "./esiKillmailDatabase.js";
 
 const CLIENT_ID = "0be85dc3df334b098d1b123d73936275";
 const REDIRECT_URI = "http://localhost:41721/callback";
@@ -22,6 +30,9 @@ const CALLBACK_PORT = 41721;
 
 const CHARACTER_SCOPE = "esi-wallet.read_character_wallet.v1";
 const CORPORATION_SCOPE = "esi-wallet.read_corporation_wallets.v1";
+const CHARACTER_KILLMAIL_SCOPE = "esi-killmails.read_killmails.v1";
+const CORPORATION_KILLMAIL_SCOPE = "esi-killmails.read_corporation_killmails.v1";
+const KILLMAIL_SOURCES = new Set(["character", "corporation"]);
 
 const AUTHORISE_URL = "https://login.eveonline.com/v2/oauth/authorize";
 const TOKEN_URL = "https://login.eveonline.com/v2/oauth/token";
@@ -50,6 +61,13 @@ function validateCorporationId(value) {
   }
 
   return id;
+}
+
+function validateKillmailSource(sourceType) {
+  if (!KILLMAIL_SOURCES.has(sourceType)) {
+    throw new Error("Invalid killmail authorisation type");
+  }
+  return sourceType;
 }
 
 function ensureEncryptionAvailable() {
@@ -411,6 +429,7 @@ async function createCallbackListener(expectedState) {
 
 export function createEsiAuthService({ db, shell }) {
   initialiseEsiDatabase(db);
+  initialiseEsiKillmailDatabase(db);
 
   let linking = false;
 
@@ -419,6 +438,20 @@ export function createEsiAuthService({ db, shell }) {
 
   const corporationRefreshLocks = new Map();
   const corporationAccessTokenCache = new Map();
+
+  const killmailRefreshLocks = new Map();
+  const killmailAccessTokenCache = new Map();
+
+  function killmailKey(sourceType, characterId) {
+    return `${validateKillmailSource(sourceType)}:${validateCharacterId(characterId)}`;
+  }
+
+  function cacheKillmailAccessToken(sourceType, characterId, tokens) {
+    killmailAccessTokenCache.set(killmailKey(sourceType, characterId), {
+      token: tokens.access_token,
+      expiresAt: Date.parse(getTokenExpiry(tokens)),
+    });
+  }
 
   function cacheAccessToken(characterId, tokens) {
     const expiresAt = Date.parse(getTokenExpiry(tokens));
@@ -541,6 +574,163 @@ export function createEsiAuthService({ db, shell }) {
       characterName: identity.name,
       ...corporation,
     };
+  }
+
+  async function linkKillmail(sourceType) {
+    validateKillmailSource(sourceType);
+    const scope = sourceType === "character"
+      ? CHARACTER_KILLMAIL_SCOPE
+      : CORPORATION_KILLMAIL_SCOPE;
+    const { tokens, identity } = await performLogin(scope);
+    let corporation = null;
+
+    if (sourceType === "corporation") {
+      corporation = await getCharacterCorporation(identity.characterId);
+    }
+
+    saveEsiKillmailAuthorisation(db, {
+      sourceType,
+      characterId: identity.characterId,
+      characterName: identity.name,
+      corporationId: corporation?.corporationId ?? null,
+      corporationName: corporation?.corporationName ?? null,
+      encryptedRefreshToken: encryptRefreshToken(tokens.refresh_token),
+      tokenExpiresAt: getTokenExpiry(tokens),
+    });
+
+    cacheKillmailAccessToken(sourceType, identity.characterId, tokens);
+
+    return {
+      sourceType,
+      characterId: identity.characterId,
+      characterName: identity.name,
+      ...corporation,
+    };
+  }
+
+  async function performKillmailRefresh(sourceType, characterId) {
+    const authorisation = getEsiKillmailAuthorisation(db, sourceType, characterId);
+    if (!authorisation || authorisation.status !== "valid") {
+      throw new Error("Killmail authorisation is not linked or requires attention");
+    }
+
+    const key = killmailKey(sourceType, characterId);
+    const refreshToken = decryptRefreshToken(authorisation.encrypted_refresh_token);
+    let tokens;
+
+    try {
+      tokens = validateTokenResponse(await exchangeToken({
+        grant_type: "refresh_token",
+        refresh_token: refreshToken,
+        client_id: CLIENT_ID,
+      }));
+    } catch (error) {
+      if (error instanceof EsiRequestError && [400, 401, 403].includes(error.status)) {
+        killmailAccessTokenCache.delete(key);
+        markEsiKillmailAuthorisationStatus(db, sourceType, characterId, "attention");
+      }
+      throw error;
+    }
+
+    try {
+      const identity = await verifyCharacter(tokens.access_token);
+      if (identity.characterId !== characterId) {
+        throw new Error("Refreshed killmail token belongs to a different character");
+      }
+
+      let corporation = null;
+      if (sourceType === "corporation") {
+        corporation = await getCharacterCorporation(characterId);
+        if (corporation.corporationId !== authorisation.corporation_id) {
+          throw new Error("Authorising character changed corporations. Relink killmail access.");
+        }
+      }
+
+      saveEsiKillmailAuthorisation(db, {
+        sourceType,
+        characterId,
+        characterName: identity.name,
+        corporationId: corporation?.corporationId ?? null,
+        corporationName: corporation?.corporationName ?? null,
+        encryptedRefreshToken: encryptRefreshToken(tokens.refresh_token),
+        tokenExpiresAt: getTokenExpiry(tokens),
+      });
+
+      cacheKillmailAccessToken(sourceType, characterId, tokens);
+      return {
+        sourceType,
+        characterId,
+        characterName: identity.name,
+        ...corporation,
+      };
+    } catch (error) {
+      killmailAccessTokenCache.delete(key);
+      markEsiKillmailAuthorisationStatus(db, sourceType, characterId, "attention");
+      throw error;
+    }
+  }
+
+  async function refreshKillmail(sourceType, characterId) {
+    const key = killmailKey(sourceType, characterId);
+    if (killmailRefreshLocks.has(key)) {
+      return killmailRefreshLocks.get(key);
+    }
+
+    const operation = performKillmailRefresh(sourceType, validateCharacterId(characterId));
+    killmailRefreshLocks.set(key, operation);
+    try {
+      return await operation;
+    } finally {
+      killmailRefreshLocks.delete(key);
+    }
+  }
+
+  async function getKillmailAccessToken(sourceType, characterId, options = {}) {
+    const id = validateCharacterId(characterId);
+    const key = killmailKey(sourceType, id);
+    const authorisation = getEsiKillmailAuthorisation(db, sourceType, id);
+    if (!authorisation || authorisation.status !== "valid") {
+      killmailAccessTokenCache.delete(key);
+      throw new Error("Killmail authorisation is not linked or requires attention");
+    }
+
+    if (killmailRefreshLocks.has(key)) {
+      await killmailRefreshLocks.get(key);
+    }
+
+    const cached = killmailAccessTokenCache.get(key);
+    if (
+      options.forceRefresh !== true &&
+      cached &&
+      cached.expiresAt - Date.now() > TOKEN_EXPIRY_MARGIN_MS
+    ) {
+      return cached.token;
+    }
+
+    await refreshKillmail(sourceType, id);
+    const updated = killmailAccessTokenCache.get(key);
+    if (!updated?.token) {
+      throw new Error("Unable to obtain killmail ESI access token");
+    }
+    return updated.token;
+  }
+
+  function unlinkKillmail(sourceType, characterId) {
+    const key = killmailKey(sourceType, characterId);
+    if (killmailRefreshLocks.has(key)) {
+      throw new Error("Cannot unlink killmail access during token refresh");
+    }
+    const deleted = deleteEsiKillmailAuthorisation(
+      db, sourceType, validateCharacterId(characterId)
+    );
+    killmailAccessTokenCache.delete(key);
+    return deleted;
+  }
+
+  function setKillmailSyncEnabled(sourceType, characterId, enabled) {
+    return setEsiKillmailSyncEnabled(
+      db, validateKillmailSource(sourceType), validateCharacterId(characterId), enabled
+    );
   }
 
   async function performRefresh(characterId) {
@@ -881,5 +1071,13 @@ export function createEsiAuthService({ db, shell }) {
     getCorporationAccessToken,
     listCorporations,
     unlinkCorporation,
+    linkKillmail,
+    refreshKillmail,
+    getKillmailAccessToken,
+    listKillmailAuthorisations(sourceType = null) {
+      return listEsiKillmailAuthorisations(db, sourceType);
+    },
+    setKillmailSyncEnabled,
+    unlinkKillmail,
   };
 }

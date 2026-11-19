@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import pkg from "../../package.json";
@@ -30,6 +31,12 @@ export default function Dashboard() {
       title: "CRABs",
       desc: "Track beacons, bounty entries, loot, and net profit.",
       to: "/crabs",
+      pill: "Active",
+    },
+    {
+      title: "FOB Tracking",
+      desc: "Track FOB income, corporation tax, and completed strongholds.",
+      to: "/fobs",
       pill: "Active",
     },
     {

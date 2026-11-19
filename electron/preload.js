@@ -241,6 +241,19 @@ contextBridge.exposeInMainWorld("api", {
   esiListWalletJournal: (options = {}) =>
     ipcRenderer.invoke("esi:listWalletJournal", options),
 
+  esiSyncCharacterJournal: (characterId, pageLimit = 20) =>
+    ipcRenderer.invoke(
+      "esi:syncCharacterJournal",
+      characterId,
+      pageLimit
+    ),
+
+  esiGetCharacterWalletSyncState: (characterId) =>
+    ipcRenderer.invoke(
+      "esi:getCharacterWalletSyncState",
+      characterId
+    ),
+
   esiSyncCorporationJournal: (characterId, division = 1, pageLimit = 20) =>
     ipcRenderer.invoke(
       "esi:syncCorporationJournal",

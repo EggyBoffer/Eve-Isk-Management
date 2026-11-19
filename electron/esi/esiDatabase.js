@@ -1,3 +1,18 @@
+const FOB_GROSS_REWARD = 100_000_000;
+
+function isFobCandidate(sourceType, refType, amount, taxRate = null) {
+  if (refType !== "corporate_reward_payout") return false;
+  if (Math.abs(amount - FOB_GROSS_REWARD) < 0.01) return true;
+  if (sourceType !== "character" || amount <= 0) return false;
+
+  if (Number.isFinite(taxRate) && taxRate >= 0 && taxRate <= 1) {
+    const expected = Math.round(FOB_GROSS_REWARD * (1 - taxRate));
+    return Math.abs(amount - expected) <= 1;
+  }
+
+  return Math.abs(amount - 99_000_000) < 0.01;
+}
+
 export function initialiseEsiDatabase(db) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS esi_characters (
@@ -68,6 +83,17 @@ export function initialiseEsiDatabase(db) {
       date DESC
     );
   `);
+
+  db.prepare(`
+    UPDATE esi_wallet_journal
+    SET candidate_fob = 1
+    WHERE candidate_fob = 0
+      AND ref_type = 'corporate_reward_payout'
+      AND (
+        amount = 100000000
+        OR (source_type = 'character' AND amount = 99000000)
+      )
+  `).run();
 
   initialiseEsiWalletSyncDatabase(db);
 }
@@ -372,6 +398,14 @@ export function importEsiWalletJournal(
 
       const refType = entry.ref_type ?? entry.refType;
       const amount = entry.amount;
+      const taxRate = entry.taxRate ?? entry.tax_rate ?? null;
+
+      if (
+        taxRate !== null &&
+        (!Number.isFinite(taxRate) || taxRate < 0 || taxRate > 1)
+      ) {
+        throw new Error("Invalid corporation tax rate");
+      }
 
       if (
         typeof entry.date !== "string" ||
@@ -415,11 +449,10 @@ export function importEsiWalletJournal(
         contextId,
         contextIdType,
         reason: entry.reason ?? "",
-        candidateFob:
-          refType === "corporate_reward_payout" &&
-          amount === 100_000_000
-            ? 1
-            : 0,
+        candidateFob: Number(
+          isFobCandidate(sourceType, refType, amount, taxRate) ||
+          previous?.candidate_fob === 1
+        ),
         now,
       });
 
