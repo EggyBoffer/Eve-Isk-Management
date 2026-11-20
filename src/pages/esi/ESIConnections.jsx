@@ -14,17 +14,18 @@ import {
   ShoppingCart,
   Wallet,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import ESIUnlinkModal from "./ESIUnlinkModal";
+import ESIConnectionUnlinkDialog from "./ESIConnectionUnlinkDialog";
 import "../../styles/esi/esi.css";
+
+function sameId(left, right) {
+  return Number(left) === Number(right);
+}
 
 function corporationIds(authorisations) {
   return new Set(authorisations.map(({ corporationId }) => Number(corporationId)));
 }
 
 function CorporationServices({ wallet, killmails, market }) {
-  if (!wallet && !killmails && !market) return null;
-
   return (
     <div
       aria-label="Corporation ESI services"
@@ -63,8 +64,7 @@ export default function ESIConnections() {
   const [characters, setCharacters] = useState([]);
   const [corporationAuthorisations, setCorporationAuthorisations] = useState([]);
   const [corporations, setCorporations] = useState({});
-  const [killmailSyncCharacters, setKillmailSyncCharacters] = useState(new Set());
-  const [corporationKillmails, setCorporationKillmails] = useState([]);
+  const [killmailAuthorisations, setKillmailAuthorisations] = useState([]);
   const [marketAuthorisations, setMarketAuthorisations] = useState([]);
   const [corporationMarketAuthorisations, setCorporationMarketAuthorisations] = useState([]);
   const [busy, setBusy] = useState(false);
@@ -72,7 +72,6 @@ export default function ESIConnections() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [unlinkTarget, setUnlinkTarget] = useState(null);
-  const [corporationUnlinkTarget, setCorporationUnlinkTarget] = useState(null);
 
   const available = Boolean(
     window.api?.esiLinkCharacter &&
@@ -96,14 +95,6 @@ export default function ESIConnections() {
   const corporationMarketAvailable = Boolean(
     window.api?.esiListCorporationMarketAuthorisations &&
     window.api?.esiUnlinkCorporationMarket
-  );
-
-  const marketCharacterIds = new Set(
-    marketAuthorisations.map(({ characterId }) => Number(characterId))
-  );
-
-  const corporationMarketCharacterIds = new Set(
-    corporationMarketAuthorisations.map(({ characterId }) => Number(characterId))
   );
 
   const loadCorporationDetails = useCallback(async (linkedCharacters) => {
@@ -133,64 +124,46 @@ export default function ESIConnections() {
   }, []);
 
   const loadConnections = useCallback(async () => {
-    if (!available) return;
-
     setLoading(true);
 
     try {
-      const [characterResult, corporationResult, killmailResult, marketResult, corporationMarketResult] =
-        await Promise.all([
-          window.api.esiListCharacters(),
-          corporationAvailable
-            ? window.api.esiListCorporations()
-            : Promise.resolve([]),
-          window.api?.esiListKillmailAuthorisations
-            ? window.api.esiListKillmailAuthorisations().catch(() => [])
-            : Promise.resolve([]),
-          marketAvailable
-            ? window.api.esiListMarketAuthorisations()
-            : Promise.resolve([]),
-          corporationMarketAvailable
-            ? window.api.esiListCorporationMarketAuthorisations()
-            : Promise.resolve([]),
-        ]);
+      const results = await Promise.allSettled([
+        window.api?.esiListCharacters?.() ?? [],
+        window.api?.esiListCorporations?.() ?? [],
+        window.api?.esiListKillmailAuthorisations?.() ?? [],
+        window.api?.esiListMarketAuthorisations?.() ?? [],
+        window.api?.esiListCorporationMarketAuthorisations?.() ?? [],
+      ]);
 
-      const linkedCharacters = Array.isArray(characterResult) ? characterResult : [];
-      const linkedCorporations = Array.isArray(corporationResult) ? corporationResult : [];
-      const killmailAuthorisations = Array.isArray(killmailResult) ? killmailResult : [];
+      const setters = [
+        setCharacters,
+        setCorporationAuthorisations,
+        setKillmailAuthorisations,
+        setMarketAuthorisations,
+        setCorporationMarketAuthorisations,
+      ];
 
-      setCharacters(linkedCharacters);
-      setCorporationAuthorisations(linkedCorporations);
-      setMarketAuthorisations(marketResult);
-      setCorporationMarketAuthorisations(corporationMarketResult);
-      setCorporationKillmails(
-        killmailAuthorisations.filter((entry) => entry.sourceType === "corporation")
-      );
-      setKillmailSyncCharacters(new Set(
-        killmailAuthorisations
-          .filter((entry) =>
-            entry.sourceType === "character" &&
-            entry.status === "valid" &&
-            entry.syncEnabled === true
-          )
-          .map((entry) => Number(entry.characterId))
-      ));
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          setters[index](Array.isArray(result.value) ? result.value : []);
+        }
+      });
 
-      await loadCorporationDetails(linkedCharacters);
+      if (results[0].status === "fulfilled") {
+        const wallets = Array.isArray(results[0].value) ? results[0].value : [];
+        await loadCorporationDetails(wallets);
+      }
+
+      const failure = results.find((result) => result.status === "rejected");
+      if (failure) throw failure.reason;
     } finally {
       setLoading(false);
     }
-  }, [
-    available,
-    corporationAvailable,
-    marketAvailable,
-    corporationMarketAvailable,
-    loadCorporationDetails,
-  ]);
+  }, [loadCorporationDetails]);
 
   useEffect(() => {
     loadConnections().catch((err) => {
-      setError(err?.message || "Unable to load ESI connections.");
+      setError(err?.message || "Unable to load all ESI connections.");
     });
   }, [loadConnections]);
 
@@ -242,16 +215,6 @@ export default function ESIConnections() {
     );
   }
 
-  function unlinkMarket(characterId, corporation) {
-    return runAction(
-      () => corporation
-        ? window.api.esiUnlinkCorporationMarket(characterId)
-        : window.api.esiUnlinkMarket(characterId),
-      "Market access unlinked.",
-      "Unable to unlink Market access."
-    );
-  }
-
   function refreshCharacter(characterId) {
     return runAction(
       () => window.api.esiRefreshCharacter(characterId),
@@ -276,44 +239,42 @@ export default function ESIConnections() {
     );
   }
 
-  function requestUnlink(character) {
-    if (busy || loading) return;
-
+  function openUnlink(target) {
     setError("");
     setNotice("");
-    setUnlinkTarget(character);
+    setUnlinkTarget(target);
   }
 
-  async function confirmUnlink() {
-    if (!unlinkTarget || busy || loading) return;
-
-    await runAction(
-      () => window.api.esiUnlinkCharacter(unlinkTarget.characterId),
-      `${unlinkTarget.name} has been unlinked.`,
-      "Unable to unlink character."
-    );
-
+  function closeUnlink() {
+    setError("");
     setUnlinkTarget(null);
   }
 
-  function requestCorporationUnlink(authorisation) {
-    if (busy || loading) return;
+  const personalKillmails = killmailAuthorisations.filter(
+    (entry) => entry.sourceType === "character"
+  );
 
-    setError("");
-    setNotice("");
-    setCorporationUnlinkTarget(authorisation);
-  }
+  const corporationKillmails = killmailAuthorisations.filter(
+    (entry) => entry.sourceType === "corporation"
+  );
 
-  async function confirmCorporationUnlink() {
-    if (!corporationUnlinkTarget || busy || loading) return;
+  const characterCards = new Map(
+    characters.map((character) => [
+      Number(character.characterId),
+      { ...character, hasWallet: true },
+    ])
+  );
 
-    await runAction(
-      () => window.api.esiUnlinkCorporation(corporationUnlinkTarget.characterId),
-      `${corporationUnlinkTarget.corporationName} wallet authorisation removed.`,
-      "Unable to unlink corporation wallet."
-    );
+  for (const { characterId, characterName } of [
+    ...marketAuthorisations,
+    ...corporationMarketAuthorisations,
+    ...personalKillmails,
+  ]) {
+    const id = Number(characterId);
 
-    setCorporationUnlinkTarget(null);
+    if (Number.isSafeInteger(id) && id > 0 && !characterCards.has(id)) {
+      characterCards.set(id, { characterId: id, name: characterName, hasWallet: false });
+    }
   }
 
   const healthy = characters.filter((character) => character.status === "valid").length;
@@ -345,6 +306,7 @@ export default function ESIConnections() {
   }));
 
   const shownCorporations = corporationIds(corporationAuthorisations);
+
   for (const authorisation of [...corporationKillmails, ...corporationMarketAuthorisations]) {
     const corporationId = Number(authorisation.corporationId);
 
@@ -359,6 +321,98 @@ export default function ESIConnections() {
       corporationName: authorisation.corporationName,
       wallet: null,
     });
+  }
+
+  const connections = [];
+
+  function addConnections(entries, label, method, argsFor, detailFor) {
+    if (typeof window.api?.[method] !== "function") return;
+
+    for (const entry of entries) {
+      connections.push({
+        id: `${method}:${label}:${entry.characterId}`,
+        label,
+        detail: detailFor?.(entry),
+        unlink: () => window.api[method](...argsFor(entry)),
+      });
+    }
+  }
+
+  if (unlinkTarget?.type === "character") {
+    const forCharacter = (entry) => sameId(entry.characterId, unlinkTarget.id);
+    const characterArgs = (entry) => [Number(entry.characterId)];
+
+    addConnections(
+      characters.filter(forCharacter),
+      "Personal Wallet",
+      "esiUnlinkCharacter",
+      characterArgs
+    );
+    addConnections(
+      personalKillmails.filter(forCharacter),
+      "Personal Killmails",
+      "esiUnlinkKillmail",
+      (entry) => ["character", Number(entry.characterId)]
+    );
+    addConnections(
+      marketAuthorisations.filter(forCharacter),
+      "Personal Market",
+      "esiUnlinkMarket",
+      characterArgs
+    );
+    addConnections(
+      corporationKillmails.filter(forCharacter),
+      "Corporation Killmails",
+      "esiUnlinkKillmail",
+      (entry) => ["corporation", Number(entry.characterId)],
+      (entry) => entry.corporationName
+    );
+    addConnections(
+      corporationMarketAuthorisations.filter(forCharacter),
+      "Corporation Market",
+      "esiUnlinkCorporationMarket",
+      characterArgs,
+      (entry) => entry.corporationName
+    );
+  }
+
+  if (unlinkTarget?.type === "corporation") {
+    const forCorporation = (entry) => sameId(entry.corporationId, unlinkTarget.id);
+    const characterArgs = (entry) => [Number(entry.characterId)];
+    const authorisingCharacter = (entry) => entry.characterName || `Character ${entry.characterId}`;
+
+    addConnections(
+      corporationAuthorisations.filter(forCorporation),
+      "Corporation Wallet",
+      "esiUnlinkCorporation",
+      characterArgs,
+      authorisingCharacter
+    );
+    addConnections(
+      corporationKillmails.filter(forCorporation),
+      "Corporation Killmails",
+      "esiUnlinkKillmail",
+      (entry) => ["corporation", Number(entry.characterId)],
+      authorisingCharacter
+    );
+    addConnections(
+      corporationMarketAuthorisations.filter(forCorporation),
+      "Corporation Market",
+      "esiUnlinkCorporationMarket",
+      characterArgs,
+      authorisingCharacter
+    );
+  }
+
+  function unlinkConnection(id) {
+    const connection = connections.find((entry) => entry.id === id);
+    if (!connection) return;
+
+    return runAction(
+      connection.unlink,
+      `${connection.label} unlinked.`,
+      `Unable to unlink ${connection.label}.`
+    );
   }
 
   function renderCorporationDetails(character) {
@@ -463,26 +517,26 @@ export default function ESIConnections() {
         <div className="esi-stat">
           <Users size={21} />
           <span>Linked capsuleers</span>
-          <strong>{characters.length}</strong>
+          <strong>{characterCards.size}</strong>
         </div>
         <div className="esi-stat">
           <ShieldCheck size={21} />
-          <span>Healthy connections</span>
+          <span>Healthy wallets</span>
           <strong>{healthy}</strong>
         </div>
         <div className="esi-stat">
           <ShieldAlert size={21} />
-          <span>Attention needed</span>
+          <span>Wallets needing attention</span>
           <strong>{attention}</strong>
         </div>
       </section>
 
-      {error && <div className="esi-alert esi-error" role="alert">{error}</div>}
+      {error && !unlinkTarget && <div className="esi-alert esi-error" role="alert">{error}</div>}
       {notice && <div className="esi-alert" role="status">{notice}</div>}
 
       {!available && (
         <div className="esi-alert">
-          Secure EVE SSO integration is not enabled in this build yet.
+          Character wallet linking is not available in this build.
         </div>
       )}
 
@@ -492,46 +546,14 @@ export default function ESIConnections() {
         </div>
       )}
 
-      {(marketAvailable || corporationMarketAvailable) && (
-        <section aria-labelledby="esi-market-heading">
-          <div className="esi-section-heading">
-            <h2 id="esi-market-heading">Market Authorisations</h2>
-            <Link to="/market" className="esi-secondary">Open Market</Link>
-          </div>
-
-          {[...marketAuthorisations, ...corporationMarketAuthorisations].map(
-            ({ characterId, characterName, corporationName, corporationId }) => (
-              <div className="esi-section-heading" key={`${corporationId ?? "personal"}:${characterId}`}>
-                <span className="esi-status esi-valid">
-                  <ShoppingCart size={14} />
-                  {corporationName
-                    ? `${corporationName} · ${characterName} (Corporation)`
-                    : `${characterName} (Personal)`}
-                </span>
-                <button
-                  type="button"
-                  className="esi-secondary"
-                  disabled={busy || loading}
-                  aria-label={`Unlink ${corporationId ? "Corporation" : "Personal"} Market access for ${characterName}`}
-                  onClick={() => unlinkMarket(characterId, Boolean(corporationId))}
-                >
-                  <Link2Off size={15} />
-                  Unlink Market
-                </button>
-              </div>
-            )
-          )}
-        </section>
-      )}
-
       <div className="esi-section-heading">
         <h2>Linked Characters</h2>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span>{characters.length} total</span>
+          <span>{characterCards.size} total</span>
           <button
             type="button"
             className="esi-secondary"
-            disabled={!available || busy || loading}
+            disabled={busy || loading}
             onClick={refreshLinkedUsers}
           >
             <RefreshCw size={15} />
@@ -540,14 +562,11 @@ export default function ESIConnections() {
         </div>
       </div>
 
-      {characters.length === 0 ? (
+      {characterCards.size === 0 ? (
         <section className="esi-empty">
           <div className="esi-empty-icon"><Users size={32} /></div>
           <h3>No characters linked yet</h3>
-          <p>
-            Connect your EVE Online characters to prepare for secure
-            multi-character income tracking and future FOB operations.
-          </p>
+          <p>Link an EVE Online character to start tracking wallet income.</p>
           <button
             type="button"
             className="esi-secondary"
@@ -560,99 +579,117 @@ export default function ESIConnections() {
         </section>
       ) : (
         <div className="esi-grid">
-          {characters.map((character) => (
-            <article className="esi-character" key={character.characterId}>
-              <div className="esi-character-top">
-                <div style={{ position: "relative", flexShrink: 0 }}>
-                  <img
-                    src={`https://images.evetech.net/characters/${character.characterId}/portrait?size=256`}
-                    alt={character.name}
-                    loading="lazy"
-                  />
-                  {killmailSyncCharacters.has(Number(character.characterId)) && (
-                    <span
-                      title="Killmail sync enabled"
-                      aria-label="Killmail sync enabled"
-                      style={{
-                        position: "absolute",
-                        top: -5,
-                        right: -5,
-                        width: 23,
-                        height: 23,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        borderRadius: "50%",
-                        background: "#153c36",
-                        border: "1px solid #34d399",
-                        color: "#6ee7b7",
-                      }}
+          {[...characterCards.values()].map((character) => {
+            const { characterId, hasWallet } = character;
+            const name = character.name || `Character ${characterId}`;
+            const killmails = personalKillmails.find((entry) => sameId(entry.characterId, characterId));
+            const hasMarket = marketAuthorisations.some((entry) => sameId(entry.characterId, characterId));
+            const hasCorporationMarket = corporationMarketAuthorisations.some(
+              (entry) => sameId(entry.characterId, characterId)
+            );
+
+            return (
+              <article className="esi-character" key={characterId}>
+                <div className="esi-character-top">
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <img
+                      src={`https://images.evetech.net/characters/${characterId}/portrait?size=256`}
+                      alt={name}
+                      loading="lazy"
+                    />
+                    {killmails?.status === "valid" && killmails.syncEnabled && (
+                      <span
+                        title="Killmail sync enabled"
+                        aria-label="Killmail sync enabled"
+                        style={{
+                          position: "absolute",
+                          top: -5,
+                          right: -5,
+                          width: 23,
+                          height: 23,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "50%",
+                          background: "#153c36",
+                          border: "1px solid #34d399",
+                          color: "#6ee7b7",
+                        }}
+                      >
+                        <Crosshair size={14} />
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="esi-character-info">
+                    <h3>
+                      {name}
+                      {hasMarket && (
+                        <span title="Personal Market access linked" style={{ marginInlineStart: 8 }}>
+                          <ShoppingCart size={15} role="img" aria-label="Personal Market access linked" />
+                        </span>
+                      )}
+                      {hasCorporationMarket && (
+                        <span title="Corporation Market access linked" style={{ marginInlineStart: 8 }}>
+                          <Building2 size={15} role="img" aria-label="Corporation Market access linked" />
+                        </span>
+                      )}
+                    </h3>
+                    {hasWallet && (
+                      <span className={`esi-status ${character.status === "valid" ? "esi-valid" : "esi-warning"}`}>
+                        {character.status === "valid" ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
+                        {character.status === "valid" ? "Connected" : "Attention required"}
+                      </span>
+                    )}
+                    <small>Character ID {characterId}</small>
+                  </div>
+                </div>
+
+                {hasWallet && (
+                  <>
+                    {renderCorporationDetails(character)}
+
+                    <div className="esi-details">
+                      <div>
+                        <span>Authorisation</span>
+                        <strong>{character.status === "valid" ? "Valid" : "Requires attention"}</strong>
+                      </div>
+                      <div>
+                        <span>Last token check</span>
+                        <strong>
+                          {character.lastValidatedAt
+                            ? new Date(character.lastValidatedAt).toLocaleString()
+                            : "Not yet checked"}
+                        </strong>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="esi-actions">
+                  {hasWallet && (
+                    <button
+                      type="button"
+                      disabled={!available || busy || loading}
+                      onClick={() => refreshCharacter(characterId)}
                     >
-                      <Crosshair size={14} />
-                    </span>
+                      <RefreshCw size={15} />
+                      Refresh token
+                    </button>
                   )}
+                  <button
+                    type="button"
+                    className="esi-danger"
+                    disabled={busy || loading}
+                    onClick={() => openUnlink({ type: "character", id: characterId, name })}
+                  >
+                    <Link2Off size={15} />
+                    Unlink
+                  </button>
                 </div>
-
-                <div className="esi-character-info">
-                  <h3>
-                    {character.name}
-                    {marketCharacterIds.has(Number(character.characterId)) && (
-                      <span title="Personal Market access linked" style={{ marginInlineStart: 8 }}>
-                        <ShoppingCart size={15} role="img" aria-label="Personal Market access linked" />
-                      </span>
-                    )}
-                    {corporationMarketCharacterIds.has(Number(character.characterId)) && (
-                      <span title="Corporation Market access linked" style={{ marginInlineStart: 8 }}>
-                        <Building2 size={15} role="img" aria-label="Corporation Market access linked" />
-                      </span>
-                    )}
-                  </h3>
-                  <span className={`esi-status ${character.status === "valid" ? "esi-valid" : "esi-warning"}`}>
-                    {character.status === "valid" ? <ShieldCheck size={14} /> : <ShieldAlert size={14} />}
-                    {character.status === "valid" ? "Connected" : "Attention required"}
-                  </span>
-                  <small>Character ID {character.characterId}</small>
-                </div>
-              </div>
-
-              {renderCorporationDetails(character)}
-
-              <div className="esi-details">
-                <div>
-                  <span>Authorisation</span>
-                  <strong>{character.status === "valid" ? "Valid" : "Requires attention"}</strong>
-                </div>
-                <div>
-                  <span>Last token check</span>
-                  <strong>
-                    {character.lastValidatedAt
-                      ? new Date(character.lastValidatedAt).toLocaleString()
-                      : "Not yet checked"}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="esi-actions">
-                <button
-                  type="button"
-                  disabled={busy || loading}
-                  onClick={() => refreshCharacter(character.characterId)}
-                >
-                  <RefreshCw size={15} />
-                  Refresh token
-                </button>
-                <button
-                  type="button"
-                  className="esi-danger"
-                  disabled={busy || loading}
-                  onClick={() => requestUnlink(character)}
-                >
-                  <Link2Off size={15} />
-                  Unlink
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -678,28 +715,29 @@ export default function ESIConnections() {
         </section>
       ) : (
         <div className="esi-grid">
-          {corporationCards.map(({ key, corporationId, corporationName, wallet }) => (
-            <article className="esi-character" key={key}>
-              <div className="esi-character-top">
-                <img
-                  src={`https://images.evetech.net/corporations/${corporationId}/logo?size=128`}
-                  alt={corporationName || `Corporation ${corporationId}`}
-                  loading="lazy"
-                />
+          {corporationCards.map(({ key, corporationId, corporationName, wallet }) => {
+            const name = corporationName || `Corporation ${corporationId}`;
 
-                <div className="esi-character-info">
-                  <h3>{corporationName || `Corporation ${corporationId}`}</h3>
-                  <small>Corporation ID {corporationId}</small>
-                  <CorporationServices
-                    wallet={wallet}
-                    killmails={killmailsByCorporation.get(Number(corporationId))}
-                    market={marketCorporationIds.has(Number(corporationId))}
+            return (
+              <article className="esi-character" key={key}>
+                <div className="esi-character-top">
+                  <img
+                    src={`https://images.evetech.net/corporations/${corporationId}/logo?size=128`}
+                    alt={name}
+                    loading="lazy"
                   />
+                  <div className="esi-character-info">
+                    <h3>{name}</h3>
+                    <small>Corporation ID {corporationId}</small>
+                    <CorporationServices
+                      wallet={wallet}
+                      killmails={killmailsByCorporation.get(Number(corporationId))}
+                      market={marketCorporationIds.has(Number(corporationId))}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {wallet && (
-                <>
+                {wallet && (
                   <div className="esi-details">
                     <div>
                       <span>Authorised by</span>
@@ -714,30 +752,32 @@ export default function ESIConnections() {
                       </strong>
                     </div>
                   </div>
+                )}
 
-                  <div className="esi-actions">
+                <div className="esi-actions">
+                  {wallet && (
                     <button
                       type="button"
-                      disabled={busy || loading}
+                      disabled={!corporationAvailable || busy || loading}
                       onClick={() => refreshCorporation(wallet.characterId)}
                     >
                       <RefreshCw size={15} />
                       Refresh token
                     </button>
-                    <button
-                      type="button"
-                      className="esi-danger"
-                      disabled={busy || loading}
-                      onClick={() => requestCorporationUnlink(wallet)}
-                    >
-                      <Link2Off size={15} />
-                      Unlink wallet
-                    </button>
-                  </div>
-                </>
-              )}
-            </article>
-          ))}
+                  )}
+                  <button
+                    type="button"
+                    className="esi-danger"
+                    disabled={busy || loading}
+                    onClick={() => openUnlink({ type: "corporation", id: corporationId, name })}
+                  >
+                    <Link2Off size={15} />
+                    Unlink
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
@@ -746,75 +786,15 @@ export default function ESIConnections() {
         ESI credentials are stored and encrypted locally.
       </p>
 
-      <ESIUnlinkModal
-        character={unlinkTarget}
-        busy={busy}
-        onCancel={() => setUnlinkTarget(null)}
-        onConfirm={confirmUnlink}
-      />
-
-      {corporationUnlinkTarget && (
-        <div
-          role="presentation"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 10000,
-            background: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="esi-corporation-unlink-title"
-            style={{
-              width: "100%",
-              maxWidth: 440,
-              padding: 24,
-              borderRadius: 12,
-              background: "#17202C",
-              color: "#F3F6FB",
-              border: "1px solid #344255",
-            }}
-          >
-            <h3 id="esi-corporation-unlink-title">Unlink Corporation Wallet</h3>
-            <p>
-              Remove the corporation wallet authorisation for{" "}
-              <strong>{corporationUnlinkTarget.corporationName}</strong>
-              , granted by{" "}
-              <strong>{corporationUnlinkTarget.characterName}</strong>
-              ?
-            </p>
-            <p>
-              This will remove the locally stored corporation wallet
-              credentials for this authorising character.
-            </p>
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-              <button
-                type="button"
-                className="esi-secondary"
-                disabled={busy || loading}
-                onClick={() => setCorporationUnlinkTarget(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="esi-danger"
-                disabled={busy || loading}
-                onClick={confirmCorporationUnlink}
-              >
-                <Link2Off size={15} />
-                Unlink Corporation
-              </button>
-            </div>
-          </div>
-        </div>
+      {unlinkTarget && (
+        <ESIConnectionUnlinkDialog
+          targetName={unlinkTarget.name}
+          connections={connections}
+          busy={busy || loading}
+          error={error}
+          onClose={closeUnlink}
+          onUnlink={unlinkConnection}
+        />
       )}
     </div>
   );
