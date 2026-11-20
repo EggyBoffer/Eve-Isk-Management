@@ -7,6 +7,7 @@ import db from "./database.js";
 import { registerEsiIpc } from "./esi/esiIpc.js";
 import { initialiseOfficerDatabase } from "./officers/officerDatabase.js";
 import { registerOfficerIpc } from "./officers/officerIpc.js";
+import { createTelemetryService } from "./telemetry/telemetryService.js";
 import {
   saveCrabRun,
   getRecentCrabRuns,
@@ -44,6 +45,7 @@ try {
 }
 
 const settingsPath = path.join(app.getPath("userData"), "settings.json");
+const telemetryService = createTelemetryService(app.getPath("userData"));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -901,6 +903,28 @@ ipcMain.handle("api:request", async (event, request) => {
   }
 });
 
+ipcMain.handle("telemetry:get-status", (event) => {
+  assertMainSender(event);
+
+  return telemetryService.getStatus();
+});
+
+ipcMain.handle("telemetry:set-enabled", (event, enabled) => {
+  assertMainSender(event);
+
+  if (typeof enabled !== "boolean") {
+    throw new Error("Invalid telemetry preference");
+  }
+
+  return telemetryService.setEnabled(enabled);
+});
+
+ipcMain.handle("telemetry:reset-installation-id", (event) => {
+  assertMainSender(event);
+
+  return telemetryService.resetInstallationId();
+});
+
 ipcMain.handle("get-app-settings", (event) => {
   assertMainSender(event);
   return { overlayCloseHotkey: getOverlayHotkey() };
@@ -1287,6 +1311,7 @@ async function runStartupSync() {
 app.whenReady().then(() => {
   createSplash();
   createMainWindow();
+  telemetryService.recordLaunch();
 
   autoSync.start({ runImmediately: false });
   console.log("[ESI AUTO SYNC] Automatic synchronisation enabled");
@@ -1317,6 +1342,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
+  telemetryService.stop();
   autoSync.stop();
 
   if (officerSyncTimer !== null) {

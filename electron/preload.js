@@ -152,6 +152,15 @@ contextBridge.exposeInMainWorld("api", {
   saveAppSettings: (settings) =>
     ipcRenderer.invoke("save-app-settings", settings),
 
+  telemetryGetStatus: () =>
+    ipcRenderer.invoke("telemetry:get-status"),
+
+  telemetrySetEnabled: (enabled) =>
+    ipcRenderer.invoke("telemetry:set-enabled", enabled),
+
+  telemetryResetInstallationId: () =>
+    ipcRenderer.invoke("telemetry:reset-installation-id"),
+
   openOverlayWithCost: (cost, shipType, tier, stormType) =>
     ipcRenderer.send(
       "open-overlay-with-cost",
@@ -344,10 +353,10 @@ contextBridge.exposeInMainWorld("api", {
   officerGetSummary: () =>
     ipcRenderer.invoke("officer:getSummary"),
 
-    on,
-    once,
-    off,
-    send,
+  on,
+  once,
+  off,
+  send,
 });
 
 contextBridge.exposeInMainWorld("electron", {

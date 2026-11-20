@@ -1,7 +1,7 @@
 
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LoaderCircle, X } from "lucide-react";
+import { LoaderCircle, X, ChartNoAxesColumnIncreasing } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Dashboard from "./pages/Dashboard";
 import Abyssals from "./pages/Abyssals";
@@ -149,6 +149,124 @@ function AppRoutes() {
       <Route path="/officers" element={<OfficerTracker />} />
       <Route path="/officers/analytics" element={<OfficerAnalytics />} />
     </Routes>
+  );
+}
+
+function TelemetryDisclosure({ onContinue, saving, error }) {
+  return (
+    <div
+      role="presentation"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 20000,
+        background: "rgba(3, 8, 17, 0.88)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="telemetry-disclosure-title"
+        aria-describedby="telemetry-disclosure-description"
+        style={{
+          width: "100%",
+          maxWidth: 480,
+          background: "#151e2b",
+          border: "1px solid #40516a",
+          borderRadius: 16,
+          padding: 28,
+          boxShadow: "0 24px 70px rgba(0, 0, 0, 0.55)",
+          color: "#eef3fa",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            marginBottom: 18,
+          }}
+        >
+          <ChartNoAxesColumnIncreasing
+            size={26}
+            color="#7dd3fc"
+          />
+          <h2
+            id="telemetry-disclosure-title"
+            style={{
+              margin: 0,
+              fontSize: 21,
+              fontWeight: 700,
+            }}
+          >
+            Help Improve ISKONOMY
+          </h2>
+        </div>
+
+        <div
+          id="telemetry-disclosure-description"
+          style={{
+            fontSize: 14,
+            lineHeight: 1.7,
+            color: "#cbd5e1",
+          }}
+        >
+          <p>
+            ISKONOMY collects basic usage statistics to help
+            us understand how many installations are active
+            and how often the application is launched.
+          </p>
+
+          <p>
+            No EVE character information, ESI data, financial
+            information, operating system details or error
+            reports are collected.
+          </p>
+
+          <p>
+            You can disable usage statistics at any time in
+            <strong> Settings → Privacy &amp; Usage Analytics</strong>.
+          </p>
+        </div>
+
+        {error && (
+          <p
+            role="alert"
+            style={{
+              color: "#fca5a5",
+              fontSize: 13,
+              marginTop: 14,
+            }}
+          >
+            {error}
+          </p>
+        )}
+
+        <button
+          type="button"
+          disabled={saving}
+          onClick={onContinue}
+          style={{
+            width: "100%",
+            marginTop: 22,
+            padding: "12px 16px",
+            borderRadius: 9,
+            border: "1px solid #38bdf8",
+            background: "#0369a1",
+            color: "#ffffff",
+            fontWeight: 700,
+            cursor: saving ? "wait" : "pointer",
+            opacity: saving ? 0.65 : 1,
+          }}
+        >
+          {saving ? "Saving preference..." : "OK, Continue"}
+        </button>
+      </section>
+    </div>
   );
 }
 
@@ -306,6 +424,11 @@ function MainAppContent() {
   );
   const [linkCancelling, setLinkCancelling] = useState(false);
 
+  const [telemetryDisclosureOpen, setTelemetryDisclosureOpen] =
+    useState(false);
+  const [telemetrySaving, setTelemetrySaving] = useState(false);
+  const [telemetryError, setTelemetryError] = useState("");
+
   const didRun = useRef(false);
   const activeLinkRef = useRef(null);
 
@@ -316,6 +439,51 @@ function MainAppContent() {
 
     return localStorage.getItem("forceUpdatePopup") === "true";
   }, [location.search]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkTelemetryDisclosure() {
+      try {
+        const status = await window.api.telemetryGetStatus();
+
+        if (!cancelled && !status.acknowledged) {
+          setTelemetryDisclosureOpen(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "[TELEMETRY] Unable to load preferences:",
+            error
+          );
+        }
+      }
+    }
+
+    void checkTelemetryDisclosure();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function acknowledgeTelemetryDisclosure() {
+    if (telemetrySaving) return;
+
+    setTelemetrySaving(true);
+    setTelemetryError("");
+
+    try {
+      await window.api.telemetrySetEnabled(true);
+      setTelemetryDisclosureOpen(false);
+    } catch {
+      setTelemetryError(
+        "Unable to save your preference. Please try again."
+      );
+    } finally {
+      setTelemetrySaving(false);
+    }
+  }
 
   useEffect(() => {
     if (didRun.current) return;
@@ -539,7 +707,7 @@ function MainAppContent() {
       {showNavbar && <Navbar />}
 
       <UpdatePopup
-        open={updateOpen && showNavbar}
+        open={updateOpen && showNavbar && !telemetryDisclosureOpen}
         currentVersion={pkg.version}
         latestVersion={latestVersion}
         onClose={closeUpdate}
@@ -560,6 +728,14 @@ function MainAppContent() {
         status={linkStatus}
         onCancel={cancelLink}
       />
+
+      {telemetryDisclosureOpen && (
+        <TelemetryDisclosure
+          onContinue={acknowledgeTelemetryDisclosure}
+          saving={telemetrySaving}
+          error={telemetryError}
+        />
+      )}
     </>
   );
 }

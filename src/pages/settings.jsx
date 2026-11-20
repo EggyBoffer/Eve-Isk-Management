@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+import { Info, ShieldCheck } from "lucide-react";
 import "../styles/settings.css";
 
 import {
@@ -30,7 +31,14 @@ export default function Settings() {
   const [repriceError, setRepriceError] = useState("");
   const [repriceSummary, setRepriceSummary] = useState(null);
 
+  const [telemetryEnabled, setTelemetryEnabled] = useState(false);
+  const [telemetryLoading, setTelemetryLoading] = useState(true);
+  const [telemetrySaving, setTelemetrySaving] = useState(false);
+  const [telemetryError, setTelemetryError] = useState("");
+  const [telemetryTooltipOpen, setTelemetryTooltipOpen] = useState(false);
+
   const importInputRef = useRef(null);
+  const telemetryTooltipRef = useRef(null);
 
   useEffect(() => {
     window.api.getDbSize?.().then((res) => {
@@ -59,6 +67,86 @@ export default function Settings() {
       setAutoRepriceDEDOnLaunch(stored.autoRepriceDEDOnLaunch);
     }
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTelemetrySettings() {
+      try {
+        const status = await window.api.telemetryGetStatus();
+
+        if (!cancelled) {
+          setTelemetryEnabled(status?.enabled === true);
+          setTelemetryError("");
+        }
+      } catch {
+        if (!cancelled) {
+          setTelemetryError(
+            "Unable to load usage statistics preferences."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setTelemetryLoading(false);
+        }
+      }
+    }
+
+    void loadTelemetrySettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!telemetryTooltipOpen) {
+      return;
+    }
+
+    function handleOutsideClick(event) {
+      if (
+        telemetryTooltipRef.current &&
+        !telemetryTooltipRef.current.contains(event.target)
+      ) {
+        setTelemetryTooltipOpen(false);
+      }
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setTelemetryTooltipOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [telemetryTooltipOpen]);
+
+  async function changeTelemetryEnabled(enabled) {
+    if (telemetrySaving || telemetryLoading) {
+      return;
+    }
+
+    setTelemetrySaving(true);
+    setTelemetryError("");
+
+    try {
+      const status = await window.api.telemetrySetEnabled(enabled);
+      setTelemetryEnabled(status?.enabled === true);
+    } catch {
+      setTelemetryError(
+        "Unable to save your usage statistics preference."
+      );
+    } finally {
+      setTelemetrySaving(false);
+    }
+  }
 
   async function saveSettings() {
     setHotkeyError("");
@@ -378,6 +466,141 @@ export default function Settings() {
                 <strong>{repriceSummary.failed}</strong>
               </div>
             )}
+          </div>
+
+          <div className="settingsCard">
+            <div className="settingsCardHead">
+              <h2>Privacy &amp; Usage Analytics</h2>
+              <ShieldCheck size={20} color="#7dd3fc" aria-hidden="true" />
+            </div>
+
+            <div className="settingsSubtext">
+              Control whether ISKONOMY shares basic usage statistics.
+              This preference is saved automatically.
+            </div>
+
+            <div className="settingsForm">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 16,
+                  flexWrap: "wrap",
+                }}
+              >
+                <label
+                  className="settingsToggle"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    flex: "1 1 240px",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={telemetryEnabled}
+                    disabled={telemetryLoading || telemetrySaving}
+                    onChange={(e) =>
+                      changeTelemetryEnabled(e.target.checked)
+                    }
+                  />
+                  <span className="settingsToggleText">
+                    Share anonymous usage statistics
+                  </span>
+                </label>
+
+                <div
+                  ref={telemetryTooltipRef}
+                  style={{
+                    position: "relative",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  onMouseEnter={() => setTelemetryTooltipOpen(true)}
+                  onMouseLeave={() => setTelemetryTooltipOpen(false)}
+                >
+                  <button
+                    type="button"
+                    aria-label="What usage statistics are collected?"
+                    aria-expanded={telemetryTooltipOpen}
+                    onClick={() =>
+                      setTelemetryTooltipOpen((open) => !open)
+                    }
+                    onFocus={() => setTelemetryTooltipOpen(true)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 5,
+                      background: "transparent",
+                      border: "none",
+                      color: "#7dd3fc",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Info size={19} />
+                  </button>
+
+                  {telemetryTooltipOpen && (
+                    <div
+                      role="tooltip"
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        bottom: "calc(100% + 10px)",
+                        width: "min(310px, 75vw)",
+                        zIndex: 50,
+                        padding: 14,
+                        borderRadius: 10,
+                        background: "#172436",
+                        border: "1px solid #40516a",
+                        boxShadow: "0 12px 30px rgba(0, 0, 0, 0.4)",
+                        color: "#e2e8f0",
+                        fontSize: 13,
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      <strong>What does ISKONOMY collect?</strong>
+
+                      <p style={{ margin: "8px 0" }}>
+                        A randomly generated installation ID and the
+                        time the application launches.
+                      </p>
+
+                      <p style={{ margin: "8px 0" }}>
+                        No character names, wallet information, ESI
+                        tokens, operating system details or error
+                        reports are collected.
+                      </p>
+
+                      <p style={{ margin: "8px 0 0" }}>
+                        Turning this off stops future telemetry.
+                        Previously collected statistics are not
+                        automatically deleted.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="settingsMeta">
+                {telemetryLoading
+                  ? "Loading privacy preference..."
+                  : telemetrySaving
+                    ? "Saving privacy preference..."
+                    : telemetryEnabled
+                      ? "Usage statistics are enabled."
+                      : "Usage statistics are disabled."}
+              </div>
+
+              {telemetryError && (
+                <div className="settingsNotice error" role="alert">
+                  {telemetryError}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

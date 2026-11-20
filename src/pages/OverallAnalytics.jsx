@@ -8,9 +8,10 @@ import { loadEventBounties } from "../lib/eventBountiesStore";
 import { loadIncursionTicks } from "../lib/parsers/features/Incursions/incursionStore";
 import { getAllCrabRuns } from "../lib/crabStore";
 
+const FOB_HISTORY_START = "2003-01-01T00:00:00.000Z";
+
 export default function OverallAnalytics() {
   const navigate = useNavigate();
-
   const [abyssals, setAbyssals] = useState([]);
   const [glorified, setGlorified] = useState([]);
   const [dedRuns, setDedRuns] = useState([]);
@@ -18,60 +19,85 @@ export default function OverallAnalytics() {
   const [eventBounties, setEventBounties] = useState([]);
   const [incursionTicks, setIncursionTicks] = useState([]);
   const [crabRuns, setCrabRuns] = useState([]);
-
-  useEffect(() => {
-    refreshAll();
-
-    const onStorage = (e) => {
-      if (e.key === "ded:runs:v1") setDedRuns(loadDEDRuns());
-      if (e.key === "event:runs:v1") setEventRuns(loadEventRuns());
-      if (e.key === "event:bounties:v1") setEventBounties(loadEventBounties());
-      if (e.key === "incursions:ticks:v1") setIncursionTicks(loadIncursionTicks());
-    };
-
-    window.addEventListener("storage", onStorage);
-
-    const off = window.api?.on?.("entries-updated", (payload) => {
-      if (payload?.table === "abyssals") refreshAbyssals();
-    });
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      if (typeof off === "function") off();
-    };
-  }, [refreshAll, refreshAbyssals]);
+  const [officerSummary, setOfficerSummary] = useState(null);
+  const [fobSummary, setFobSummary] = useState(null);
+  const [errors, setErrors] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const refreshAbyssals = useCallback(async () => {
-    try {
-      const [a, g] = await Promise.all([
-        window.api.getEntries("abyssals"),
-        window.api.getGlorified(),
-      ]);
-      setAbyssals(Array.isArray(a) ? a : []);
-      setGlorified(Array.isArray(g) ? g : []);
-    } catch {
-      setAbyssals([]);
-      setGlorified([]);
-    }
+    const [entries, bonus] = await Promise.all([
+      window.api.getEntries("abyssals"),
+      window.api.getGlorified(),
+    ]);
+    setAbyssals(Array.isArray(entries) ? entries : []);
+    setGlorified(Array.isArray(bonus) ? bonus : []);
   }, []);
 
   const refreshCrabs = useCallback(async () => {
-    try {
-      const runs = await getAllCrabRuns();
-      setCrabRuns(Array.isArray(runs) ? runs : []);
-    } catch {
-      setCrabRuns([]);
-    }
+    const runs = await getAllCrabRuns();
+    setCrabRuns(Array.isArray(runs) ? runs : []);
   }, []);
 
-  const refreshAll = useCallback(() => {
-    refreshAbyssals();
-    refreshCrabs();
+  const refreshOfficers = useCallback(async () => {
+    if (typeof window.api?.officerGetSummary !== "function") {
+      throw new Error("Officer summary API is unavailable");
+    }
+    const summary = await window.api.officerGetSummary();
+    setOfficerSummary(summary);
+  }, []);
+
+  const refreshFobs = useCallback(async () => {
+    if (typeof window.api?.fobGetAnalyticsDashboard !== "function") {
+      throw new Error("FOB analytics API is unavailable");
+    }
+    const result = await window.api.fobGetAnalyticsDashboard({
+      startDate: FOB_HISTORY_START,
+      endDate: new Date().toISOString(),
+      historyDays: 30,
+    });
+    if (!result?.summary) throw new Error("FOB summary is missing");
+    setFobSummary(result.summary);
+  }, []);
+
+  const refreshLocal = useCallback(() => {
     setDedRuns(loadDEDRuns());
     setEventRuns(loadEventRuns());
     setEventBounties(loadEventBounties());
     setIncursionTicks(loadIncursionTicks());
-  }, [refreshAbyssals, refreshCrabs]);
+  }, []);
+
+  const refreshAll = useCallback(async () => {
+    setRefreshing(true);
+    const tasks = [
+      ["Abyssals", refreshAbyssals],
+      ["CRABs", refreshCrabs],
+      ["Officers", refreshOfficers],
+      ["FOBs", refreshFobs],
+      ["Local trackers", refreshLocal],
+    ];
+    const results = await Promise.allSettled(tasks.map(([, run]) => Promise.resolve().then(run)));
+    setErrors(results.flatMap((result, index) => result.status === "rejected"
+      ? [`${tasks[index][0]}: ${result.reason?.message || "Unable to load data"}`]
+      : []));
+    setRefreshing(false);
+  }, [refreshAbyssals, refreshCrabs, refreshOfficers, refreshFobs, refreshLocal]);
+
+  useEffect(() => {
+    refreshAll();
+    const onStorage = (event) => {
+      if (["ded:runs:v1", "event:runs:v1", "event:bounties:v1", "incursions:ticks:v1"].includes(event.key)) {
+        refreshLocal();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    const off = window.api?.on?.("entries-updated", (payload) => {
+      if (payload?.table === "abyssals") refreshAbyssals().catch(() => {});
+    });
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      if (typeof off === "function") off();
+    };
+  }, [refreshAll, refreshAbyssals, refreshLocal]);
 
   const totals = useMemo(() => {
     const abyss = computeAbyssalsTotals(abyssals, glorified);
@@ -79,25 +105,35 @@ export default function OverallAnalytics() {
     const ev = computeEventTotals(eventRuns, eventBounties);
     const inc = computeIncursionTotals(incursionTicks);
     const crab = computeCrabTotals(crabRuns);
+    const officers = {
+      runs: num(officerSummary?.totalKills),
+      totalISK: num(officerSummary?.totalLootValue),
+      totalHours: 0,
+      iskPerHour: null,
+    };
+    const fobs = {
+      runs: num(fobSummary?.completions?.total),
+      payouts: num(fobSummary?.income?.payoutCount),
+      totalISK: num(fobSummary?.income?.gross ?? fobSummary?.income?.total),
+      totalHours: 0,
+      iskPerHour: null,
+    };
+    const timedISK = abyss.totalISK + ded.totalISK + ev.totalISK + inc.totalISK + crab.totalISK;
+    const totalHours = abyss.totalHours + ded.totalHours + ev.totalHours + inc.totalHours + crab.totalHours;
+    const totalISK = timedISK + officers.totalISK + fobs.totalISK;
+    const iskPerHour = totalHours > 0 ? timedISK / totalHours : 0;
+    return { abyss, ded, ev, inc, crab, officers, fobs, totalISK, timedISK, totalHours, iskPerHour };
+  }, [abyssals, glorified, dedRuns, eventRuns, eventBounties, incursionTicks, crabRuns, officerSummary, fobSummary]);
 
-    const totalISK =
-      abyss.totalISK +
-      ded.totalISK +
-      ev.totalISK +
-      inc.totalISK +
-      crab.totalISK;
-
-    const totalHours =
-      abyss.totalHours +
-      ded.totalHours +
-      ev.totalHours +
-      inc.totalHours +
-      crab.totalHours;
-
-    const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
-
-    return { abyss, ded, ev, inc, crab, totalISK, totalHours, iskPerHour };
-  }, [abyssals, glorified, dedRuns, eventRuns, eventBounties, incursionTicks, crabRuns]);
+  const modules = [
+    { label: "Abyssals", route: "/analytics", count: totals.abyss.runs, unit: "runs", ...totals.abyss },
+    { label: "DED", route: "/ded-analytics", count: totals.ded.runs, unit: "runs", ...totals.ded },
+    { label: "Events", route: "/event-analytics", count: totals.ev.runs, unit: "runs", ...totals.ev },
+    { label: "Incursions", route: "/incursions/analytics", count: totals.inc.ticks, unit: "ticks", ...totals.inc },
+    { label: "CRABs", route: "/crabs/analytics", count: totals.crab.runs, unit: "runs", ...totals.crab },
+    { label: "Officers", route: "/officers/analytics", count: totals.officers.runs, unit: "kills", ...totals.officers },
+    { label: "FOBs", route: "/fobs", count: totals.fobs.runs, unit: "confirmed kills", ...totals.fobs },
+  ];
 
   return (
     <div className="overallPage">
@@ -105,17 +141,17 @@ export default function OverallAnalytics() {
         <div className="overallHeader">
           <h1>Overall Statistics</h1>
           <p>All income tracking combined into one unified overview.</p>
-
           <div className="overallHeaderNavRow">
-            <button
-              type="button"
-              className="overallHeaderNavBtn"
-              onClick={() => navigate("/overall-graphs")}
-            >
-              View Graphs →
-            </button>
+            <button type="button" className="overallHeaderNavBtn" onClick={() => navigate("/overall-graphs")}>View Graphs →</button>
           </div>
         </div>
+
+        {errors.length > 0 && (
+          <div role="alert" className="overallSection" style={{ border: "1px solid #ef4444", padding: 16, marginBottom: 18 }}>
+            <strong>Some tracker data could not be loaded.</strong>
+            {errors.map((message) => <div key={message}>{message}</div>)}
+          </div>
+        )}
 
         <section className="overallTopGrid">
           <div className="overallMetric">
@@ -127,118 +163,32 @@ export default function OverallAnalytics() {
             <div className="overallMetricValue">{fmtHours(totals.totalHours)}</div>
           </div>
           <div className="overallMetric">
-            <div className="overallMetricLabel">ISK / Hour</div>
+            <div className="overallMetricLabel">ISK / Hour (Timed Activities)</div>
             <div className="overallMetricValue">{fmtISK(totals.iskPerHour)}</div>
           </div>
-          <button type="button" className="overallRefreshBtn" onClick={refreshAll}>
-            Refresh
+          <button type="button" className="overallRefreshBtn" onClick={refreshAll} disabled={refreshing}>
+            {refreshing ? "Refreshing..." : "Refresh"}
           </button>
         </section>
+        <p className="overallMuted" style={{ marginBottom: 20 }}>
+          Total ISK includes Officer loot and FOB wallet rewards. ISK/hour only includes trackers with recorded time; Officer and FOB income is excluded from that calculation.
+        </p>
 
         <section className="overallSection">
           <div className="overallSectionHead">
             <h2>Modules</h2>
             <div className="overallMuted">Jump straight into detailed analytics.</div>
           </div>
-
           <div className="overallModulesGrid">
-            <button type="button" className="overallModuleCard" onClick={() => navigate("/analytics")}>
-              <div className="overallModuleTop">
-                <div className="overallModuleTitle">Abyssals</div>
-              </div>
-              <div className="overallModuleRow">
-                <span>Total ISK</span>
-                <strong>{fmtISK(totals.abyss.totalISK)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>Runs</span>
-                <strong>{fmtInt(totals.abyss.runs)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>ISK / Hour</span>
-                <strong>{fmtISK(totals.abyss.iskPerHour)}</strong>
-              </div>
-            </button>
-
-            <button type="button" className="overallModuleCard" onClick={() => navigate("/ded-analytics")}>
-              <div className="overallModuleTop">
-                <div className="overallModuleTitle">DED</div>
-              </div>
-              <div className="overallModuleRow">
-                <span>Total ISK</span>
-                <strong>{fmtISK(totals.ded.totalISK)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>Runs</span>
-                <strong>{fmtInt(totals.ded.runs)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>ISK / Hour</span>
-                <strong>{fmtISK(totals.ded.iskPerHour)}</strong>
-              </div>
-            </button>
-
-            <button type="button" className="overallModuleCard" onClick={() => navigate("/event-analytics")}>
-              <div className="overallModuleTop">
-                <div className="overallModuleTitle">Events</div>
-              </div>
-              <div className="overallModuleRow">
-                <span>Total ISK</span>
-                <strong>{fmtISK(totals.ev.totalISK)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>Runs</span>
-                <strong>{fmtInt(totals.ev.runs)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>ISK / Hour</span>
-                <strong>{fmtISK(totals.ev.iskPerHour)}</strong>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="overallModuleCard"
-              onClick={() => navigate("/incursions/analytics")}
-            >
-              <div className="overallModuleTop">
-                <div className="overallModuleTitle">Incursions</div>
-              </div>
-              <div className="overallModuleRow">
-                <span>Total ISK</span>
-                <strong>{fmtISK(totals.inc.totalISK)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>Ticks</span>
-                <strong>{fmtInt(totals.inc.ticks)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>ISK / Hour</span>
-                <strong>{fmtISK(totals.inc.iskPerHour)}</strong>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className="overallModuleCard"
-              onClick={() => navigate("/crabs/analytics")}
-            >
-              <div className="overallModuleTop">
-                <div className="overallModuleTitle">CRABs</div>
-              </div>
-              <div className="overallModuleRow">
-                <span>Total ISK</span>
-                <strong>{fmtISK(totals.crab.totalISK)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>Runs</span>
-                <strong>{fmtInt(totals.crab.runs)}</strong>
-              </div>
-              <div className="overallModuleRow">
-                <span>ISK / Hour</span>
-                <strong>{fmtISK(totals.crab.iskPerHour)}</strong>
-              </div>
-            </button>
+            {modules.map((module) => (
+              <button key={module.label} type="button" className="overallModuleCard" onClick={() => navigate(module.route)}>
+                <div className="overallModuleTop"><div className="overallModuleTitle">{module.label}</div></div>
+                <div className="overallModuleRow"><span>Total ISK</span><strong>{fmtISK(module.totalISK)}</strong></div>
+                <div className="overallModuleRow"><span>{module.label === "FOBs" ? "Confirmed FOBs" : module.label === "Officers" ? "Kills" : module.unit === "ticks" ? "Ticks" : "Runs"}</span><strong>{fmtInt(module.count)}</strong></div>
+                {module.label === "FOBs" && <div className="overallModuleRow"><span>Wallet payouts</span><strong>{fmtInt(module.payouts)}</strong></div>}
+                <div className="overallModuleRow"><span>ISK / Hour</span><strong>{module.iskPerHour == null ? "N/A" : fmtISK(module.iskPerHour)}</strong></div>
+              </button>
+            ))}
           </div>
         </section>
 
@@ -247,54 +197,19 @@ export default function OverallAnalytics() {
             <h2>Breakdown</h2>
             <div className="overallMuted">Totals by tracker.</div>
           </div>
-
           <div className="overallTableWrap">
             <table className="overallTable">
-              <thead>
-                <tr>
-                  <th>Tracker</th>
-                  <th>Count</th>
-                  <th>Total Time</th>
-                  <th>Total ISK</th>
-                  <th>ISK / Hour</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Tracker</th><th>Count</th><th>Total Time</th><th>Total ISK</th><th>ISK / Hour</th></tr></thead>
               <tbody>
-                <tr>
-                  <td>Abyssals</td>
-                  <td>{fmtInt(totals.abyss.runs)} runs</td>
-                  <td>{fmtHours(totals.abyss.totalHours)}</td>
-                  <td>{fmtISK(totals.abyss.totalISK)}</td>
-                  <td>{fmtISK(totals.abyss.iskPerHour)}</td>
-                </tr>
-                <tr>
-                  <td>DED</td>
-                  <td>{fmtInt(totals.ded.runs)} runs</td>
-                  <td>{fmtHours(totals.ded.totalHours)}</td>
-                  <td>{fmtISK(totals.ded.totalISK)}</td>
-                  <td>{fmtISK(totals.ded.iskPerHour)}</td>
-                </tr>
-                <tr>
-                  <td>Events</td>
-                  <td>{fmtInt(totals.ev.runs)} runs</td>
-                  <td>{fmtHours(totals.ev.totalHours)}</td>
-                  <td>{fmtISK(totals.ev.totalISK)}</td>
-                  <td>{fmtISK(totals.ev.iskPerHour)}</td>
-                </tr>
-                <tr>
-                  <td>Incursions</td>
-                  <td>{fmtInt(totals.inc.ticks)} ticks</td>
-                  <td>{fmtHours(totals.inc.totalHours)}</td>
-                  <td>{fmtISK(totals.inc.totalISK)}</td>
-                  <td>{fmtISK(totals.inc.iskPerHour)}</td>
-                </tr>
-                <tr>
-                  <td>CRABs</td>
-                  <td>{fmtInt(totals.crab.runs)} runs</td>
-                  <td>{fmtHours(totals.crab.totalHours)}</td>
-                  <td>{fmtISK(totals.crab.totalISK)}</td>
-                  <td>{fmtISK(totals.crab.iskPerHour)}</td>
-                </tr>
+                {modules.map((module) => (
+                  <tr key={module.label}>
+                    <td>{module.label}</td>
+                    <td>{fmtInt(module.count)} {module.unit}</td>
+                    <td>{module.iskPerHour == null ? "N/A" : fmtHours(module.totalHours)}</td>
+                    <td>{fmtISK(module.totalISK)}</td>
+                    <td>{module.iskPerHour == null ? "N/A" : fmtISK(module.iskPerHour)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -306,77 +221,45 @@ export default function OverallAnalytics() {
 
 function computeAbyssalsTotals(entries, glorified) {
   const runs = Array.isArray(entries) ? entries.length : 0;
-
-  const baseISK = (entries || []).reduce((s, e) => {
-    return (
-      s +
-      num(e.room1_isk) +
-      num(e.room2_isk) +
-      num(e.room3_isk) -
-      num(e.fillament_cost)
-    );
-  }, 0);
-
-  const glorifiedISK = (glorified || []).reduce(
-    (s, g) => s + num(g.value_isk || g.value || g.isk || 0),
-    0
-  );
-
-  const totalMinutes = (entries || []).reduce((s, e) => s + num(e.time_taken), 0);
+  const baseISK = (entries || []).reduce((sum, entry) => sum + num(entry.room1_isk) + num(entry.room2_isk) + num(entry.room3_isk) - num(entry.fillament_cost), 0);
+  const glorifiedISK = (glorified || []).reduce((sum, entry) => sum + num(entry.value_isk || entry.value || entry.isk || 0), 0);
+  const totalMinutes = (entries || []).reduce((sum, entry) => sum + num(entry.time_taken), 0);
   const totalHours = totalMinutes / 60;
   const totalISK = baseISK + glorifiedISK;
-  const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
-
-  return { runs, totalISK, totalHours, iskPerHour };
+  return { runs, totalISK, totalHours, iskPerHour: totalHours > 0 ? totalISK / totalHours : 0 };
 }
 
 function computeDEDTotals(runs) {
   const count = Array.isArray(runs) ? runs.length : 0;
-  const totalISK = (runs || []).reduce((s, r) => s + num(r.iskTotal), 0);
-  const totalMinutes = (runs || []).reduce((s, r) => s + num(r.clearTimeMinutes), 0);
-  const totalHours = totalMinutes / 60;
-  const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
-  return { runs: count, totalISK, totalHours, iskPerHour };
+  const totalISK = (runs || []).reduce((sum, run) => sum + num(run.iskTotal), 0);
+  const totalHours = (runs || []).reduce((sum, run) => sum + num(run.clearTimeMinutes), 0) / 60;
+  return { runs: count, totalISK, totalHours, iskPerHour: totalHours > 0 ? totalISK / totalHours : 0 };
 }
 
 function computeEventTotals(runs, bounties) {
   const count = Array.isArray(runs) ? runs.length : 0;
-  const lootISK = (runs || []).reduce((s, r) => s + num(r.lootISK), 0);
-  const bountyISKFromRuns = (runs || []).reduce((s, r) => s + num(r.bountyISK), 0);
-  const bountyISKFromTicks = (bounties || []).reduce((s, t) => s + num(t.tickISK), 0);
-
+  const lootISK = (runs || []).reduce((sum, run) => sum + num(run.lootISK), 0);
+  const bountyISKFromRuns = (runs || []).reduce((sum, run) => sum + num(run.bountyISK), 0);
+  const bountyISKFromTicks = (bounties || []).reduce((sum, tick) => sum + num(tick.tickISK), 0);
   const totalISK = lootISK + bountyISKFromRuns + bountyISKFromTicks;
-
-  const totalMinutes = (runs || []).reduce((s, r) => s + num(r.clearTimeMinutes), 0);
-  const totalHours = totalMinutes / 60;
-  const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
-
-  return { runs: count, totalISK, totalHours, iskPerHour };
+  const totalHours = (runs || []).reduce((sum, run) => sum + num(run.clearTimeMinutes), 0) / 60;
+  return { runs: count, totalISK, totalHours, iskPerHour: totalHours > 0 ? totalISK / totalHours : 0 };
 }
 
 function computeIncursionTotals(ticks) {
   const count = Array.isArray(ticks) ? ticks.length : 0;
-  const totalISK = (ticks || []).reduce((s, t) => s + num(t.amountISK), 0);
-
-  const timestamps = (ticks || [])
-    .map((t) => parseWalletTs(t.timestamp))
-    .filter((n) => Number.isFinite(n))
-    .sort((a, b) => a - b);
-
+  const totalISK = (ticks || []).reduce((sum, tick) => sum + num(tick.amountISK), 0);
+  const timestamps = (ticks || []).map((tick) => parseWalletTs(tick.timestamp)).filter(Number.isFinite).sort((a, b) => a - b);
   const spanMs = timestamps.length >= 2 ? timestamps[timestamps.length - 1] - timestamps[0] : 0;
-  const totalHours = spanMs > 0 ? spanMs / (1000 * 60 * 60) : 0;
-  const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
-
-  return { ticks: count, totalISK, totalHours, iskPerHour };
+  const totalHours = spanMs > 0 ? spanMs / 3600000 : 0;
+  return { ticks: count, totalISK, totalHours, iskPerHour: totalHours > 0 ? totalISK / totalHours : 0 };
 }
 
 function computeCrabTotals(runs) {
   const count = Array.isArray(runs) ? runs.length : 0;
-  const totalISK = (runs || []).reduce((s, r) => s + num(r.net_profit), 0);
-  const totalMinutes = (runs || []).reduce((s, r) => s + num(r.duration_minutes), 0);
-  const totalHours = totalMinutes / 60;
-  const iskPerHour = totalHours > 0 ? totalISK / totalHours : 0;
-  return { runs: count, totalISK, totalHours, iskPerHour };
+  const totalISK = (runs || []).reduce((sum, run) => sum + num(run.net_profit), 0);
+  const totalHours = (runs || []).reduce((sum, run) => sum + num(run.duration_minutes), 0) / 60;
+  return { runs: count, totalISK, totalHours, iskPerHour: totalHours > 0 ? totalISK / totalHours : 0 };
 }
 
 function parseWalletTs(ts) {
@@ -387,32 +270,23 @@ function parseWalletTs(ts) {
   return Number.isFinite(ms) ? ms : NaN;
 }
 
-function num(v) {
-  const n = Number(v);
+function num(value) {
+  const n = Number(value);
   return Number.isFinite(n) ? n : 0;
 }
 
-function fmtISK(v) {
-  try {
-    return `${new Intl.NumberFormat().format(Math.round(v))} ISK`;
-  } catch {
-    return `${Math.round(v)} ISK`;
-  }
+function fmtISK(value) {
+  return `${new Intl.NumberFormat("en-GB").format(Math.round(num(value)))} ISK`;
 }
 
-function fmtInt(v) {
-  try {
-    return new Intl.NumberFormat().format(Math.round(v));
-  } catch {
-    return String(Math.round(v));
-  }
+function fmtInt(value) {
+  return new Intl.NumberFormat("en-GB").format(Math.round(num(value)));
 }
 
-function fmtHours(h) {
-  const n = Number(h) || 0;
-  if (n <= 0) return "0h";
-  if (n < 1) return `${Math.round(n * 60)}m`;
-  const whole = Math.floor(n);
-  const mins = Math.round((n - whole) * 60);
-  return mins > 0 ? `${whole}h ${mins}m` : `${whole}h`;
+function fmtHours(value) {
+  const minutes = Math.round(num(value) * 60);
+  if (minutes <= 0) return "0h";
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return hours ? `${hours}h${remainder ? ` ${remainder}m` : ""}` : `${remainder}m`;
 }
