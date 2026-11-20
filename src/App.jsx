@@ -152,7 +152,10 @@ function AppRoutes() {
   );
 }
 
-function TelemetryDisclosure({ onContinue, saving, error }) {
+function TelemetryDisclosure({ onChoose, saving, error }) {
+  const privacyUrl =
+    "https://github.com/EggyBoffer/Eve-Isk-Management/blob/development/PRIVACY.md";
+
   return (
     <div
       role="presentation"
@@ -216,21 +219,45 @@ function TelemetryDisclosure({ onContinue, saving, error }) {
           }}
         >
           <p>
-            ISKONOMY collects basic usage statistics to help
-            us understand how many installations are active
-            and how often the application is launched.
+            Help us understand how many installations are active
+            and how often ISKONOMY is launched.
+          </p>
+
+          <p>
+            Usage analytics use a randomly generated installation
+            identifier to associate launch events with an installation.
           </p>
 
           <p>
             No EVE character information, ESI data, financial
             information, operating system details or error
-            reports are collected.
+            reports are included in usage telemetry.
           </p>
 
           <p>
-            You can disable usage statistics at any time in
+            Usage analytics are optional. You can change your
+            choice at any time in
             <strong> Settings → Privacy &amp; Usage Analytics</strong>.
           </p>
+
+          <button
+            type="button"
+            onClick={() => window.api.openExternal(privacyUrl)}
+            style={{
+              display: "inline-block",
+              padding: 0,
+              marginTop: 8,
+              background: "transparent",
+              border: "none",
+              color: "#7dd3fc",
+              fontSize: 14,
+              fontWeight: 600,
+              textDecoration: "underline",
+              cursor: "pointer",
+            }}
+          >
+            Learn more about our Privacy Notice ↗
+          </button>
         </div>
 
         {error && (
@@ -246,25 +273,52 @@ function TelemetryDisclosure({ onContinue, saving, error }) {
           </p>
         )}
 
-        <button
-          type="button"
-          disabled={saving}
-          onClick={onContinue}
+        <div
           style={{
-            width: "100%",
-            marginTop: 22,
-            padding: "12px 16px",
-            borderRadius: 9,
-            border: "1px solid #38bdf8",
-            background: "#0369a1",
-            color: "#ffffff",
-            fontWeight: 700,
-            cursor: saving ? "wait" : "pointer",
-            opacity: saving ? 0.65 : 1,
+            display: "flex",
+            gap: 12,
+            marginTop: 24,
+            flexWrap: "wrap",
           }}
         >
-          {saving ? "Saving preference..." : "OK, Continue"}
-        </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => onChoose(false)}
+            style={{
+              flex: "1 1 190px",
+              padding: "12px 14px",
+              borderRadius: 9,
+              border: "1px solid #52647a",
+              background: "#263447",
+              color: "#f1f5f9",
+              fontWeight: 700,
+              cursor: saving ? "wait" : "pointer",
+              opacity: saving ? 0.65 : 1,
+            }}
+          >
+            Continue Without Analytics
+          </button>
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => onChoose(true)}
+            style={{
+              flex: "1 1 160px",
+              padding: "12px 14px",
+              borderRadius: 9,
+              border: "1px solid #38bdf8",
+              background: "#0369a1",
+              color: "#ffffff",
+              fontWeight: 700,
+              cursor: saving ? "wait" : "pointer",
+              opacity: saving ? 0.65 : 1,
+            }}
+          >
+            {saving ? "Saving preference..." : "Allow Analytics"}
+          </button>
+        </div>
       </section>
     </div>
   );
@@ -467,14 +521,15 @@ function MainAppContent() {
     };
   }, []);
 
-  async function acknowledgeTelemetryDisclosure() {
+
+  async function acknowledgeTelemetryDisclosure(enabled) {
     if (telemetrySaving) return;
 
     setTelemetrySaving(true);
     setTelemetryError("");
 
     try {
-      await window.api.telemetrySetEnabled(true);
+      await window.api.telemetrySetEnabled(enabled);
       setTelemetryDisclosureOpen(false);
     } catch {
       setTelemetryError(
@@ -731,7 +786,7 @@ function MainAppContent() {
 
       {telemetryDisclosureOpen && (
         <TelemetryDisclosure
-          onContinue={acknowledgeTelemetryDisclosure}
+          onChoose={acknowledgeTelemetryDisclosure}
           saving={telemetrySaving}
           error={telemetryError}
         />

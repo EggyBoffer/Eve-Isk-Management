@@ -600,6 +600,28 @@ export default function Settings() {
                   {telemetryError}
                 </div>
               )}
+                            <button
+                type="button"
+                onClick={() =>
+                  window.api.openExternal(
+                    "https://github.com/EggyBoffer/Eve-Isk-Management/blob/main/PRIVACY.md"
+                  )
+                }
+                style={{
+                  alignSelf: "flex-start",
+                  padding: 0,
+                  marginTop: 12,
+                  background: "transparent",
+                  border: "none",
+                  color: "#7dd3fc",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                }}
+              >
+                Learn more about our Privacy Notice ↗
+              </button>
             </div>
           </div>
         </div>

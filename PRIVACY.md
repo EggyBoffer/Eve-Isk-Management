@@ -36,7 +36,7 @@ Telemetry records are stored in a database controlled by the ISKONOMY project.
 
 Network infrastructure used to deliver requests may process technical connection information, including IP addresses, independently of the telemetry database.
 
-Data is only used to monitor usage and can be used to apply for Eve online Partnership programme. (https://www.eveonline.com/partners)
+Usage statistics are collected to measure ISKONOMY's adoption and activity. Aggregated statistics, such as installation counts and application launches, may also be used to support an application to the EVE Online Partnership Programme. Individual installation identifiers will not be shared as part of that application. (https://www.eveonline.com/partners)
 
 ## Data Retention
 
