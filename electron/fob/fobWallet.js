@@ -163,6 +163,10 @@ function normaliseEntry(entry, characterId) {
       Number.isSafeInteger(entry.second_party_id)
         ? entry.second_party_id
         : null,
+    reason:
+      typeof entry.reason === "string"
+        ? entry.reason.slice(0, 2000)
+        : "",
     candidateFob: isFobCandidate(entry),
   };
 }

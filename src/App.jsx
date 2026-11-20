@@ -28,6 +28,7 @@ import CrabGraphs from "./pages/crab-graphs";
 import ESIConnections from "./pages/esi/ESIConnections";
 import FobTracker from "./pages/fob/FobTracker";
 import Killmails from "./pages/killmails/Killmails";
+import OfficerTracker from "./pages/officers/OfficerTracker";
 import pkg from "../package.json";
 import "./styles/global.css";
 
@@ -144,6 +145,7 @@ function AppRoutes() {
       <Route path="/esi-connections" element={<ESIConnections />} />
       <Route path="/fobs" element={<FobTracker />} />
       <Route path="/killmails" element={<Killmails />} />
+      <Route path="/officers" element={<OfficerTracker />} />
     </Routes>
   );
 }

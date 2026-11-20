@@ -91,6 +91,15 @@ export default function Navbar() {
             FOBs
           </NavLink>
 
+          <NavLink
+            to="/officers"
+            className={({ isActive }) =>
+              "navbar__link" + (isActive ? " navbar__link--active" : "")
+            }
+          >
+            Officers
+          </NavLink>
+
           <div ref={moreRef} className="navbar__more">
             <button
               type="button"

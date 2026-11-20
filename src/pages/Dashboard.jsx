@@ -40,6 +40,12 @@ export default function Dashboard() {
       pill: "Active",
     },
     {
+      title: "Officer Tracking",
+      desc: "Automatically detect officer kills and track loot income.",
+      to: "/officers",
+      pill: "Active",
+    },
+    {
       title: "Overall Stats",
       desc: "All analytics combined into one big overview page.",
       to: "/overall-analytics",

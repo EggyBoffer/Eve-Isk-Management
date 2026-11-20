@@ -17,6 +17,7 @@ export function registerEsiIpc({
   db,
   shell,
   assertMainSender,
+  onCharacterLinked,
 }) {
   const esi = createEsiAuthService({ db, shell });
 
@@ -62,8 +63,27 @@ export function registerEsiIpc({
   });
 
   ipcMain.handle("esi:linkCharacter", async (event) => {
-    assertMainSender(event);
-    return esi.linkCharacter();
+  assertMainSender(event);
+
+  const character = await esi.linkCharacter();
+
+  void (async () => {
+    try {
+      await walletSync.syncCharacter(character.characterId);
+
+      if (typeof onCharacterLinked === "function") {
+        const result = await onCharacterLinked(character.characterId);
+
+        if (result && !result.success && !result.skipped) {
+          console.error("[OFFICER SYNC] Post-link scan reported errors:", result.errors);
+        }
+      }
+    } catch (error) {
+      console.error("[ESI] Initial character wallet sync failed:", error);
+    }
+  })();
+
+  return character;
   });
 
   ipcMain.handle("esi:cancelLinking", (event) => {

@@ -4,13 +4,15 @@ import fs from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import os from "os";
 import db from "./database.js";
+import { registerEsiIpc } from "./esi/esiIpc.js";
+import { initialiseOfficerDatabase } from "./officers/officerDatabase.js";
+import { registerOfficerIpc } from "./officers/officerIpc.js";
 import {
   saveCrabRun,
   getRecentCrabRuns,
   getCrabRunById,
   getAllCrabRuns,
 } from "./crabDatabase.js";
-import { registerEsiIpc } from "./esi/esiIpc.js";
 
 console.log("DB path being used:", db.name);
 
@@ -533,6 +535,17 @@ const { autoSync } = registerEsiIpc({
   ipcMain,
   db,
   shell,
+  assertMainSender,
+  onCharacterLinked: (characterId) =>
+    officerSync.runOnce({ characterId }),
+});
+
+initialiseOfficerDatabase(db);
+
+
+const { officerSync } = registerOfficerIpc({
+  ipcMain,
+  db,
   assertMainSender,
 });
 
@@ -1247,12 +1260,48 @@ function _getLocalIp() {
   return "127.0.0.1";
 }
 
+const OFFICER_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+let officerSyncTimer = null;
+
+async function runStartupSync() {
+  try {
+    await autoSync.runOnce();
+  } catch (error) {
+    console.error("[ESI AUTO SYNC] Startup failed:", error);
+  }
+
+  try {
+    const result = await officerSync.runOnce();
+
+    console.log("[OFFICER AUTO SYNC] Startup scan:", {
+      scanned: result.scanned,
+      detected: result.detected,
+      errors: result.errors.length,
+    });
+  } catch (error) {
+    console.error("[OFFICER AUTO SYNC] Startup failed:", error);
+  }
+}
+
 app.whenReady().then(() => {
   createSplash();
   createMainWindow();
 
-  autoSync.start({ runImmediately: true });
+  autoSync.start({ runImmediately: false });
   console.log("[ESI AUTO SYNC] Automatic synchronisation enabled");
+
+  void runStartupSync();
+
+  officerSyncTimer = setInterval(() => {
+    officerSync.runOnce().catch((error) => {
+      console.error("[OFFICER AUTO SYNC] Scheduled scan failed:", error);
+    });
+  }, OFFICER_SYNC_INTERVAL_MS);
+
+  officerSyncTimer.unref?.();
+
+  console.log("[OFFICER AUTO SYNC] Six-hour schedule enabled");
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -1269,5 +1318,11 @@ app.on("window-all-closed", () => {
 
 app.on("will-quit", () => {
   autoSync.stop();
+
+  if (officerSyncTimer !== null) {
+    clearInterval(officerSyncTimer);
+    officerSyncTimer = null;
+  }
+
   unregisterOverlayHotkey();
 });

@@ -161,6 +161,9 @@ contextBridge.exposeInMainWorld("api", {
       stormType
     ),
 
+  officerUpdateLoot: (id, payload) =>
+    ipcRenderer.invoke("officer:updateLoot", id, payload),
+
   openExternal: (url) =>
     ipcRenderer.invoke("openExternal", url),
 
@@ -329,10 +332,22 @@ contextBridge.exposeInMainWorld("api", {
   fobGetAnalyticsDashboard: (options = {}) =>
     ipcRenderer.invoke("fob:getAnalyticsDashboard", options),
 
-  on,
-  once,
-  off,
-  send,
+  officerSync: (options = {}) =>
+    ipcRenderer.invoke("officer:sync", options),
+
+  officerGetSyncStatus: () =>
+    ipcRenderer.invoke("officer:getSyncStatus"),
+
+  officerListKills: (options = {}) =>
+    ipcRenderer.invoke("officer:listKills", options),
+
+  officerGetSummary: () =>
+    ipcRenderer.invoke("officer:getSummary"),
+
+    on,
+    once,
+    off,
+    send,
 });
 
 contextBridge.exposeInMainWorld("electron", {
