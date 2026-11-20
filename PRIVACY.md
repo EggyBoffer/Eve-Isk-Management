@@ -36,13 +36,19 @@ Telemetry records are stored in a database controlled by the ISKONOMY project.
 
 Network infrastructure used to deliver requests may process technical connection information, including IP addresses, independently of the telemetry database.
 
+Data is only used to monitor usage and can be used to apply for Eve online Partnership programme. (https://www.eveonline.com/partners)
+
 ## Data Retention
 
-Telemetry records are retained for a maximum of one year from their individual storage dates.
+Individual application launch records are retained for a maximum of 12 calendar months from the date they are recorded.
 
-Records reaching the end of their retention period are automatically deleted.
+Installation identifiers are retained while installations remain active. An installation identifier is automatically deleted after 12 months without recorded activity, provided no associated launch records remain within their retention period.
 
-This retention policy applies to the telemetry database. Any independent infrastructure logs or backups must be managed under their own appropriate retention arrangements.
+An automated cleanup process runs at least once every 24 hours to remove expired records.
+
+Disabling telemetry stops future collection but does not automatically delete previously collected records.
+
+For privacy enquiries or deletion requests, contact **dk21eve@gmail.com**.
 
 ## Your Choices
 
