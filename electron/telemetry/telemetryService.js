@@ -1,4 +1,3 @@
-
 import fs from "node:fs";
 import path from "node:path";
 
@@ -67,7 +66,9 @@ export function createTelemetryService(userDataPath) {
     } finally {
       try {
         fs.unlinkSync(temporaryPath);
-      } catch {}
+      } catch {
+        // The temporary file is usually gone after the rename.
+      }
     }
   }
 

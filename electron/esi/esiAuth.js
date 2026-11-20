@@ -1,6 +1,7 @@
 import http from "node:http";
 import crypto from "node:crypto";
 import { safeStorage } from "electron";
+import { createEsiMarketCorporationLink } from "./esiMarketCorporationLink.js";
 import {
   initialiseEsiDatabase,
   listEsiCharacters,
@@ -28,6 +29,7 @@ const CLIENT_ID = "0be85dc3df334b098d1b123d73936275";
 const REDIRECT_URI = "http://localhost:41721/callback";
 const CALLBACK_PORT = 41721;
 
+const MARKET_SCOPE = "esi-markets.read_character_orders.v1";
 const CHARACTER_SCOPE = "esi-wallet.read_character_wallet.v1";
 const CORPORATION_SCOPE = "esi-wallet.read_corporation_wallets.v1";
 const CHARACTER_KILLMAIL_SCOPE = "esi-killmails.read_killmails.v1";
@@ -146,7 +148,7 @@ async function exchangeToken(parameters) {
   });
 }
 
-async function verifyCharacter(accessToken) {
+async function verifyCharacter(accessToken, requiredScope) {
   if (typeof accessToken !== "string" || !accessToken) {
     throw new Error("EVE did not return an access token");
   }
@@ -157,6 +159,10 @@ async function verifyCharacter(accessToken) {
       Accept: "application/json",
     },
   });
+
+  if (requiredScope && !String(identity.Scopes ?? "").split(/\s+/).includes(requiredScope)) {
+    throw new Error("EVE did not grant the requested Market access");
+  }
 
   const characterId = validateCharacterId(identity.CharacterID);
 
@@ -427,9 +433,17 @@ async function createCallbackListener(expectedState) {
   };
 }
 
-export function createEsiAuthService({ db, shell }) {
+export function createEsiAuthService({ db, shell, corporationMarketDatabase }) {
   initialiseEsiDatabase(db);
   initialiseEsiKillmailDatabase(db);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS esi_market_authorisations (
+      character_id INTEGER PRIMARY KEY,
+      character_name TEXT NOT NULL,
+      encrypted_refresh_token TEXT NOT NULL,
+      linked_at TEXT NOT NULL
+    )
+  `);
 
   let activeLogin = null;
 
@@ -481,7 +495,7 @@ export function createEsiAuthService({ db, shell }) {
     return true;
   }
 
-  async function performLogin(scope) {
+  async function performLogin(scope, requiredScope) {
     if (activeLogin) {
       throw new Error("EVE linking is already in progress");
     }
@@ -534,7 +548,7 @@ export function createEsiAuthService({ db, shell }) {
       );
       ensureNotCancelled();
 
-      const identity = await verifyCharacter(tokens.access_token);
+      const identity = await verifyCharacter(tokens.access_token, requiredScope);
       ensureNotCancelled();
 
       return { tokens, identity };
@@ -599,6 +613,27 @@ export function createEsiAuthService({ db, shell }) {
       characterName: identity.name,
       ...corporation,
     };
+  }
+
+  async function linkMarket() {
+    const { tokens, identity } = await performLogin(MARKET_SCOPE, MARKET_SCOPE);
+
+    db.prepare(`
+      INSERT INTO esi_market_authorisations (
+        character_id, character_name, encrypted_refresh_token, linked_at
+      ) VALUES (?, ?, ?, ?)
+      ON CONFLICT (character_id) DO UPDATE SET
+        character_name = excluded.character_name,
+        encrypted_refresh_token = excluded.encrypted_refresh_token,
+        linked_at = excluded.linked_at
+    `).run(
+      identity.characterId,
+      identity.name,
+      encryptRefreshToken(tokens.refresh_token),
+      new Date().toISOString()
+    );
+
+    return { characterId: identity.characterId, characterName: identity.name };
   }
 
   async function linkKillmail(sourceType) {
@@ -1085,7 +1120,23 @@ export function createEsiAuthService({ db, shell }) {
     return deleted;
   }
 
+  const corporationMarketLink = corporationMarketDatabase
+    ? createEsiMarketCorporationLink({
+        corporationDatabase: corporationMarketDatabase,
+        performLogin,
+        getCharacterCorporation,
+        encryptRefreshToken,
+      })
+    : null;
+
   return {
+    linkCorporationMarket() {
+      if (!corporationMarketLink) {
+        throw new Error("Corporation Market linking is unavailable.");
+      }
+
+      return corporationMarketLink.linkCorporationMarket();
+    },
     cancelLinking,
     linkCharacter,
     refreshCharacter,
@@ -1097,6 +1148,19 @@ export function createEsiAuthService({ db, shell }) {
     getCorporationAccessToken,
     listCorporations,
     unlinkCorporation,
+    linkMarket,
+    listMarketAuthorisations() {
+      return db.prepare(`
+        SELECT character_id AS characterId, character_name AS characterName
+        FROM esi_market_authorisations
+        ORDER BY character_name COLLATE NOCASE
+      `).all();
+    },
+    unlinkMarket(characterId) {
+      return db.prepare(`
+        DELETE FROM esi_market_authorisations WHERE character_id = ?
+      `).run(validateCharacterId(characterId)).changes > 0;
+    },
     linkKillmail,
     refreshKillmail,
     getKillmailAccessToken,

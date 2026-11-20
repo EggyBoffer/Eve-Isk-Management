@@ -1,3 +1,9 @@
+import { createEsiMarketAccessService } from "./esiMarketAccess.js";
+import { createEsiMarketCorporationDatabase } from "./esiMarketCorporationDatabase.js";
+import { createEsiMarketOrdersService } from "./esiMarketOrders.js";
+import { createEsiMarketSalesService } from "./esiMarketSales.js";
+import { createEsiMarketItemNamesService } from "./esiMarketItemNames.js";
+import { createEsiJitaPriceCheckService } from "./esiJitaPriceCheck.js";
 import { getCharacterCorporation } from "./esiCorporations.js";
 import { createEsiAuthService } from "./esiAuth.js";
 import { createFobWalletService } from "../fob/fobWallet.js";
@@ -19,7 +25,28 @@ export function registerEsiIpc({
   assertMainSender,
   onCharacterLinked,
 }) {
-  const esi = createEsiAuthService({ db, shell });
+  const corporationMarketDatabase = createEsiMarketCorporationDatabase(db);
+  const esi = createEsiAuthService({ db, shell, corporationMarketDatabase });
+
+  const marketAccess = createEsiMarketAccessService({
+    db,
+    corporationDatabase: corporationMarketDatabase,
+  });
+  const marketOrders = createEsiMarketOrdersService({
+    listMarketAuthorisations: esi.listMarketAuthorisations,
+    listCorporationMarketAuthorisations: corporationMarketDatabase.listAuthorisations,
+    getMarketAccessToken: marketAccess.getMarketAccessToken,
+  });
+
+  const marketSales = createEsiMarketSalesService({
+    listCharacters: esi.listCharacters,
+    getAccessToken: esi.getAccessToken,
+    listCorporations: esi.listCorporations,
+    getCorporationAccessToken: esi.getCorporationAccessToken,
+  });
+
+  const marketItemNames = createEsiMarketItemNamesService();
+  const jitaPriceCheck = createEsiJitaPriceCheckService();
 
   const fobWallet = createFobWalletService({
     getAccessToken: esi.getAccessToken,
@@ -63,27 +90,27 @@ export function registerEsiIpc({
   });
 
   ipcMain.handle("esi:linkCharacter", async (event) => {
-  assertMainSender(event);
+    assertMainSender(event);
 
-  const character = await esi.linkCharacter();
+    const character = await esi.linkCharacter();
 
-  void (async () => {
-    try {
-      await walletSync.syncCharacter(character.characterId);
+    void (async () => {
+      try {
+        await walletSync.syncCharacter(character.characterId);
 
-      if (typeof onCharacterLinked === "function") {
-        const result = await onCharacterLinked(character.characterId);
+        if (typeof onCharacterLinked === "function") {
+          const result = await onCharacterLinked(character.characterId);
 
-        if (result && !result.success && !result.skipped) {
-          console.error("[OFFICER SYNC] Post-link scan reported errors:", result.errors);
+          if (result && !result.success && !result.skipped) {
+            console.error("[OFFICER SYNC] Post-link scan reported errors:", result.errors);
+          }
         }
+      } catch (error) {
+        console.error("[ESI] Initial character wallet sync failed:", error);
       }
-    } catch (error) {
-      console.error("[ESI] Initial character wallet sync failed:", error);
-    }
-  })();
+    })();
 
-  return character;
+    return character;
   });
 
   ipcMain.handle("esi:cancelLinking", (event) => {
@@ -132,6 +159,70 @@ export function registerEsiIpc({
       return esi.unlinkCorporation(characterId);
     }
   );
+
+  ipcMain.handle("esi:listMarketAuthorisations", (event) => {
+    assertMainSender(event);
+    return esi.listMarketAuthorisations();
+  });
+
+  ipcMain.handle("esi:listCorporationMarketAuthorisations", (event) => {
+    assertMainSender(event);
+    return corporationMarketDatabase.listAuthorisations();
+  });
+
+  ipcMain.handle("esi:linkMarket", (event) => {
+    assertMainSender(event);
+    return esi.linkMarket();
+  });
+
+  ipcMain.handle("esi:linkCorporationMarket", (event) => {
+    assertMainSender(event);
+    return esi.linkCorporationMarket();
+  });
+
+  ipcMain.handle("esi:unlinkMarket", (event, characterId) => {
+    assertMainSender(event);
+    const unlinked = esi.unlinkMarket(characterId);
+    marketAccess.clearMarketAccessToken(Number(characterId));
+    return unlinked;
+  });
+
+  ipcMain.handle("esi:unlinkCorporationMarket", (event, characterId) => {
+    assertMainSender(event);
+
+    if (!Number.isSafeInteger(characterId) || characterId <= 0) {
+      throw new Error("Invalid EVE character ID");
+    }
+
+    const unlinked = corporationMarketDatabase.unlinkAuthorisation(characterId);
+    marketAccess.clearMarketAccessToken(characterId, true);
+    return unlinked;
+  });
+
+  ipcMain.handle("esi:listMarketOrders", async (event) => {
+    assertMainSender(event);
+
+    const result = await marketOrders.listOpenOrders();
+    return {
+      ...result,
+      orders: await marketItemNames.addItemNames(result.orders),
+    };
+  });
+
+  ipcMain.handle("esi:listMarketSales", async (event) => {
+    assertMainSender(event);
+
+    const result = await marketSales.listRecentSales();
+    return {
+      ...result,
+      sales: await marketItemNames.addItemNames(result.sales),
+    };
+  });
+
+  ipcMain.handle("esi:quoteJitaItems", (event, typeIds) => {
+    assertMainSender(event);
+    return jitaPriceCheck.quoteTypes(typeIds);
+  });
 
   ipcMain.handle(
     "esi:listKillmailAuthorisations",

@@ -44,6 +44,10 @@ const ESI_LINK_ACTIONS = {
     title: "Linking EVE Corporation",
     method: "esiLinkCorporation",
   },
+  market: {
+    title: "Linking Character Market Access",
+    method: "esiLinkMarket",
+  },
   "killmail-character": {
     title: "Linking Personal Killmails",
     method: "esiLinkKillmail",

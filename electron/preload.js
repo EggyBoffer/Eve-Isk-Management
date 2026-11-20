@@ -1,4 +1,3 @@
-
 const { contextBridge, ipcRenderer } = require("electron");
 
 const allowedReceiveChannels = new Set([
@@ -223,6 +222,33 @@ contextBridge.exposeInMainWorld("api", {
 
   esiUnlinkCorporation: (characterId) =>
     ipcRenderer.invoke("esi:unlinkCorporation", characterId),
+
+  esiListMarketOrders: () =>
+    ipcRenderer.invoke("esi:listMarketOrders"),
+
+  esiListMarketSales: () =>
+    ipcRenderer.invoke("esi:listMarketSales"),
+
+  esiQuoteJitaItems: (typeIds) =>
+    ipcRenderer.invoke("esi:quoteJitaItems", typeIds),
+
+  esiListMarketAuthorisations: () =>
+    ipcRenderer.invoke("esi:listMarketAuthorisations"),
+
+  esiListCorporationMarketAuthorisations: () =>
+    ipcRenderer.invoke("esi:listCorporationMarketAuthorisations"),
+
+  esiLinkMarket: () =>
+    ipcRenderer.invoke("esi:linkMarket"),
+
+  esiLinkCorporationMarket: () =>
+    ipcRenderer.invoke("esi:linkCorporationMarket"),
+
+  esiUnlinkMarket: (characterId) =>
+    ipcRenderer.invoke("esi:unlinkMarket", characterId),
+
+  esiUnlinkCorporationMarket: (characterId) =>
+    ipcRenderer.invoke("esi:unlinkCorporationMarket", characterId),
 
   esiListKillmailAuthorisations: (sourceType = null) =>
     ipcRenderer.invoke("esi:listKillmailAuthorisations", sourceType),

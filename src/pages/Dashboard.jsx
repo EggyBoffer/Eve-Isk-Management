@@ -53,7 +53,7 @@ export default function Dashboard() {
     },
     {
       title: "Market",
-      desc: "Market utilities and pricing helpers.",
+      desc: "Market buy and sell orders. Also check in game market. ",
       to: "/market",
       pill: "Tools",
     },

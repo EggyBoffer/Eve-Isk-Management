@@ -8,6 +8,34 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.6.0",
+      date: "2026-11-20",
+      changes: [
+        "Security audit and rewrite done to the application in preparation for ESI.  Blocked the app from opening unauthorised pages, images and receiving data.",
+        "Added telemetry to the application to record launch statistics to help with application for Eve Partner.",
+        "Added ESI integration to pull killmails, wallet records and market orders. Further ESI integration may be implemented in further versions.",
+        "Added FOB automated tracking from ESI.  Link characters with wallet access to automatically pull income from Forward operating bases kills.",
+        "Added support for manual and automatic pulling of killmails for Forward operating bases. This will allow you to track income per fob and potentially system data later.",
+        "Added FOB analytics for income trail.",
+        "Added officer hunting page, with kills pulled from linked wallets.", 
+        "Added manual loot import from assets or cargo for Officer kills. Just add the loot to the kill once it pulls. Officer sync is every 6 hours.",
+        "Improved cargo parser to also include loot from assets window instead of just cargo.",
+        "Updated ESI to pull more accurate pricing. ",
+        "Audit done to pass lint verification, including code tidy up and removing some unused variables.",
+        "Privacy notice added to acccount for ESI integration and Anonymous Telemetry", 
+        "Finally added Market inegration to track current market orders, passed market orders and income from market sales.",
+        "Some code preparation for v0.7.0 adding Industry and mining.",
+        "Added killmails page to track all imported FOB killmails in one place. You can also enable automatic killmail pulling here.",
+        "Fixed bug with overall stats that could cause the app to become unresponsive in some situations.",
+        "Fixed a similar bug with overall stats graphs page that could cause the app to become unresponsive and refuse to load.",
+        "Fixed bug in loading which could cause the splash screen to not close correctly.",
+        "Fixed wording for donations and support popup, It incorrectly said you could support the development.",
+        "Fixed a bug in the patch notes which could cause the app to close when closing the patch note window.",
+        "Removed placeholder for Market page as it now has a working page.",
+        "Added encrypted ESI database for linked characters.",
+      ],
+    },
+    {
       version: "0.5.0",
       date: "2026-03-28",
       changes: [
