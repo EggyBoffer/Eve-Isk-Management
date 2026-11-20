@@ -224,8 +224,9 @@ function TelemetryDisclosure({ onChoose, saving, error }) {
           </p>
 
           <p>
-            Usage analytics use a randomly generated installation
-            identifier to associate launch events with an installation.
+            When enabled, ISKONOMY sends a launch event without
+            any installation or user identifier. Only daily
+            launch totals are stored.
           </p>
 
           <p>

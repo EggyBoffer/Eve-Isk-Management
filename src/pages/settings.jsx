@@ -565,8 +565,9 @@ export default function Settings() {
                       <strong>What does ISKONOMY collect?</strong>
 
                       <p style={{ margin: "8px 0" }}>
-                        A randomly generated installation ID and the
-                        time the application launches.
+                        An application launch event without any installation
+                        or user identifier. Only aggregate daily launch
+                        counts are stored.
                       </p>
 
                       <p style={{ margin: "8px 0" }}>
