@@ -55,3 +55,15 @@
 Want updates or need help?
 
 [![Discord](https://img.shields.io/discord/1392840871044583505?label=Join%20our%20Discord&logo=discord&style=for-the-badge)](https://discord.gg/M87HtnjBYg)
+
+## 🔒 Privacy & Usage Analytics
+
+ISKONOMY uses optional usage analytics to measure installations and application launches.
+
+No EVE Online character information, ESI tokens, wallet data or income records are included in usage telemetry.
+
+You can disable usage analytics at any time under **Settings → Privacy & Usage Analytics**.
+
+For details about data collection, retention and your choices, read our [Privacy Notice](PRIVACY.md).
+
+For privacy enquiries, contact **dk21eve@gmail.com**.
