@@ -919,11 +919,6 @@ ipcMain.handle("telemetry:set-enabled", (event, enabled) => {
   return telemetryService.setEnabled(enabled);
 });
 
-ipcMain.handle("telemetry:reset-installation-id", (event) => {
-  assertMainSender(event);
-
-  return telemetryService.resetInstallationId();
-});
 
 ipcMain.handle("get-app-settings", (event) => {
   assertMainSender(event);

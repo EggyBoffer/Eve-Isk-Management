@@ -158,9 +158,6 @@ contextBridge.exposeInMainWorld("api", {
   telemetrySetEnabled: (enabled) =>
     ipcRenderer.invoke("telemetry:set-enabled", enabled),
 
-  telemetryResetInstallationId: () =>
-    ipcRenderer.invoke("telemetry:reset-installation-id"),
-
   openOverlayWithCost: (cost, shipType, tier, stormType) =>
     ipcRenderer.send(
       "open-overlay-with-cost",

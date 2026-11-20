@@ -1,18 +1,11 @@
+
 import fs from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
 
 const TELEMETRY_ENDPOINT =
   "https://iskonomy.r3dit.space/api/v1/events";
 
 const REQUEST_TIMEOUT_MS = 8000;
-
-function isValidUUID(value) {
-  return (
-    typeof value === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-  );
-}
 
 export function createTelemetryService(userDataPath) {
   const settingsPath = path.join(
@@ -22,14 +15,12 @@ export function createTelemetryService(userDataPath) {
 
   let state = {
     acknowledged: false,
-    enabled: false,
-    installationId: null
+    enabled: false
   };
 
   let launchRecorded = false;
   let generation = 0;
   let activeController = null;
-  let pendingRequest = Promise.resolve();
 
   function load() {
     try {
@@ -41,16 +32,16 @@ export function createTelemetryService(userDataPath) {
         acknowledged: stored.acknowledged === true,
         enabled:
           stored.acknowledged === true &&
-          stored.enabled === true,
-        installationId: isValidUUID(stored.installationId)
-          ? stored.installationId
-          : null
+          stored.enabled === true
       };
+
+      if (Object.hasOwn(stored, "installationId")) {
+        save(state);
+      }
     } catch {
       state = {
         acknowledged: false,
-        enabled: false,
-        installationId: null
+        enabled: false
       };
     }
   }
@@ -76,9 +67,7 @@ export function createTelemetryService(userDataPath) {
     } finally {
       try {
         fs.unlinkSync(temporaryPath);
-      } catch {
-        // Temporary file was already renamed or never created.
-      }
+      } catch {}
     }
   }
 
@@ -96,15 +85,12 @@ export function createTelemetryService(userDataPath) {
       activeController.abort();
       activeController = null;
     }
-
-    pendingRequest = Promise.resolve();
   }
 
-  async function sendEvent(event, installationId, requestGeneration) {
+  async function sendLaunch(requestGeneration) {
     if (
       !state.enabled ||
-      generation !== requestGeneration ||
-      state.installationId !== installationId
+      generation !== requestGeneration
     ) {
       return false;
     }
@@ -123,8 +109,7 @@ export function createTelemetryService(userDataPath) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          event,
-          installationId
+          event: "app_launched"
         }),
         signal: controller.signal,
         redirect: "error",
@@ -156,40 +141,8 @@ export function createTelemetryService(userDataPath) {
       return;
     }
 
-    if (!state.installationId) {
-      const nextState = {
-        ...state,
-        installationId: randomUUID()
-      };
-
-      save(nextState);
-      state = nextState;
-    }
-
     launchRecorded = true;
-
-    const installationId = state.installationId;
-    const requestGeneration = generation;
-
-    pendingRequest = pendingRequest
-      .catch(() => false)
-      .then(async () => {
-        const registered = await sendEvent(
-          "installation_registered",
-          installationId,
-          requestGeneration
-        );
-
-        if (!registered) {
-          return false;
-        }
-
-        return sendEvent(
-          "app_launched",
-          installationId,
-          requestGeneration
-        );
-      });
+    void sendLaunch(generation);
   }
 
   function setEnabled(enabled) {
@@ -198,42 +151,15 @@ export function createTelemetryService(userDataPath) {
     }
 
     const nextState = {
-      ...state,
       acknowledged: true,
       enabled
     };
 
-    if (enabled && !nextState.installationId) {
-      nextState.installationId = randomUUID();
-    }
-
     save(nextState);
-
     cancelRequests();
     state = nextState;
 
     if (enabled) {
-      recordLaunch();
-    }
-
-    return getStatus();
-  }
-
-  function resetInstallationId() {
-    const nextState = {
-      ...state,
-      installationId: state.enabled
-        ? randomUUID()
-        : null
-    };
-
-    save(nextState);
-
-    cancelRequests();
-    state = nextState;
-    launchRecorded = false;
-
-    if (state.enabled) {
       recordLaunch();
     }
 
@@ -250,7 +176,6 @@ export function createTelemetryService(userDataPath) {
     getStatus,
     setEnabled,
     recordLaunch,
-    resetInstallationId,
     stop
   };
 }
