@@ -4,9 +4,23 @@
 
 ## Usage Analytics
 
-ISKONOMY collects limited usage statistics to help its developers understand how many installations are active and how frequently the application is launched.
+ISKONOMY offers optional usage analytics to help its developer understand how many installations are active and how frequently the application is launched.
 
-Usage analytics are optional and can be disabled through the application settings.
+When ISKONOMY is first launched, users can choose to allow usage analytics or continue without them. Analytics are disabled unless the user chooses to enable them.
+
+Users can change their preference at any time under Settings → Privacy & Usage Analytics.
+
+Usage analytics use a randomly generated installation identifier and application launch events. They do not include EVE Online character information, ESI credentials, wallet transactions, market orders or other financial information.
+
+## EVE Online ESI Data
+
+ISKONOMY uses EVE Online's ESI API to retrieve information authorised by the user, including character, corporation and financial information where the relevant permissions have been granted.
+
+ESI authentication credentials and retrieved data are handled separately from optional usage analytics.
+
+Authenticated ESI requests are made to CCP's services. ESI credentials and retrieved financial records are not transmitted to ISKONOMY's usage analytics service.
+
+Users can manage and revoke linked ESI authorisations through the application's ESI Connections interface.
 
 ## Information Collected
 
@@ -52,9 +66,13 @@ For privacy enquiries or deletion requests, contact **dk21eve@gmail.com**.
 
 ## Your Choices
 
-You can disable usage analytics at any time by navigating to:
+Users can accept or decline optional usage analytics during the first-launch disclosure.
 
-**Settings → Privacy & Usage Analytics**
+The preference can subsequently be changed under Settings → Privacy & Usage Analytics.
+
+Declining or disabling analytics prevents future telemetry events from being transmitted. Previously collected telemetry records remain subject to the retention policy described above.
+
+Users can contact dk21eve@gmail.com with privacy enquiries or requests concerning their information.
 
 Disabling analytics prevents future telemetry events from being sent. It does not automatically remove previously collected records.
 
