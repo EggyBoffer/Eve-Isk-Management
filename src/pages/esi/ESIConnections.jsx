@@ -87,16 +87,6 @@ export default function ESIConnections() {
     window.api?.esiUnlinkCorporation
   );
 
-  const marketAvailable = Boolean(
-    window.api?.esiListMarketAuthorisations &&
-    window.api?.esiUnlinkMarket
-  );
-
-  const corporationMarketAvailable = Boolean(
-    window.api?.esiListCorporationMarketAuthorisations &&
-    window.api?.esiUnlinkCorporationMarket
-  );
-
   const loadCorporationDetails = useCallback(async (linkedCharacters) => {
     if (!window.api?.esiGetCharacterCorporation) return;
 

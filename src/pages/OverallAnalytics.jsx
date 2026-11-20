@@ -21,6 +21,7 @@ export default function OverallAnalytics() {
   const [crabRuns, setCrabRuns] = useState([]);
   const [officerSummary, setOfficerSummary] = useState(null);
   const [fobSummary, setFobSummary] = useState(null);
+  const [marketSales, setMarketSales] = useState(null);
   const [errors, setErrors] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -59,6 +60,30 @@ export default function OverallAnalytics() {
     setFobSummary(result.summary);
   }, []);
 
+  const refreshMarketSales = useCallback(async () => {
+    try {
+      if (typeof window.api?.esiListMarketSales !== "function") {
+        throw new Error("Market sales API is unavailable");
+      }
+
+      const result = await window.api.esiListMarketSales();
+
+      if (
+        !Number.isSafeInteger(result?.linkedCharacterCount) ||
+        !Number.isFinite(result.grossSalesValue) ||
+        !Array.isArray(result.sales) ||
+        !Array.isArray(result.errors)
+      ) {
+        throw new Error("Market sales data is missing");
+      }
+
+      setMarketSales(result);
+    } catch (error) {
+      setMarketSales(null);
+      throw error;
+    }
+  }, []);
+
   const refreshLocal = useCallback(() => {
     setDedRuns(loadDEDRuns());
     setEventRuns(loadEventRuns());
@@ -73,6 +98,7 @@ export default function OverallAnalytics() {
       ["CRABs", refreshCrabs],
       ["Officers", refreshOfficers],
       ["FOBs", refreshFobs],
+      ["Market Sales", refreshMarketSales],
       ["Local trackers", refreshLocal],
     ];
     const results = await Promise.allSettled(tasks.map(([, run]) => Promise.resolve().then(run)));
@@ -80,7 +106,7 @@ export default function OverallAnalytics() {
       ? [`${tasks[index][0]}: ${result.reason?.message || "Unable to load data"}`]
       : []));
     setRefreshing(false);
-  }, [refreshAbyssals, refreshCrabs, refreshOfficers, refreshFobs, refreshLocal]);
+  }, [refreshAbyssals, refreshCrabs, refreshOfficers, refreshFobs, refreshMarketSales, refreshLocal]);
 
   useEffect(() => {
     refreshAll();
@@ -135,6 +161,11 @@ export default function OverallAnalytics() {
     { label: "FOBs", route: "/fobs", count: totals.fobs.runs, unit: "confirmed kills", ...totals.fobs },
   ];
 
+  const hasMarketResults = marketSales &&
+    marketSales.linkedCharacterCount > marketSales.errors.length;
+  const partialMarketResults = hasMarketResults &&
+    (marketSales.errors.length > 0 || (marketSales.warnings?.length ?? 0) > 0);
+
   return (
     <div className="overallPage">
       <div className="overallWrap">
@@ -169,9 +200,28 @@ export default function OverallAnalytics() {
           <button type="button" className="overallRefreshBtn" onClick={refreshAll} disabled={refreshing}>
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
+          <div className="overallMetric" style={{ gridColumn: "1 / -1" }}>
+            <div className="overallMetricLabel">Recent Market Sales</div>
+            <div className="overallMetricValue">
+              {hasMarketResults ? fmtISK(marketSales.grossSalesValue) : "—"}
+            </div>
+            <div className="overallMuted">
+              {hasMarketResults
+                ? `${fmtInt(marketSales.sales.length)} sale transactions · Gross proceeds`
+                : refreshing
+                  ? "Loading sales..."
+                  : marketSales?.linkedCharacterCount === 0
+                    ? "No personal or corporation wallets linked."
+                    : "Market sales could not be loaded."}
+            </div>
+            {partialMarketResults && (
+              <div className="overallMuted">Partial total. Some wallet data could not be loaded.</div>
+            )}
+          </div>
         </section>
         <p className="overallMuted" style={{ marginBottom: 20 }}>
-          Total ISK includes Officer loot and FOB wallet rewards. ISK/hour only includes trackers with recorded time; Officer and FOB income is excluded from that calculation.
+          Total ISK includes Officer loot and FOB wallet rewards. Recent Market Sales is shown separately
+          to avoid counting tracked loot again when it sells. ISK/hour uses activities with recorded time.
         </p>
 
         <section className="overallSection">
@@ -266,7 +316,7 @@ function parseWalletTs(ts) {
   const s = String(ts || "").trim();
   if (!s) return NaN;
   const isoLike = s.replace(/\./g, "-").replace(" ", "T") + ":00";
-  const ms = new Date(isoLike).getTime();
+  const ms = Date.parse(isoLike);
   return Number.isFinite(ms) ? ms : NaN;
 }
 
