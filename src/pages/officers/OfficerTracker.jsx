@@ -1,6 +1,7 @@
+
 import { createElement, useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, RefreshCw, Target, Coins, Users, Clock3, Package, X } from "lucide-react";
+import { AlertTriangle, RefreshCw, Target, Coins, Users, Clock3, Package, X, BarChart3 } from "lucide-react";
 import { parseCargo } from "../../lib/cargoParser";
 import { priceItemsJita } from "../../lib/marketClient";
 
@@ -219,9 +220,23 @@ export default function OfficerTracker() {
             <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: 1, color: "#38bdf8", margin: "0 0 10px" }}>Officer Tracking</h1>
             <p style={{ margin: 0, color: "#cbd5e1" }}>Keep track of Officer kills and import loot to track income.</p>
           </div>
-          <button type="button" style={{ ...button, opacity: syncing ? 0.6 : 1 }} disabled={syncing} onClick={scanOfficers}>
-            <RefreshCw size={17} /> {syncing ? "Scanning..." : "Scan Wallet Journals"}
-          </button>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              style={{ ...button, background: "#1e293b" }}
+              onClick={() => navigate("/officers/analytics")}
+            >
+              <BarChart3 size={17} /> View Analytics
+            </button>
+            <button
+              type="button"
+              style={{ ...button, opacity: syncing ? 0.6 : 1 }}
+              disabled={syncing}
+              onClick={scanOfficers}
+            >
+              <RefreshCw size={17} /> {syncing ? "Scanning..." : "Scan Wallet Journals"}
+            </button>
+          </div>
         </header>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
