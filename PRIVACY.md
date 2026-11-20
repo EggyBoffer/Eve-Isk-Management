@@ -2,83 +2,96 @@
 
 **Last updated:** 20 November 2026
 
-## Usage Analytics
+## Overview
 
-ISKONOMY offers optional usage analytics to help its developer understand how frequently the application is launched.
+ISKONOMY is a desktop application for tracking EVE Online activity and income. Most application records are stored locally on the user's computer. Optional usage analytics are separate from EVE Online ESI connections and financial records.
 
-When ISKONOMY is first launched, users can choose to allow usage analytics or continue without them. Analytics are disabled unless the user chooses to enable them.
+This notice describes what ISKONOMY stores, what it sends over the network, and how users can manage that information. It does not claim that all information handled by ISKONOMY is anonymous: EVE character information may be associated with identifiable people in some circumstances.
 
-Users can change their preference at any time under **Settings → Privacy & Usage Analytics**.
+## Optional Usage Analytics
 
-When enabled, the application sends a launch event containing only the event name `app_launched`. No installation UUID, account identifier or character identifier is included in the event payload.
+ISKONOMY offers optional usage analytics to measure how often the application is launched.
 
-## EVE Online ESI Data
+On first launch, users can choose **Allow Analytics** or **Continue Without Analytics**. Analytics are disabled until the user explicitly enables them. The preference can be changed at any time under **Settings → Privacy & Usage Analytics**.
 
-ISKONOMY uses EVE Online's ESI API to retrieve information authorised by the user, including character, corporation and financial information where the relevant permissions have been granted.
+When enabled, ISKONOMY sends an HTTPS request to `https://iskonomy.r3dit.space/api/v1/events` containing only the event name `app_launched`. The application does not include an installation identifier, UUID, EVE character or account identifier, ESI credential, financial record, device identifier, operating-system information, or error report in this telemetry payload.
 
-ESI authentication credentials and retrieved data are handled separately from optional usage analytics.
+The telemetry service aggregates accepted launch events into daily launch totals. Its application database is designed to retain aggregate daily counts rather than individual installation records or per-launch histories. It does not use a persistent identifier to recognise returning installations or users. Consequently, these figures measure launches, **not unique users or installations**.
 
-Authenticated ESI requests are made to CCP's services. ESI credentials and retrieved financial records are not transmitted to ISKONOMY's usage analytics service.
+Enabling analytics may send a launch event for the current application session. Disabling analytics stops subsequent launch-event requests and cancels any request still in progress where possible. An event already received by the server cannot be withdrawn from its aggregate count.
 
-Users can manage and revoke linked ESI authorisations through the application's ESI Connections interface.
+## EVE Online ESI Connections
 
-## Information Collected
+ISKONOMY allows users to authorise access to selected EVE Online data through CCP's EVE Online Single Sign-On (SSO) and ESI services. The application requests the permissions needed for the features the user chooses to connect, including character or corporation wallet information and, where enabled, killmail information.
 
-When usage analytics are enabled, ISKONOMY transmits a single application-launch event per application session to its telemetry service. The telemetry database stores the total number of launches for each UTC day, rather than individual launch histories.
+ESI authentication takes place through CCP's login service. ISKONOMY uses an OAuth authorisation flow with PKCE and a temporary local callback listener. ESI requests are made to CCP's services; the reviewed application implementation does not forward ESI credentials, character records, wallet entries, or killmail data to the ISKONOMY usage analytics endpoint.
 
-The application also stores the user's analytics preference locally so that the choice persists between sessions.
+### Information stored locally
 
-## Information Not Included in Usage Telemetry
+Depending on the features used, ISKONOMY may save the following on the user's computer:
 
-ISKONOMY does not include the following information in usage telemetry:
+- EVE Online character names and IDs, and associated corporation names and IDs.
+- ESI authorisation status, permission-related connection information, token expiry and synchronisation metadata.
+- ESI refresh tokens encrypted using Electron's operating-system-backed `safeStorage` facility. Short-lived access tokens are held in application memory during use.
+- Imported character and corporation wallet journal records, including transaction dates, amounts, reference types, descriptions, party IDs and related transaction details.
+- Killmail-related information and records used by relevant tracking features.
+- Locally entered income, tracking and application settings data.
 
-- Installation identifiers or UUIDs.
-- EVE Online character names or account identifiers.
-- ESI access or refresh tokens.
-- Wallet balances, transactions, market orders or income records.
-- Operating system details or hardware specifications.
-- Error reports or detailed application activity.
+These records are stored in local application files and databases. Character IDs, names and transaction information can identify or be associated with an EVE character, and may be personal data in context.
 
-## Storage and Processing
+The application does not operate a central ISKONOMY account database for these ESI records. Normal operating-system backups, synchronisation tools, security software or other software on the user's device may independently copy or process local application files.
 
-Usage events are transmitted securely to ISKONOMY's self-hosted telemetry service at `iskonomy.r3dit.space`.
+### Unlinking ESI connections
 
-The telemetry database stores aggregate daily launch counts. It does not store IP addresses or identifiers associated with individual launch events.
+Unlinking an ESI character, corporation or killmail connection removes the corresponding locally saved authorisation record and stops ISKONOMY using that connection for future authenticated synchronisation. It does **not** necessarily delete wallet journal entries, killmail records, income history or other information previously imported or generated while the connection was active.
 
-Network infrastructure used to deliver requests may process technical connection information, including IP addresses, independently of the telemetry database.
+Users may also revoke an ESI application's access through CCP's account authorisation controls. Revocation prevents future authorised access but does not itself erase data already stored locally by ISKONOMY.
 
-Aggregated launch statistics are collected to measure ISKONOMY's adoption and activity. They may also be used to support an application to the [EVE Online Partnership Programme](https://www.eveonline.com/partners).
+### Deleting locally stored information
 
-## Data Retention
+Unlinking is **not** a complete data-erasure function. ISKONOMY does not currently provide a verified, comprehensive in-app deletion function for every locally retained ESI record. Users seeking to remove all local application data can remove ISKONOMY's application-data files after closing the application, subject to any backups they maintain. This also removes local settings, tracking history and other saved data; uninstalling the application alone may not remove these files.
 
-Daily aggregate launch counts are retained for approximately 12 calendar months. An automated cleanup process runs on startup and at least once every 24 hours to remove expired daily records.
+On Windows, the application data is normally located in the user's `%APPDATA%\iskonomy` folder. Users should verify the folder before deletion and back up anything they wish to keep. For assistance identifying locally stored information or requesting guidance on deletion, contact **dk21eve@gmail.com**.
 
-Disabling telemetry stops future collection but does not remove previously recorded aggregate daily totals, which cannot be associated with a particular installation through the telemetry database.
+## Network Connections and Infrastructure
 
-## Your Choices
+ISKONOMY communicates with external services when required for features such as EVE SSO/ESI, public EVE information, pricing or updates, and, if enabled, usage analytics. Those services may process connection information under their own privacy notices.
 
-Users can accept or decline optional usage analytics during the first-launch disclosure.
+The optional telemetry endpoint is hosted through infrastructure used by the ISKONOMY project, including Cloudflare and its origin server. Although the telemetry **application payload and aggregate database** do not contain user or installation identifiers, HTTP delivery necessarily involves technical connection information such as IP addresses. Infrastructure providers, reverse proxies, security systems and server logs may process or retain such information independently of the aggregate telemetry database.
 
-The preference can subsequently be changed under **Settings → Privacy & Usage Analytics**.
+The precise retention periods for infrastructure-level connection logs have not yet been independently verified. This notice therefore does **not** claim that no IP address is ever processed or logged anywhere in the request path.
 
-Declining or disabling analytics prevents future telemetry events from being transmitted. Enabling analytics permits a launch event for the current application session.
+## Purposes of Processing
 
-## Privacy Enquiries
+- **Optional analytics:** measure daily application launch activity and understand adoption. Aggregate launch statistics may be used in support of an application to the EVE Online Partnership Programme.
+- **ESI integration:** retrieve and locally display the EVE Online information authorised by the user, and support income and activity tracking.
+- **Service delivery and security:** transmit requests, protect endpoints and diagnose service availability where necessary.
 
-For questions about usage analytics, data retention or requests relating to your information, contact:
+ISKONOMY does not use optional telemetry to build profiles of individual installations or EVE characters.
 
-**dk21eve@gmail.com**
+## Retention
+
+- **Aggregate telemetry:** daily launch totals are intended to be retained for approximately 12 months, with automated cleanup of older daily totals. These aggregates cannot be selectively deleted for a particular installation because no installation identifier is stored with them.
+- **Local ESI and tracking records:** saved on the user's device until removed by the user or a specific application feature. Unlinking authorisation does not automatically delete previously imported history.
+- **ESI authorisations:** locally stored until unlinked, replaced or otherwise removed; short-lived access tokens expire and are refreshed as required.
+- **Infrastructure logs:** retention depends on the applicable hosting, proxy and security configuration and has not been fully verified.
+
+## Your Choices and Privacy Rights
+
+Users can decline optional analytics on first launch or turn them off later under **Settings → Privacy & Usage Analytics**. Disabling analytics prevents future telemetry submissions, but previously recorded daily aggregate counts cannot be attributed to or individually removed for a particular user.
+
+Users can manage ESI authorisations through the application's **ESI Connections** interface and can revoke access through CCP's authorisation controls. Removing a connection does not erase previously imported local records.
+
+Where UK data protection law applies to identifiable information processed by the ISKONOMY project, individuals may have rights including access, rectification, erasure, restriction and objection, subject to applicable conditions and exemptions. Genuinely anonymous aggregate statistics cannot be linked back to an individual to fulfil an individual-record request.
+
+For privacy questions or requests, contact **dk21eve@gmail.com**.
 
 ## Applicable Privacy Rules
 
-The telemetry database contains daily aggregate launch counts without installation or user identifiers. Those aggregate counts are not intended to identify individual users.
+UK GDPR and the Data Protection Act 2018 may apply where information relates to an identified or identifiable individual. The Privacy and Electronic Communications Regulations (PECR) may also apply to technologies that store or access information on a user's device. ISKONOMY seeks permission before enabling optional usage analytics, separately from the permissions a user grants to CCP for ESI access.
 
-Technical information processed in delivering requests may be subject to applicable data protection rules, including UK GDPR. The use of information stored on or accessed from a user's device may also be subject to the Privacy and Electronic Communications Regulations (PECR).
-
-Optional usage analytics are enabled only following the user's affirmative choice. Where consent is required for this processing, users can withdraw it at any time through the application settings.
-
-Where personal-data rights apply, individuals may have rights relating to access, erasure, restriction and other aspects of their information. Individuals may also complain to the [Information Commissioner's Office](https://ico.org.uk/make-a-complaint/).
+This notice describes the reviewed implementation and is not a statement that every infrastructure setting or legal obligation has been independently certified.
 
 ## Changes to This Notice
 
-This notice may be updated as ISKONOMY develops. The latest version will be available in the project's GitHub repository.
+This notice may be updated as ISKONOMY develops. The current version is made available through the project's GitHub repository.
