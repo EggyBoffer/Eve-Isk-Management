@@ -533,7 +533,7 @@ function assertMainSender(event) {
   }
 }
 
-const { autoSync } = registerEsiIpc({
+const { autoSync, killmailSync } = registerEsiIpc({
   ipcMain,
   db,
   shell,
@@ -1281,7 +1281,31 @@ function _getLocalIp() {
 
 const OFFICER_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
+const KILLMAIL_SYNC_INTERVAL_MS = 15 * 60 * 1000;
+
 let officerSyncTimer = null;
+let killmailSyncTimer = null;
+let killmailSyncRunning = false;
+
+async function runAutomaticKillmailSync() {
+  if (killmailSyncRunning) return;
+
+  killmailSyncRunning = true;
+
+  try {
+    const { results } = await killmailSync.runOnce();
+
+    for (const result of results) {
+      if (!result.success) {
+        console.warn("[KILLMAIL AUTO SYNC] Source failed:", result);
+      }
+    }
+  } catch (error) {
+    console.error("[KILLMAIL AUTO SYNC] Run failed:", error);
+  } finally {
+    killmailSyncRunning = false;
+  }
+}
 
 async function runStartupSync() {
   try {
@@ -1312,6 +1336,12 @@ app.whenReady().then(() => {
   console.log("[ESI AUTO SYNC] Automatic synchronisation enabled");
 
   void runStartupSync();
+  void runAutomaticKillmailSync();
+
+  killmailSyncTimer = setInterval(() => {
+    void runAutomaticKillmailSync();
+  }, KILLMAIL_SYNC_INTERVAL_MS);
+  killmailSyncTimer.unref?.();
 
   officerSyncTimer = setInterval(() => {
     officerSync.runOnce().catch((error) => {
@@ -1339,6 +1369,11 @@ app.on("window-all-closed", () => {
 app.on("will-quit", () => {
   telemetryService.stop();
   autoSync.stop();
+
+  if (killmailSyncTimer !== null) {
+    clearInterval(killmailSyncTimer);
+    killmailSyncTimer = null;
+  }
 
   if (officerSyncTimer !== null) {
     clearInterval(officerSyncTimer);
