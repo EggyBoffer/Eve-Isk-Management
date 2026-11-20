@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
   Download,
@@ -187,6 +188,7 @@ function ActivityChart({ data, days = 7, metric = "income" }) {
 }
 
 export default function FobTracker() {
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState(null);
   const [corporations, setCorporations] = useState([]);
   const [selectedCorporation, setSelectedCorporation] = useState("");
@@ -714,9 +716,18 @@ export default function FobTracker() {
         </section>
 
         <section style={panel}>
-          <h2 style={{ fontSize: 19, marginTop: 0 }}>
-            Last 10 FOB Kills
-          </h2>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <h2 style={{ fontSize: 19, margin: 0 }}>
+              Last 10 FOB Kills
+            </h2>
+            <button
+              type="button"
+              style={{ ...button, background: "#263e52", padding: "9px 15px" }}
+              onClick={() => navigate("/killmails")}
+            >
+              All Kills
+            </button>
+          </div>
 
           <p style={{ ...muted, fontSize: 12 }}>
             Latest confirmed imports, regardless of the income date filter

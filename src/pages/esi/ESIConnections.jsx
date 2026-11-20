@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import {
   ShieldCheck,
@@ -11,6 +10,7 @@ import {
   Building2,
   AlertTriangle,
   Info,
+  Crosshair,
 } from "lucide-react";
 import ESIUnlinkModal from "./ESIUnlinkModal";
 import "../../styles/esi/esi.css";
@@ -19,6 +19,7 @@ export default function ESIConnections() {
   const [characters, setCharacters] = useState([]);
   const [corporationAuthorisations, setCorporationAuthorisations] = useState([]);
   const [corporations, setCorporations] = useState({});
+  const [killmailSyncCharacters, setKillmailSyncCharacters] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -81,10 +82,13 @@ export default function ESIConnections() {
     setLoading(true);
 
     try {
-      const [characterResult, corporationResult] = await Promise.all([
+      const [characterResult, corporationResult, killmailResult] = await Promise.all([
         window.api.esiListCharacters(),
         corporationAvailable
           ? window.api.esiListCorporations()
+          : Promise.resolve([]),
+        window.api?.esiListKillmailAuthorisations
+          ? window.api.esiListKillmailAuthorisations("character").catch(() => [])
           : Promise.resolve([]),
       ]);
 
@@ -98,6 +102,15 @@ export default function ESIConnections() {
 
       setCharacters(linkedCharacters);
       setCorporationAuthorisations(linkedCorporations);
+      setKillmailSyncCharacters(new Set(
+        (Array.isArray(killmailResult) ? killmailResult : [])
+          .filter((entry) =>
+            entry.sourceType === "character" &&
+            entry.status === "valid" &&
+            entry.syncEnabled === true
+          )
+          .map((entry) => Number(entry.characterId))
+      ));
 
       await loadCorporationDetails(linkedCharacters);
     } finally {
@@ -137,13 +150,23 @@ export default function ESIConnections() {
     }
   }
 
+  function requestEsiLink(kind) {
+    return new Promise((resolve, reject) => {
+      window.dispatchEvent(
+        new CustomEvent("iskonomy:esi-link", {
+          detail: { kind, resolve, reject },
+        })
+      );
+    });
+  }
+
   function linkCharacter() {
     if (!available) {
       return;
     }
 
     return runAction(
-      () => window.api.esiLinkCharacter(),
+      () => requestEsiLink("character"),
       "Character linked successfully.",
       "Character linking failed."
     );
@@ -155,7 +178,7 @@ export default function ESIConnections() {
     }
 
     return runAction(
-      () => window.api.esiLinkCorporation(),
+      () => requestEsiLink("corporation"),
       "Corporation wallet linked successfully.",
       "Corporation linking failed."
     );
@@ -547,11 +570,35 @@ export default function ESIConnections() {
               key={character.characterId}
             >
               <div className="esi-character-top">
-                <img
-                  src={`https://images.evetech.net/characters/${character.characterId}/portrait?size=256`}
-                  alt={character.name}
-                  loading="lazy"
-                />
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <img
+                    src={`https://images.evetech.net/characters/${character.characterId}/portrait?size=256`}
+                    alt={character.name}
+                    loading="lazy"
+                  />
+                  {killmailSyncCharacters.has(Number(character.characterId)) && (
+                    <span
+                      title="Killmail sync enabled"
+                      aria-label="Killmail sync enabled"
+                      style={{
+                        position: "absolute",
+                        top: -5,
+                        right: -5,
+                        width: 23,
+                        height: 23,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "50%",
+                        background: "#153c36",
+                        border: "1px solid #34d399",
+                        color: "#6ee7b7",
+                      }}
+                    >
+                      <Crosshair size={14} />
+                    </span>
+                  )}
+                </div>
 
                 <div className="esi-character-info">
                   <h3>{character.name}</h3>

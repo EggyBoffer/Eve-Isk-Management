@@ -1,9 +1,9 @@
-
 import { getCharacterCorporation } from "./esiCorporations.js";
 import { createEsiAuthService } from "./esiAuth.js";
 import { createFobWalletService } from "../fob/fobWallet.js";
 import { createEsiWalletSyncService } from "./esiWalletSync.js";
 import { createEsiAutoSyncService } from "./esiAutoSync.js";
+import { createEsiKillmailSyncService } from "./esiKillmailSync.js";
 import { createFobKillmailService } from "../fob/fobKillmails.js";
 import { createFobAnalyticsService } from "../fob/fobAnalytics.js";
 import {
@@ -40,6 +40,14 @@ export function registerEsiIpc({
     syncCorporation: walletSync.syncCorporation,
   });
 
+  const fobKillmails = createFobKillmailService({ db });
+
+  const killmailSync = createEsiKillmailSyncService({
+    db,
+    getKillmailAccessToken: esi.getKillmailAccessToken,
+    importKillmail: fobKillmails.importKillmail,
+  });
+
   ipcMain.handle(
     "esi:getCharacterCorporation",
     async (event, characterId) => {
@@ -56,6 +64,11 @@ export function registerEsiIpc({
   ipcMain.handle("esi:linkCharacter", async (event) => {
     assertMainSender(event);
     return esi.linkCharacter();
+  });
+
+  ipcMain.handle("esi:cancelLinking", (event) => {
+    assertMainSender(event);
+    return esi.cancelLinking();
   });
 
   ipcMain.handle(
@@ -97,6 +110,114 @@ export function registerEsiIpc({
     (event, characterId) => {
       assertMainSender(event);
       return esi.unlinkCorporation(characterId);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:listKillmailAuthorisations",
+    (event, sourceType = null) => {
+      assertMainSender(event);
+      return esi.listKillmailAuthorisations(sourceType);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:linkKillmail",
+    async (event, sourceType) => {
+      assertMainSender(event);
+
+      const linked = await esi.linkKillmail(sourceType);
+
+      esi.setKillmailSyncEnabled(
+        sourceType,
+        linked.characterId,
+        true
+      );
+
+      try {
+        const syncResult = await killmailSync.syncSource(
+          sourceType,
+          linked.characterId
+        );
+
+        return {
+          ...linked,
+          syncEnabled: true,
+          initialSync: {
+            success: true,
+            ...syncResult,
+          },
+        };
+      } catch (error) {
+        return {
+          ...linked,
+          syncEnabled: true,
+          initialSync: {
+            success: false,
+            error: error instanceof Error
+              ? error.message
+              : String(error),
+          },
+        };
+      }
+    }
+  );
+
+  ipcMain.handle(
+    "esi:refreshKillmail",
+    async (event, sourceType, characterId) => {
+      assertMainSender(event);
+      return esi.refreshKillmail(sourceType, characterId);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:unlinkKillmail",
+    (event, sourceType, characterId) => {
+      assertMainSender(event);
+      return esi.unlinkKillmail(sourceType, characterId);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:setKillmailSyncEnabled",
+    async (event, sourceType, characterId, enabled) => {
+      assertMainSender(event);
+
+      const result = esi.setKillmailSyncEnabled(
+        sourceType,
+        characterId,
+        enabled
+      );
+
+      if (enabled === true) {
+        try {
+          await killmailSync.syncSource(sourceType, characterId);
+        } catch (error) {
+          console.warn(
+            "Killmail sync after enabling collection failed:",
+            error
+          );
+        }
+      }
+
+      return result;
+    }
+  );
+
+  ipcMain.handle(
+    "esi:syncKillmail",
+    async (event, sourceType, characterId) => {
+      assertMainSender(event);
+      return killmailSync.syncSource(sourceType, characterId);
+    }
+  );
+
+  ipcMain.handle(
+    "esi:runKillmailAutoSync",
+    async (event) => {
+      assertMainSender(event);
+      return killmailSync.runOnce();
     }
   );
 
@@ -216,8 +337,6 @@ export function registerEsiIpc({
     return autoSync.runOnce();
   });
 
-  const fobKillmails = createFobKillmailService({ db });
-
   ipcMain.handle(
     "fob:importKillmail",
     async (event, url) => {
@@ -273,5 +392,5 @@ export function registerEsiIpc({
     }
   );
 
-  return { autoSync };
+  return { autoSync, killmailSync };
 }

@@ -431,7 +431,7 @@ export function createEsiAuthService({ db, shell }) {
   initialiseEsiDatabase(db);
   initialiseEsiKillmailDatabase(db);
 
-  let linking = false;
+  let activeLogin = null;
 
   const refreshLocks = new Map();
   const accessTokenCache = new Map();
@@ -471,21 +471,42 @@ export function createEsiAuthService({ db, shell }) {
     });
   }
 
+  function cancelLinking() {
+    if (!activeLogin || activeLogin.cancelled) {
+      return false;
+    }
+
+    activeLogin.cancelled = true;
+    activeLogin.callback?.close();
+    return true;
+  }
+
   async function performLogin(scope) {
-    if (linking) {
+    if (activeLogin) {
       throw new Error("EVE linking is already in progress");
     }
 
     ensureEncryptionAvailable();
-    linking = true;
 
-    let callback;
+    const session = {
+      cancelled: false,
+      callback: null,
+    };
+
+    activeLogin = session;
+
+    function ensureNotCancelled() {
+      if (session.cancelled) {
+        throw new Error("EVE authentication was cancelled");
+      }
+    }
 
     try {
       const state = crypto.randomBytes(32).toString("base64url");
       const { verifier, challenge } = createPkce();
 
-      callback = await createCallbackListener(state);
+      session.callback = await createCallbackListener(state);
+      ensureNotCancelled();
 
       const url = new URL(AUTHORISE_URL);
 
@@ -498,8 +519,10 @@ export function createEsiAuthService({ db, shell }) {
       url.searchParams.set("code_challenge_method", "S256");
 
       await shell.openExternal(url.toString());
+      ensureNotCancelled();
 
-      const code = await callback.promise;
+      const code = await session.callback.promise;
+      ensureNotCancelled();
 
       const tokens = validateTokenResponse(
         await exchangeToken({
@@ -509,15 +532,17 @@ export function createEsiAuthService({ db, shell }) {
           code_verifier: verifier,
         })
       );
+      ensureNotCancelled();
 
-      const identity = await verifyCharacter(
-        tokens.access_token
-      );
+      const identity = await verifyCharacter(tokens.access_token);
+      ensureNotCancelled();
 
       return { tokens, identity };
     } finally {
-      callback?.close();
-      linking = false;
+      session.callback?.close();
+      if (activeLogin === session) {
+        activeLogin = null;
+      }
     }
   }
 
@@ -1061,6 +1086,7 @@ export function createEsiAuthService({ db, shell }) {
   }
 
   return {
+    cancelLinking,
     linkCharacter,
     refreshCharacter,
     getAccessToken,

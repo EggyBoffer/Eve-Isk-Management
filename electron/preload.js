@@ -194,6 +194,9 @@ contextBridge.exposeInMainWorld("api", {
   esiLinkCharacter: () =>
     ipcRenderer.invoke("esi:linkCharacter"),
 
+  esiCancelLinking: () =>
+    ipcRenderer.invoke("esi:cancelLinking"),
+
   esiRefreshCharacter: (characterId) =>
     ipcRenderer.invoke("esi:refreshCharacter", characterId),
 
@@ -211,6 +214,26 @@ contextBridge.exposeInMainWorld("api", {
 
   esiUnlinkCorporation: (characterId) =>
     ipcRenderer.invoke("esi:unlinkCorporation", characterId),
+
+  esiListKillmailAuthorisations: (sourceType = null) =>
+    ipcRenderer.invoke("esi:listKillmailAuthorisations", sourceType),
+
+  esiLinkKillmail: (sourceType) =>
+    ipcRenderer.invoke("esi:linkKillmail", sourceType),
+
+  esiRefreshKillmail: (sourceType, characterId) =>
+    ipcRenderer.invoke("esi:refreshKillmail", sourceType, characterId),
+
+  esiUnlinkKillmail: (sourceType, characterId) =>
+    ipcRenderer.invoke("esi:unlinkKillmail", sourceType, characterId),
+
+  esiSetKillmailSyncEnabled: (sourceType, characterId, enabled) =>
+    ipcRenderer.invoke(
+      "esi:setKillmailSyncEnabled",
+      sourceType,
+      characterId,
+      enabled
+    ),
 
   fobPreviewWallet: (characterId, pageLimit = 1) =>
     ipcRenderer.invoke(
@@ -241,19 +264,6 @@ contextBridge.exposeInMainWorld("api", {
   esiListWalletJournal: (options = {}) =>
     ipcRenderer.invoke("esi:listWalletJournal", options),
 
-  esiSyncCharacterJournal: (characterId, pageLimit = 20) =>
-    ipcRenderer.invoke(
-      "esi:syncCharacterJournal",
-      characterId,
-      pageLimit
-    ),
-
-  esiGetCharacterWalletSyncState: (characterId) =>
-    ipcRenderer.invoke(
-      "esi:getCharacterWalletSyncState",
-      characterId
-    ),
-
   esiSyncCorporationJournal: (characterId, division = 1, pageLimit = 20) =>
     ipcRenderer.invoke(
       "esi:syncCorporationJournal",
@@ -269,11 +279,34 @@ contextBridge.exposeInMainWorld("api", {
       division
     ),
 
+  esiSyncCharacterJournal: (characterId, pageLimit = 20) =>
+    ipcRenderer.invoke(
+      "esi:syncCharacterJournal",
+      characterId,
+      pageLimit
+    ),
+
+  esiGetCharacterWalletSyncState: (characterId) =>
+    ipcRenderer.invoke(
+      "esi:getCharacterWalletSyncState",
+      characterId
+    ),
+
   esiGetAutoSyncStatus: () =>
     ipcRenderer.invoke("esi:getAutoSyncStatus"),
 
   esiRunAutoSync: () =>
     ipcRenderer.invoke("esi:runAutoSync"),
+
+  esiSyncKillmail: (sourceType, characterId) =>
+    ipcRenderer.invoke(
+      "esi:syncKillmail",
+      sourceType,
+      characterId
+    ),
+
+  esiRunKillmailAutoSync: () =>
+    ipcRenderer.invoke("esi:runKillmailAutoSync"),
 
   fobImportKillmail: (url) =>
     ipcRenderer.invoke("fob:importKillmail", url),

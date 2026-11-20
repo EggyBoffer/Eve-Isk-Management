@@ -17,6 +17,7 @@ export default function Misc() {
     { title: "Abyssal Analytics", desc: "Break down your Abyssal performance over time.", onClick: () => navigate("/analytics"), pill: "Stats" },
     { title: "DED Analytics", desc: "Performance breakdown for DED runs.", onClick: () => navigate("/ded-analytics"), pill: "Stats" },
     { title: "Incursion Analytics", desc: "Track ISK/LP trends for incursions.", onClick: () => navigate("/incursions/analytics"), pill: "Stats" },
+    { title: "Killmails", desc: "Killmail history and manage automatic Killmail imports.", onClick: () => navigate ("/killmails"), pill: "App", },
     { title: "Discord", desc: "Join the community and get help.", onClick: () => window.api?.openExternal("https://discord.gg/M87HtnjBYg"), pill: "Link" },
     { title: "GitHub Discussions", desc: "Feature requests, bugs, and suggestions.", onClick: () => window.api?.openExternal("https://github.com/EggyBoffer/Eve-Isk-Management/discussions"), pill: "Link" },
   ];

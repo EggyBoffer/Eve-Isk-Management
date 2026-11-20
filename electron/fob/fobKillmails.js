@@ -27,7 +27,7 @@ function parseKillmailUrl(value) {
     throw new Error("Only direct EVE ESI killmail URLs are supported");
   }
 
-  const match = /^\/killmails\/([1-9]\d*)\/([a-f0-9]{40})\/?$/i.exec(
+  const match = /^\/(?:latest\/)?killmails\/([1-9]\d*)\/([a-f0-9]{40})\/?$/i.exec(
     url.pathname
   );
 
@@ -51,6 +51,12 @@ function optionalId(value) {
   return Number.isSafeInteger(value) && value > 0
     ? value
     : null;
+}
+
+function classifyKillmail(victimTypeId) {
+  return CONFIRMED_FOB_TYPE_IDS.has(victimTypeId)
+    ? "confirmed"
+    : "excluded";
 }
 
 async function requestEsi(path) {
@@ -181,9 +187,16 @@ export function createFobKillmailService({ db }) {
 
   db.prepare(`
     UPDATE fob_killmails
-    SET classification = 'confirmed'
-    WHERE victim_type_id IN (46363, 46364)
-      AND classification = 'unverified'
+    SET classification = CASE
+      WHEN victim_type_id IN (46363, 46364)
+        THEN 'confirmed'
+      ELSE 'excluded'
+    END
+    WHERE classification != CASE
+      WHEN victim_type_id IN (46363, 46364)
+        THEN 'confirmed'
+      ELSE 'excluded'
+    END
   `).run();
 
   const insert = db.prepare(`
@@ -214,7 +227,12 @@ export function createFobKillmailService({ db }) {
       final_blow_corporation_id = ?,
       final_blow_ship_type_id = ?,
       final_blow_npc_type_id = ?,
-      final_blow_name = ?
+      final_blow_name = ?,
+      classification = CASE
+        WHEN victim_type_id IN (46363, 46364)
+          THEN 'confirmed'
+        ELSE 'excluded'
+      END
     WHERE killmail_id = ?
   `);
 
@@ -234,15 +252,15 @@ export function createFobKillmailService({ db }) {
   const summary = db.prepare(`
     SELECT
       COUNT(*) AS totalImported,
-      SUM(
+      COALESCE(SUM(
         CASE WHEN classification = 'confirmed' THEN 1 ELSE 0 END
-      ) AS confirmed,
-      SUM(
+      ), 0) AS confirmed,
+      COALESCE(SUM(
         CASE WHEN classification = 'unverified' THEN 1 ELSE 0 END
-      ) AS unverified,
-      SUM(
+      ), 0) AS unverified,
+      COALESCE(SUM(
         CASE WHEN classification = 'excluded' THEN 1 ELSE 0 END
-      ) AS excluded
+      ), 0) AS excluded
     FROM fob_killmails
   `);
 
@@ -323,9 +341,7 @@ export function createFobKillmailService({ db }) {
       victim.ship_type_id,
       optionalId(victim.corporation_id),
       optionalId(victim.alliance_id),
-      CONFIRMED_FOB_TYPE_IDS.has(victim.ship_type_id)
-        ? "confirmed"
-        : "unverified",
+      classifyKillmail(victim.ship_type_id),
       new Date().toISOString(),
       details.solarSystemName,
       details.finalBlowCharacterId,
