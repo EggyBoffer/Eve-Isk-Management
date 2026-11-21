@@ -389,6 +389,11 @@ export function createFobAnalyticsService({ db }) {
 
     const totalIncome = wallet.totalGrossIncome;
     const completedFobs = Number(killmails.completedFobs) || 0;
+    const activeDays = new Set(completionHistory.all(range).map(({ day }) => day));
+    const activeDayIncome = wallet.events.reduce(
+      (sum, event) => activeDays.has(event.date.slice(0, 10)) ? sum + event.gross : sum,
+      0
+    );
 
     return {
       period: {
@@ -425,6 +430,8 @@ export function createFobAnalyticsService({ db }) {
         classification: "confirmed",
       },
       averages: {
+        iskPerDay: activeDays.size > 0 ? activeDayIncome / activeDays.size : null,
+        activeDays: activeDays.size,
         iskPerFob: completedFobs > 0
           ? totalIncome / completedFobs
           : null,

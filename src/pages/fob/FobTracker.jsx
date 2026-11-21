@@ -578,12 +578,12 @@ export default function FobTracker() {
           />
           <Metric
             icon={TrendingUp}
-            label="Income / FOB"
-            value={summary?.averages?.iskPerFob != null
-              ? formatISK(summary.averages.iskPerFob)
+            label="ISK / Day"
+            value={summary?.averages?.iskPerDay != null
+              ? formatISK(summary.averages.iskPerDay)
               : "—"}
-            detail="Provisional · imported kills only"
-            tooltip="Total ESI wallet income divided by imported FOB kills in the selected period. Missing killmails can greatly inflate this figure; it is not a verified per-FOB payout."
+            detail="Only days wtih FOB kills detected."
+            tooltip="Average isk per day where FOB kills are detected. Days without FOB kills are excluded.."
           />
           <Metric
             icon={Target}
