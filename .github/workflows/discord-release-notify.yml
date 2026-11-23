@@ -5,6 +5,8 @@ on:
     tags:
       - 'v*'
 
+permissions: {}
+
 jobs:
   discord:
     runs-on: ubuntu-latest
