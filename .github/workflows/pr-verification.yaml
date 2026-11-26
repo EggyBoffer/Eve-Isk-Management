@@ -11,7 +11,7 @@ jobs:
   setup:
     name: Lint
     runs-on: ubuntu-latest
-    container: node:22
+    container: node:24
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v5

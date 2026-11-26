@@ -8,6 +8,15 @@ export default function PatchNotes() {
 
   const patches = [
     {
+      version: "0.6.3",
+      date: "2026-11-26",
+      changes: [
+        "Dependancy update to patch some vulnerabilities.",
+        "Fixed an issue that could cause wallet sync to get stuck if the app is opened and then closed before the sync completed.",
+        "Fixed a type in FOB tracker.",
+      ],
+    },
+    {
       version: "0.6.0",
       date: "2026-11-20",
       changes: [

@@ -1328,6 +1328,21 @@ async function runStartupSync() {
 }
 
 app.whenReady().then(() => {
+  if (!app.requestSingleInstanceLock()) {
+    app.quit();
+    return;
+  }
+
+  const interruptedKillmailSyncs = db.prepare(`
+    UPDATE esi_killmail_authorisations
+    SET last_sync_status = 'error', last_sync_error = ?, updated_at = ?
+    WHERE last_sync_status = 'running'
+  `).run("Previous sync interrupted before completion", new Date().toISOString());
+
+  if (interruptedKillmailSyncs.changes > 0) {
+    console.log("[KILLMAIL AUTO SYNC] Recovered interrupted sources:", interruptedKillmailSyncs.changes);
+  }
+
   createSplash();
   createMainWindow();
   telemetryService.recordLaunch();

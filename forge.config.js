@@ -1,13 +1,13 @@
 export default {
   packagerConfig: {},
+  rebuildConfig: {
+    ignoreModules: ["better-sqlite3"],
+  },
   makers: [
     {
       name: "@electron-forge/maker-zip",
       platforms: ["darwin", "linux", "win32"],
-      config: {
-        // identity: null, // Disable code signing for the maker
-        // the config can be an object
-      },
+      config: {},
     },
   ],
   publishers: [

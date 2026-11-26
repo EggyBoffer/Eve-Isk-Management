@@ -2,12 +2,11 @@
   "name": "iskonomy",
   "description": "Iskonomy is a tool to track income. From plex to profit—stay in control.",
   "private": true,
-  "version": "0.6.2",
+  "version": "0.6.3",
   "author": "ISKONOMY Corporation",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
-    "postinstall": "electron-rebuild",
     "dev": "concurrently \"vite\" \"wait-on http://localhost:5173\"",
     "dev:app": "concurrently \"vite\" \"wait-on http://localhost:5173\" \"electron-forge start\"",
     "build": "vite build",
@@ -21,32 +20,31 @@
     "publish": "electron-forge publish"
   },
   "dependencies": {
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3": "13.2.0",
     "electron-squirrel-startup": "^1.0.1",
     "lucide-react": "^0.522.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.8.1",
-    "@electron-forge/maker-deb": "^7.8.1",
-    "@electron-forge/maker-rpm": "^7.8.1",
-    "@electron-forge/maker-squirrel": "^7.8.1",
-    "@electron-forge/maker-zip": "^7.8.1",
-    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
-    "@electron-forge/plugin-fuses": "^7.8.1",
-    "@electron-forge/publisher-github": "^7.8.1",
-    "@electron/fuses": "^1.8.0",
+    "@electron-forge/cli": "8.0.1",
+    "@electron-forge/maker-deb": "8.0.1",
+    "@electron-forge/maker-rpm": "8.0.1",
+    "@electron-forge/maker-squirrel": "8.0.1",
+    "@electron-forge/maker-zip": "8.0.1",
+    "@electron-forge/plugin-auto-unpack-natives": "8.0.1",
+    "@electron-forge/plugin-fuses": "8.0.1",
+    "@electron-forge/publisher-github": "8.0.1",
+    "@electron/fuses": "2.1.3",
     "@eslint/js": "^9.25.0",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "concurrently": "^9.1.2",
-    "electron": "^36.4.0",
+    "electron": "45.5.0",
     "electron-builder": "^26.0.12",
-    "electron-rebuild": "^3.2.9",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
@@ -78,6 +76,16 @@
     "win": {
       "target": "nsis",
       "artifactName": "Iskonomy Setup ${version}.exe"
+    },
+    "npmRebuild": false
+  },
+  "overrides": {
+    "brace-expansion@1.x": "1.1.21",
+    "app-builder-lib": {
+      "minimatch": "11.0.9"
+    },
+    "@electron/universal": {
+      "minimatch": "11.0.9"
     }
   }
 }
