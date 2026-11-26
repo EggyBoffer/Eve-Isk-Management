@@ -4,13 +4,19 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types: [published]
 
 permissions:
   contents: write
 
 jobs:
   build:
+    if: github.event_name == 'push'
     runs-on: windows-latest
+    concurrency:
+      group: iskonomy-build-${{ github.ref_name }}
+      cancel-in-progress: false
 
     steps:
       - name: Checkout repo
@@ -24,10 +30,92 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build frontend (Vite)
-        run: npm run build
+      - name: Build Windows installer
+        run: npm run dist -- --publish never
 
-      - name: Build & publish (electron-builder)
-        run: npm run dist
+      - name: Create or update release draft
+        shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ($env:RELEASE_TAG -ne "v$version") {
+            throw "Tag $env:RELEASE_TAG does not match package version $version."
+          }
+
+          $installer = "dist/Iskonomy Setup $version.exe"
+          $blockmap = "$installer.blockmap"
+          $assets = @($installer, $blockmap)
+
+          foreach ($asset in $assets) {
+            if (-not (Test-Path -LiteralPath $asset -PathType Leaf)) {
+              throw "Missing release asset: $asset"
+            }
+          }
+
+          if (Test-Path -LiteralPath 'dist/latest.yml' -PathType Leaf) {
+            $assets += 'dist/latest.yml'
+          }
+
+          $draftStatus = gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json isDraft --jq '.isDraft' 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            if ($draftStatus -ne 'true') {
+              throw "Release $env:RELEASE_TAG is already published."
+            }
+            gh release upload $env:RELEASE_TAG @assets --repo $env:GITHUB_REPOSITORY --clobber
+          } else {
+            gh release create $env:RELEASE_TAG @assets --repo $env:GITHUB_REPOSITORY --verify-tag --draft --title $env:RELEASE_TAG --generate-notes
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not upload release assets for $env:RELEASE_TAG."
+          }
+
+  update-manifest:
+    if: github.event_name == 'release' && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Update latest.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Skipping non-stable tag: $RELEASE_TAG"
+            exit 0
+          fi
+
+          release="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest")"
+          if ! jq -e --arg tag "$RELEASE_TAG" '
+            .tag_name == $tag and
+            any(.assets[]; .state == "uploaded" and (.name | endswith(".exe")))
+          ' <<< "$release" > /dev/null; then
+            echo "Skipping $RELEASE_TAG because it is not the latest release with an installer."
+            exit 0
+          fi
+
+          release_url="$(jq -r '.html_url' <<< "$release")"
+          jq -n \
+            --arg version "${RELEASE_TAG#v}" \
+            --arg url "$release_url" \
+            '{version: $version, url: $url, notesUrl: $url}' > latest.json
+
+          if git diff --quiet -- latest.json; then
+            echo "latest.json is already current."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add latest.json
+          git commit -m "Update latest.json for $RELEASE_TAG"
+          git push origin HEAD:main
